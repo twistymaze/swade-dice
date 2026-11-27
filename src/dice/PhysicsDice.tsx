@@ -11,6 +11,7 @@ import { getValueFromDiceGroup } from "../helpers/getValueFromDiceGroup";
 import { ThreeElements, useFrame } from "@react-three/fiber";
 import { useAudioListener } from "../audio/useAudioListener";
 import { getNextBuffer } from "../audio/getAudioBuffer";
+import { playOneShotSound } from "../audio/oneShotSound";
 import { PhysicalMaterial } from "../types/PhysicalMaterial";
 import { getDieWeightClass } from "../helpers/getDieWeightClass";
 import { getDieDensity } from "../helpers/getDieDensity";
@@ -168,16 +169,11 @@ export function PhysicsDice({
         const weightClass = getDieWeightClass(die);
         const buffer = getNextBuffer(weightClass, physicalMaterial);
         if (buffer && listener) {
-          const sound = new THREE.PositionalAudio(listener);
-          sound.setBuffer(buffer);
-          sound.setRefDistance(3);
-          sound.play();
-          // Modulate sound volume based off of the speed of the colliding dice
-          sound.setVolume(Math.min(speed / 5, 1));
-          sound.onEnded = () => {
-            group.remove(sound);
-          };
-          group.add(sound);
+          playOneShotSound(listener, buffer, group, {
+            refDistance: 3,
+            // Modulate sound volume based off of the speed of the colliding dice
+            volume: Math.min(speed / 5, 1),
+          });
           lastAudioTimeRef.current = performance.now();
         }
       }

@@ -13,6 +13,7 @@ import { DiceQuaternion } from "../types/DiceQuaternion";
 import { Die } from "../types/Die";
 import { useAudioListener } from "../audio/useAudioListener";
 import { getNextBuffer } from "../audio/getAudioBuffer";
+import { releaseSound } from "../audio/oneShotSound";
 import { random } from "../helpers/random";
 import { WeightClass } from "../types/WeightClass";
 
@@ -93,6 +94,7 @@ export function PreviewDiceRoll() {
         if (sound) {
           sound.stop();
           group.remove(sound);
+          releaseSound(sound);
         }
       };
     }
