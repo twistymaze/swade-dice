@@ -158,7 +158,8 @@ export function PhysicsDice({
         return;
       }
       const group = ref.current;
-      // TODO: remove conditional when this gets merged https://github.com/pmndrs/react-three-rapier/pull/151/commits
+      // rigidBodyObject is optional in the @react-three/rapier types and not every
+      // body sets userData.material, so fall back to leather.
       const physicalMaterial: PhysicalMaterial =
         rigidBodyObject?.userData?.material || "LEATHER";
       const linvel = rigidBodyRef.current?.linvel();

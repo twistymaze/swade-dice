@@ -91,11 +91,9 @@ export function FairnessTester() {
       const rollingDie = diceById[rolling[0]];
       if (rollingDie) {
         setRolledDie(rollingDie);
-        console.log('🎯 FAIRNESS: Setting mode to STANDARD');
         setModeChoice('STANDARD');  // Set to STANDARD mode for fairness testing
         // Don't include wild die for fairness testing - test individual dice only
         const dice = getDiceToRoll(counts, diceById, false);
-        console.log('🎯 FAIRNESS: Starting roll with dice:', dice);
         startRoll({ dice, hidden: true });
         setActive(true);
         handleCountsReset();

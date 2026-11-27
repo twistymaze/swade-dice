@@ -104,7 +104,6 @@ export function DiceRollSync() {
             result: currentResult,
           };
           
-          console.log("🎲 Broadcasting roll (store subscription):", broadcast);
           OBR.broadcast.sendMessage(getPluginId("roll-result"), broadcast, {
             destination: "ALL" // Include self in broadcast
           });
@@ -129,7 +128,6 @@ export function DiceRollSync() {
           result: currentResult,
         };
         
-        console.log("🎲 Broadcasting roll (result change):", broadcast);
         OBR.broadcast.sendMessage(getPluginId("roll-result"), broadcast, {
           destination: "ALL"
         });

@@ -334,8 +334,8 @@ export const useDiceRollStore = create<DiceRollState>()(
   }))
 );
 
-// TEMP DEBUG: expose the dice roll store for runtime inspection in the OBR iframe.
-// Remove before merge.
+// Development only: expose the dice roll store for runtime inspection in the
+// OBR iframe. Production builds remove this block.
 if (import.meta.env.DEV) {
   (window as unknown as { __diceStore?: typeof useDiceRollStore }).__diceStore =
     useDiceRollStore;
