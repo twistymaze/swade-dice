@@ -220,3 +220,19 @@ describe("T-35 TN and modifier inputs", () => {
     expect(controls().traitModifier).toBe(0);
   });
 });
+
+describe("T-35 modifier steppers at the limit (W-01)", () => {
+  it("the custom field never shows a value outside -99..99 that the store did not apply", () => {
+    act(() => controls().setTraitModifier(-99));
+    render(<TopControls />);
+    fireEvent.click(traitButton(), { shiftKey: true });
+    const field = screen.getByRole("spinbutton") as HTMLInputElement;
+    fireEvent.click(screen.getByRole("button", { name: "−" }));
+    expect(controls().traitModifier).toBe(-99);
+    expect(field.value).toBe("-99");
+    fireEvent.change(field, { target: { value: "99" } });
+    fireEvent.click(screen.getByRole("button", { name: "+" }));
+    expect(controls().traitModifier).toBe(99);
+    expect(field.value).toBe("99");
+  });
+});

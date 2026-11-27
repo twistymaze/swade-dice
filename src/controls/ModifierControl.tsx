@@ -7,6 +7,11 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 
+import { MAX_ABS_MODIFIER } from "./store";
+
+/** The steppers show only values the store keeps (W-01). */
+const clampToStore = (value: number) => Math.max(-MAX_ABS_MODIFIER, Math.min(MAX_ABS_MODIFIER, value));
+
 interface ModifierControlConfig {
   modifier: number;
   setModifier: (value: number) => void;
@@ -176,7 +181,7 @@ export function ModifierControl({ config }: ModifierControlProps) {
               variant="outlined" 
               size="small"
               onClick={() => {
-                const newVal = (parseInt(customValue) || 0) - 1;
+                const newVal = clampToStore((parseInt(customValue) || 0) - 1);
                 setCustomValue(newVal.toString());
                 setModifier(newVal);
               }}
@@ -208,7 +213,7 @@ export function ModifierControl({ config }: ModifierControlProps) {
               variant="outlined" 
               size="small"
               onClick={() => {
-                const newVal = (parseInt(customValue) || 0) + 1;
+                const newVal = clampToStore((parseInt(customValue) || 0) + 1);
                 setCustomValue(newVal.toString());
                 setModifier(newVal);
               }}
