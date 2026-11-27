@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vite-dev",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["dev", "--port", "5173", "--strictPort"],
+      "port": 5173
+    },
+    {
+      "name": "vite-preview-prod",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "yarn build && yarn vite preview --port 5173 --strictPort"],
+      "port": 5173
+    }
+  ]
+}
