@@ -8,7 +8,7 @@ export interface DieChain {
   dieType: DiceType;
   rolls: number[];  // [initial, explosion1, explosion2, ...]
   total: number;    // Sum of all rolls
-  isWildDie?: boolean;
+  isWildDie: boolean;
 }
 
 /**
@@ -18,11 +18,15 @@ export interface RollOutcome {
   chains: DieChain[];     // The die chain(s) that contributed to this result
   modifier: number;       // Modifier applied to this result
   total: number;          // Final total including modifier
-  success?: boolean;      // vs target number
-  raises?: number;        // Number of raises
-  replacedByWild?: boolean;  // For trait tests - was worst die replaced by wild
-  criticalFailure?: boolean;  // True if this is a critical failure
-  possibleCriticalFailure?: boolean;  // True if this might be a critical failure (single trait die with 1, no wild die)
+  /** vs target number. TRAIT only: DAMAGE and STANDARD outcomes have no success (OD-5). */
+  success?: boolean;
+  /** Number of raises, 0 on a failure. TRAIT only. */
+  raises?: number;
+  replacedByWild: boolean;  // For trait tests - was worst die replaced by wild
+  /** Present (true) only on a Critical Failure. Then success is false and raises 0. */
+  criticalFailure?: boolean;
+  /** Present (true) only when a trait roll without a Wild Die might be a Critical Failure. */
+  possibleCriticalFailure?: boolean;
   criticalFailureReason?: string;  // Explanation of why it's a critical failure
 }
 
@@ -46,10 +50,11 @@ export interface SavageRollResult {
   // For DAMAGE mode: single result (sum of all dice)
   outcomes: RollOutcome[];
   
-  // Roll configuration
-  targetNumber?: number;
-  modifier?: number;
-  wildDieEnabled?: boolean;
+  // Roll configuration (the settings the outcomes were calculated with)
+  targetNumber: number;
+  /** The modifier applied to every outcome: trait modifier, damage modifier, or 0 for STANDARD. */
+  modifier: number;
+  wildDieEnabled: boolean;
   
   // Completion status
   isComplete: boolean;
@@ -67,7 +72,7 @@ export interface ExplosionResult {
   rolls: number[];  // Array of individual rolls in explosion chain
   total: number;
   exploded: boolean;
-  isWildDie?: boolean;
+  isWildDie: boolean;
 }
 
 // Plugin-specific types for OBR integration

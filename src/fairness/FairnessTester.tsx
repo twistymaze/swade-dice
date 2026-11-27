@@ -62,7 +62,6 @@ export function FairnessTester() {
   const resetDiceCounts = useDiceControlsStore(
     (state) => state.resetDiceCounts
   );
-  const setModeChoice = useDiceControlsStore((state) => state.setModeChoice);
 
   const singleDiceSelected = useMemo(() => {
     const totalCount = Object.values(counts).reduce(
@@ -91,10 +90,10 @@ export function FairnessTester() {
       const rollingDie = diceById[rolling[0]];
       if (rollingDie) {
         setRolledDie(rollingDie);
-        setModeChoice('STANDARD');  // Set to STANDARD mode for fairness testing
         // Don't include wild die for fairness testing - test individual dice only
         const dice = getDiceToRoll(counts, diceById, false);
-        startRoll({ dice, hidden: true });
+        // STANDARD: raw values, no explosions (the roll records its own mode)
+        startRoll({ dice, hidden: true }, { mode: "STANDARD" });
         setActive(true);
         handleCountsReset();
       }

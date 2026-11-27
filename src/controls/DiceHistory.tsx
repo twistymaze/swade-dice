@@ -30,14 +30,11 @@ export function DiceHistory() {
   const setTargetNumber = useDiceControlsStore((state) => state.setTargetNumber);
   const toggleWildDie = useDiceControlsStore((state) => state.toggleWildDie);
   const currentWildDieEnabled = useDiceControlsStore((state) => state.wildDieEnabled);
-  const setModeChoice = useDiceControlsStore((state) => state.setModeChoice);
 
   function handleRoll(roll: RecentRoll) {
-    // Restore Savage Worlds settings from history
+    // Restore Savage Worlds settings from history. The mode goes with the roll itself (D-05), so the
+    // controls that edit the finished roll follow it (T-62).
     if (roll.rollMode) {
-      // Set the explicit mode
-      setModeChoice(roll.rollMode);
-      
       // Set modifiers based on roll type
       if (roll.rollMode === 'TRAIT' && roll.traitModifier !== undefined) {
         setTraitModifier(roll.traitModifier);
@@ -64,7 +61,19 @@ export function DiceHistory() {
       diceSet.dice[0]?.style,
       roll.rollMode === 'TRAIT'
     );
-    startRoll({ dice, hidden });
+    const settings = useDiceControlsStore.getState();
+    startRoll(
+      { dice, hidden },
+      {
+        mode: roll.rollMode,
+        settings: {
+          targetNumber: settings.targetNumber,
+          traitModifier: settings.traitModifier,
+          damageModifier: settings.damageModifier,
+          wildDieEnabled: settings.wildDieEnabled,
+        },
+      }
+    );
     resetDiceCounts();
     handleClose();
   }

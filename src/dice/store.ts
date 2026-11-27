@@ -7,30 +7,42 @@ import { getDieFromDice } from "../helpers/getDieFromDice";
 import { DiceTransform } from "../types/DiceTransform";
 import { getRandomDiceThrow } from "../helpers/DiceThrower";
 import { generateDiceId } from "../helpers/generateDiceId";
+import { createWildDie } from "../helpers/wildDie";
 import { DiceThrow } from "../types/DiceThrow";
-import { ExplosionResult, SavageRollMode, SavageRollResult, DieChain, RollOutcome } from "../types/SavageWorldsTypes";
+import { ExplosionResult, SavageRollMode, SavageRollResult } from "../types/SavageWorldsTypes";
+import { shouldDieExplode, isValidFaceValue, MAX_EXPLOSIONS } from "../helpers/explosionHelpers";
+import { computeRollResult, DEFAULT_ROLL_SETTINGS, RollSettings } from "../rules/outcomes";
+import { updateExplosionResults, createExplosionDie, getParentDieId, createDieChains } from "./storeHelpers";
 
-type DieInfo = {
+export type DieInfo = {
   die: Die;
-  isWildDie?: boolean;
+  isWildDie: boolean;
   parentDieId?: string;
 };
-import { shouldDieExplode, MAX_EXPLOSIONS } from "../helpers/explosionHelpers";
-import { useDiceControlsStore } from "../controls/store";
-import { 
-  updateExplosionResults,
-  createExplosionDie,
-  getParentDieId,
-  processSingleDieTraitTest,
-  processMultiDieTraitTest,
-  processDamageRoll
-} from "./storeHelpers";
 
-interface DiceRollState {
+/** How to start a roll. The roll records its own mode and settings (D-05). */
+export interface StartRollOptions {
+  mode: SavageRollMode;
+  speedMultiplier?: number;
+  /** The settings the stored result is calculated with. The UI recalculates with live settings. */
+  settings?: RollSettings;
+}
+
+export interface RerollOptions {
+  /**
+   * Whether the new roll has a Wild Die (TRAIT only). Pass the current setting, so a reroll after
+   * the Wild Die was turned off throws no Wild Die (A-07). Default: as the old roll.
+   */
+  wildDieEnabled?: boolean;
+  settings?: RollSettings;
+}
+
+export interface DiceRollState {
   roll: DiceRoll | null;
   /**
    * A mapping from the die ID to its roll result.
    * A value of `null` means the die hasn't finished rolling yet.
+   * This is the source of roll progress: see `selectPendingDiceIds` and `selectIsRolling`.
    */
   rollValues: Record<string, number | null>;
   /**
@@ -51,285 +63,155 @@ interface DiceRollState {
    */
   explosionDice: Die[];
   /**
-   * Dice that have finished rolling and should be immovable
+   * Dice that have finished rolling and should be immovable (the ids whose value is set).
    */
   finishedDice: string[];
-  /**
-   * Track dice currently rolling to prevent premature finalization
-   */
-  pendingDice: string[];
-  
+
   // Savage Worlds specific state
+  /** The mode of the current roll (set by `startRoll`, kept by `reroll`, reset by `clearRoll`). */
   rollMode: SavageRollMode;
+  /** The settings of the current roll, used for the stored result at completion. */
+  rollSettings: RollSettings;
+  /** The speed multiplier of the current roll, reused by `reroll`. */
+  rollSpeedMultiplier: number;
   explosionResults: Record<string, ExplosionResult>;
   currentRollResult: SavageRollResult | null;
-  
+
   // Actions
-  startRoll: (roll: DiceRoll, speedMultiplier?: number) => void;
-  clearRoll: (ids?: string) => void;
-  /** Reroll select ids of dice or reroll all dice by passing `undefined` */
-  reroll: () => void;
-  clearExplosionDice: () => void;
-  
-  // Savage Worlds specific actions
-  setRollMode: (mode: SavageRollMode) => void;
-  checkAndProcessExplosion: (id: string, value: number, transform: DiceTransform) => void;
-  finalizeRoll: (modifier?: number, targetNumber?: number) => void;
-  
-  // Helper methods for explosion processing
-  storeRollResult: (id: string, value: number, transform: DiceTransform) => void;
-  updateExplosionResult: (parentDieId: string, value: number, info: DieInfo) => void;
-  canCreateExplosion: (parentDieId: string) => boolean;
-  createExplosion: (parentDieId: string, info: DieInfo) => void;
-  completeRoll: () => void;
-  createDieChains: () => DieChain[];
-  calculateOutcomes: (dieChains: DieChain[], modifier: number, targetNumber: number | undefined, rollMode: SavageRollMode) => RollOutcome[];
+  startRoll: (roll: DiceRoll, options: StartRollOptions) => void;
+  clearRoll: () => void;
+  /** Roll the same dice again with new ids, in one synchronous update (A-06). */
+  reroll: (options?: RerollOptions) => void;
+  /**
+   * Report the face value of a die that stopped. Returns `false` when the value is not a valid face
+   * for the die (for example 0 when no face was found, A-08): nothing is stored and the die stays
+   * pending, so the caller can read it again. Returns `true` otherwise, also when the id is unknown
+   * (stale die) or the die already has a value (a second report is ignored, A-05).
+   */
+  checkAndProcessExplosion: (id: string, value: number, transform: DiceTransform) => boolean;
+}
+
+/** Ids of the dice that have not finished yet. */
+export function selectPendingDiceIds(state: Pick<DiceRollState, "rollValues">): string[] {
+  return Object.keys(state.rollValues).filter((id) => state.rollValues[id] === null);
+}
+
+/** True while at least one die of the current roll is still rolling. */
+export function selectIsRolling(state: Pick<DiceRollState, "rollValues">): boolean {
+  return Object.values(state.rollValues).some((value) => value === null);
+}
+
+const EMPTY_ROLL_STATE = {
+  roll: null,
+  rollValues: {},
+  rollTransforms: {},
+  rollThrows: {},
+  dieInfo: {},
+  explosionDice: [],
+  finishedDice: [],
+  rollMode: "TRAIT" as SavageRollMode,
+  rollSettings: DEFAULT_ROLL_SETTINGS,
+  rollSpeedMultiplier: 1,
+  explosionResults: {},
+  currentRollResult: null,
+};
+
+type RollDraft = Omit<DiceRollState, "startRoll" | "clearRoll" | "reroll" | "checkAndProcessExplosion">;
+
+function resetRoll(draft: RollDraft) {
+  Object.assign(draft, structuredClone(EMPTY_ROLL_STATE));
+}
+
+function initRoll(draft: RollDraft, roll: DiceRoll, options: StartRollOptions) {
+  resetRoll(draft);
+  draft.roll = roll;
+  draft.rollMode = options.mode;
+  draft.rollSettings = options.settings ?? DEFAULT_ROLL_SETTINGS;
+  draft.rollSpeedMultiplier = options.speedMultiplier ?? 1;
+  for (const die of getDieFromDice(roll)) {
+    draft.rollValues[die.id] = null;
+    draft.rollTransforms[die.id] = null;
+    draft.rollThrows[die.id] = getRandomDiceThrow(options.speedMultiplier);
+    draft.dieInfo[die.id] = { die, isWildDie: die.isWildDie === true };
+  }
 }
 
 export const useDiceRollStore = create<DiceRollState>()(
   immer((set, get) => ({
-    roll: null,
-    rollValues: {},
-    rollTransforms: {},
-    rollThrows: {},
-    dieInfo: {},
-    explosionDice: [],
-    finishedDice: [],
-    pendingDice: [],
-    
-    // Savage Worlds state
-    rollMode: "TRAIT",
-    explosionResults: {},
-    currentRollResult: null,
-    
-    startRoll: (roll, speedMultiplier?: number) =>
+    ...structuredClone(EMPTY_ROLL_STATE),
+
+    startRoll: (roll, options) =>
       set((state) => {
-        // Get the current roll mode from controls store
-        const controlsState = useDiceControlsStore.getState();
-        state.rollMode = controlsState.rollMode;
-        
-        state.roll = roll;
-        state.rollValues = {};
-        state.rollTransforms = {};
-        state.rollThrows = {};
-        state.dieInfo = {};
-        state.explosionDice = [];
-        state.finishedDice = [];
-        state.pendingDice = [];
-        state.explosionResults = {};
-        state.currentRollResult = null;
-        
-        // Set all values to null and mark as pending
-        const dice = getDieFromDice(roll);
-        dice.forEach((die) => {
-          state.rollValues[die.id] = null;
-          state.rollTransforms[die.id] = null;
-          state.rollThrows[die.id] = getRandomDiceThrow(speedMultiplier);
-          state.pendingDice.push(die.id);
-          
-          // Mark wild die (D6 with Nebula style)
-          const isWildDie = die.type === "D6" && die.style === "NEBULA";
-          state.dieInfo[die.id] = { die, isWildDie };
-        });
+        initRoll(state, roll, options);
       }),
+
     clearRoll: () =>
       set((state) => {
-        state.roll = null;
-        state.rollValues = {};
-        state.rollTransforms = {};
-        state.rollThrows = {};
-        state.dieInfo = {};
-        state.explosionDice = [];
-        state.finishedDice = [];
-        state.pendingDice = [];
-        state.explosionResults = {};
-        state.currentRollResult = null;
+        resetRoll(state);
       }),
-    reroll: () => {
-      const currentRoll = get().roll;
-      if (!currentRoll) return;
-      
-      // Store the roll before clearing
-      const rollToReplay = { ...currentRoll };
-      
-      // First clear the roll completely - this will sync to remote players and clear popover
-      get().clearRoll();
-      
-      // Then set up the reroll with a small delay to ensure the clear has propagated
-      setTimeout(() => {
-        set((state) => {
-          // Generate new IDs for all dice in the roll
-          const newDice = getDieFromDice(rollToReplay).map(die => ({
-            ...die,
-            id: generateDiceId()
-          }));
-          
-          // Create a new roll with the new dice IDs
-          const newRoll: DiceRoll = {
-            ...rollToReplay,
-            dice: newDice
-          };
-          
-          // Set up the new roll exactly like startRoll does
-          state.roll = newRoll;
-          newDice.forEach((die) => {
-            state.rollValues[die.id] = null;
-            state.rollTransforms[die.id] = null;
-            state.rollThrows[die.id] = getRandomDiceThrow();
-            state.pendingDice.push(die.id);
-            
-            // Mark wild die (D6 with Nebula style)
-            const isWildDie = die.type === "D6" && die.style === "NEBULA";
-            state.dieInfo[die.id] = { die, isWildDie };
-          });
+
+    reroll: (options) => {
+      const { roll, rollMode, rollSettings, rollSpeedMultiplier } = get();
+      if (!roll) return;
+      const oldDice = getDieFromDice(roll);
+      const hadWildDie = oldDice.some((die) => die.isWildDie);
+      const traitDice = oldDice
+        .filter((die) => !die.isWildDie)
+        .map((die) => ({ ...die, id: generateDiceId() }));
+      const withWildDie = rollMode === "TRAIT" && traitDice.length > 0 && (options?.wildDieEnabled ?? hadWildDie);
+      const newRoll: DiceRoll = {
+        ...roll,
+        dice: withWildDie ? [...traitDice, createWildDie()] : traitDice,
+      };
+      set((state) => {
+        initRoll(state, newRoll, {
+          mode: rollMode,
+          speedMultiplier: rollSpeedMultiplier,
+          settings: options?.settings ?? rollSettings,
         });
-      }, 50); // Small delay to ensure clear has propagated
-    },
-    clearExplosionDice: () => {
-      set((state) => {
-        state.explosionDice = [];
       });
     },
-    
-    // Savage Worlds specific actions
-    setRollMode: (mode) => {
-      set((state) => {
-        state.rollMode = mode;
-      });
-    },
-    
+
     checkAndProcessExplosion: (id, value, transform) => {
       const state = get();
       const info = state.dieInfo[id];
-      
-      if (!info) return;
-      
-      // Store the result and update pending/finished dice
-      const parentDieId = getParentDieId(id);
-      get().storeRollResult(id, value, transform);
-      get().updateExplosionResult(parentDieId, value, info);
-      
-      // Handle explosion if needed
-      const shouldExplode = shouldDieExplode(value, info.die.type);
-      if (shouldExplode && get().canCreateExplosion(parentDieId) && get().rollMode !== "STANDARD") {
-        get().createExplosion(parentDieId, info);
-        return; // Don't check for completion when spawning explosion
-      }
-      
-      // Check for roll completion
-      if (get().pendingDice.length === 0) {
-        get().completeRoll();
-      }
-    },
-    
-    storeRollResult: (id, value, transform) => {
+      if (!info || state.rollValues[id] !== null) return true;
+      if (!isValidFaceValue(value, info.die.type)) return false;
+
       set((draft) => {
         draft.rollValues[id] = value;
         draft.rollTransforms[id] = transform;
-        
-        // Remove from pending and add to finished
-        const pendingIndex = draft.pendingDice.indexOf(id);
-        if (pendingIndex > -1) {
-          draft.pendingDice.splice(pendingIndex, 1);
-        }
-        
-        if (!draft.finishedDice.includes(id)) {
-          draft.finishedDice.push(id);
-        }
-      });
-    },
-    
-    updateExplosionResult: (parentDieId, value, info) => {
-      set((draft) => {
+        if (!draft.finishedDice.includes(id)) draft.finishedDice.push(id);
+
+        const parentDieId = getParentDieId(id);
         updateExplosionResults(draft.explosionResults, parentDieId, value, info.die.type, info.isWildDie);
-      });
-    },
-    
-    canCreateExplosion: (parentDieId) => {
-      const explosionCount = (get().explosionResults[parentDieId]?.rolls.length || 1) - 1;
-      return explosionCount < MAX_EXPLOSIONS;
-    },
-    
-    createExplosion: (parentDieId, info) => {
-      const explosionCount = (get().explosionResults[parentDieId]?.rolls.length || 1) - 1;
-      const explosionData = createExplosionDie(parentDieId, explosionCount, info.die);
-      
-      set((draft) => {
-        draft.explosionResults[parentDieId].exploded = true;
-        
-        // Add explosion die and related data
-        draft.explosionDice.push(explosionData.die);
-        draft.rollValues[explosionData.die.id] = null;
-        draft.rollTransforms[explosionData.die.id] = null;
-        draft.rollThrows[explosionData.die.id] = explosionData.throw;
-        
-        draft.pendingDice.push(explosionData.die.id);
-        draft.dieInfo[explosionData.die.id] = { 
-          die: explosionData.die, 
-          isWildDie: info.isWildDie, 
-          parentDieId 
-        };
-      });
-    },
-    
-    completeRoll: () => {
-      const controlsState = useDiceControlsStore.getState();
-      const isTraitTest = get().rollMode === "TRAIT";
-      const modifier = isTraitTest ? controlsState.traitModifier : controlsState.damageModifier;
-      const targetNumber = controlsState.targetNumber;
-      get().finalizeRoll(modifier, targetNumber);
-    },
-    
-    finalizeRoll: (modifier = 0, targetNumber) => {
-      set((state) => {
-        const dieChains = get().createDieChains();
-        const outcomes = get().calculateOutcomes(dieChains, modifier, targetNumber, state.rollMode);
-        
-        state.currentRollResult = {
-          mode: state.rollMode,
-          dieChains,
-          outcomes,
-          targetNumber,
-          modifier,
-          isComplete: true,
-          timestamp: Date.now(),
-        };
-      });
-    },
-    
-    createDieChains: (): DieChain[] => {
-      const explosions = Object.values(get().explosionResults);
-      return explosions.map(exp => ({
-        dieId: exp.dieId,
-        dieType: exp.dieType,
-        rolls: exp.rolls,
-        total: exp.total,
-        isWildDie: exp.isWildDie,
-      }));
-    },
-    
-    calculateOutcomes: (dieChains, modifier, targetNumber, rollMode): RollOutcome[] => {
-      const regularChains = dieChains.filter(c => !c.isWildDie);
-      const wildChain = dieChains.find(c => c.isWildDie);
-      
-      if (rollMode === "TRAIT") {
-        if (regularChains.length === 1) {
-          return processSingleDieTraitTest(regularChains, wildChain, modifier, targetNumber);
-        } else if (regularChains.length > 1) {
-          return processMultiDieTraitTest(regularChains, wildChain, modifier, targetNumber);
+        const chain = draft.explosionResults[parentDieId];
+        const explosionCount = chain.rolls.length - 1;
+
+        if (draft.rollMode !== "STANDARD" && shouldDieExplode(value, info.die.type) && explosionCount < MAX_EXPLOSIONS) {
+          const explosion = createExplosionDie(parentDieId, explosionCount, info.die);
+          chain.exploded = true;
+          draft.explosionDice.push(explosion.die);
+          draft.rollValues[explosion.die.id] = null;
+          draft.rollTransforms[explosion.die.id] = null;
+          draft.rollThrows[explosion.die.id] = explosion.throw;
+          draft.dieInfo[explosion.die.id] = { die: explosion.die, isWildDie: info.isWildDie, parentDieId };
+          return;
         }
-        return [];
-      } else if (rollMode === "STANDARD") {
-        // For standard mode, just return raw die values without any SWADE logic
-        return dieChains.map(chain => ({
-          chains: [chain],
-          modifier: 0,
-          total: chain.total,
-          replacedByWild: false
-        }));
-      } else {
-        return processDamageRoll(dieChains, modifier, targetNumber);
-      }
+
+        if (!selectIsRolling(draft)) {
+          draft.currentRollResult = computeRollResult(
+            {
+              mode: draft.rollMode,
+              dieChains: createDieChains(draft.explosionResults),
+              isComplete: true,
+              timestamp: Date.now(),
+            },
+            draft.rollSettings
+          );
+        }
+      });
+      return true;
     },
   }))
 );

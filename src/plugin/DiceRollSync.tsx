@@ -73,8 +73,7 @@ export function DiceRollSync() {
           
           // Only broadcast when the roll is COMPLETE
           const isComplete = 
-            Object.values(state.rollValues).every((value) => value !== null) &&
-            state.pendingDice.length === 0;
+            Object.values(state.rollValues).every((value) => value !== null);
           
           if (isComplete) {
             // Check if this is a new completed roll or if results have changed

@@ -11,6 +11,14 @@
  * - Receivers (roll history tray, notification popover) accept every fixture payload.
  * - Settings persist in three localStorage keys with string values.
  * - No player/room/scene metadata is written.
+ *
+ * Deliberate contract changes (verified findings), each with a test below:
+ * - OD-5 / A-04: DAMAGE outcomes no longer carry `success`/`raises`. Old payloads with them are still read.
+ * - A-03: STANDARD results have `modifier: 0` (result and outcomes), whatever the damage modifier.
+ * - A-01 / A-02 / A-09: TRAIT outcomes may carry `criticalFailure: true` (then `success: false`,
+ *   `raises: 0`) or `possibleCriticalFailure: true`, plus `criticalFailureReason`. The keys are absent
+ *   otherwise, so non-crit payloads keep the golden key structure. Old payloads without them are read
+ *   and the crit status is computed locally.
  */
 import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -183,6 +191,26 @@ describe("RollHistoryTray receives golden broadcasts", () => {
   });
 });
 
+describe("old payloads are still read after the contract changes", () => {
+  it("OD-5: the old damage payload (with success/raises) shows its total and no success mark", async () => {
+    render(<RollHistoryTray />);
+    const f = fixture("damage");
+    expect(f.result.outcomes[0]).toHaveProperty("success", true);
+    await sendFromRemote(f);
+    const [pill] = historyPills(f.player.name);
+    expect(within(pill).getAllByText("13").length).toBeGreaterThan(0);
+    expect(within(pill).queryByText("✓")).not.toBeInTheDocument();
+  });
+
+  it("A-01: the old traitNoWild.rolledOne payload (no crit fields) shows the possible crit, computed locally", async () => {
+    render(<RollHistoryTray />);
+    const f = fixture("traitNoWild.rolledOne");
+    await sendFromRemote(f);
+    const [pill] = historyPills(f.player.name);
+    expect(within(pill).getByText("??")).toBeInTheDocument();
+  });
+});
+
 describe("NotificationPopover receives golden broadcasts", () => {
   async function mount(actionOpen: boolean) {
     const client = resetObrMock({ id: "self", name: "Self", actionOpen }).currentClient;
@@ -268,6 +296,62 @@ describe("DiceRollSync sends the golden payload", () => {
     const golden = fixture("traitWildDie.modifierChanged");
     expect(shape(payload)).toEqual(shape(golden));
     expect(payload.result).toEqual(golden.result);
+  });
+
+  /** A finished store state with the given result (the result fields not set by settings are kept). */
+  function finishedStoreWith(golden: RollFixture) {
+    const result = golden.result as unknown as { mode: string; dieChains: { dieId: string; rolls: number[] }[] };
+    const state = structuredClone(storeFinishedTraitWild) as StoreFixture & Record<string, unknown>;
+    state.rollMode = result.mode;
+    state.rollValues = Object.fromEntries(result.dieChains.map((c) => [c.dieId, c.rolls[0]]));
+    state.currentRollResult = structuredClone(golden.result);
+    return state;
+  }
+
+  it("OD-5 contract change: a finished DAMAGE roll is sent without success/raises, other fields as golden", async () => {
+    act(() => useDiceControlsStore.setState({ traitModifier: 0, damageModifier: 2 }));
+    const client = await mountSync();
+    const golden = fixture("damage");
+    await setStore(finishedStoreWith(golden));
+    await act(flushObr);
+    const [, payload] = lastSend(client);
+    const outcomes = (golden.result.outcomes as unknown as Record<string, unknown>[]).map(
+      ({ success: _s, raises: _r, ...rest }) => rest
+    );
+    expect(payload.result).toEqual({ ...golden.result, outcomes });
+    expect(payload.result.outcomes[0]).not.toHaveProperty("success");
+    expect(payload.result.outcomes[0]).not.toHaveProperty("raises");
+  });
+
+  it("A-03 contract change: a STANDARD roll is sent with modifier 0 even with a damage modifier set", async () => {
+    act(() => useDiceControlsStore.setState({ traitModifier: 0, damageModifier: 3 }));
+    const client = await mountSync();
+    const golden = fixture("standard");
+    await setStore(finishedStoreWith(golden));
+    await act(flushObr);
+    const [, payload] = lastSend(client);
+    expect(payload.result).toEqual(golden.result);
+  });
+
+  it("A-01 contract addition: a double-1 trait roll is sent as a crit failure, even when the modifier reaches the TN", async () => {
+    act(() => useDiceControlsStore.setState({ traitModifier: 3 }));
+    const client = await mountSync();
+    const golden = fixture("traitWildDie");
+    const result = golden.result as unknown as { dieChains: { rolls: number[]; total: number }[] };
+    for (const c of result.dieChains) {
+      c.rolls = [1];
+      c.total = 1;
+    }
+    await setStore(finishedStoreWith(golden));
+    await act(flushObr);
+    const [, payload] = lastSend(client);
+    expect(payload.result.outcomes[0]).toMatchObject({
+      total: 4,
+      success: false,
+      raises: 0,
+      criticalFailure: true,
+      criticalFailureReason: "Both trait and wild die rolled 1",
+    });
   });
 
   it("an exploding chain keeps the golden key structure", async () => {

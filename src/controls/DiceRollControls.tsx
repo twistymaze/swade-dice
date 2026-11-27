@@ -11,7 +11,7 @@ import Tooltip from "@mui/material/Tooltip";
 import RollIcon from "@mui/icons-material/ArrowForwardRounded";
 import CloseIcon from "@mui/icons-material/CloseRounded";
 
-import { useDiceRollStore } from "../dice/store";
+import { selectIsRolling, useDiceRollStore } from "../dice/store";
 import { DiceType } from "../types/DiceType";
 import { Die } from "../types/Die";
 import { FinishedRollResultsWrapper } from "./FinishedRollResultsWrapper";
@@ -111,27 +111,15 @@ function DicePickedControls() {
       const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
       
-      // Find wild die ID if present
-      let wildDieId: string | undefined;
-      if (isTraitTest && wildDieEnabled && dice.length > 1) {
-        // Wild die is the Nebula D6 we added
-        const wildDie = dice.find(d => 'type' in d && d.type === 'D6' && d.style === 'NEBULA');
-        if (wildDie && 'id' in wildDie) {
-          wildDieId = wildDie.id;
+      // The roll records its own mode and settings (D-05)
+      startRoll(
+        { dice, hidden },
+        {
+          mode: rollMode,
+          speedMultiplier,
+          settings: { targetNumber, traitModifier, damageModifier, wildDieEnabled },
         }
-      }
-      
-      // Build roll with Savage Worlds config
-      startRoll({ 
-        dice, 
-        hidden,
-        savageWorldsConfig: {
-          rollType: isTraitTest ? "trait" : "damage",
-          modifier: isTraitTest ? traitModifier : damageModifier,
-          targetNumber,
-          wildDieId
-        }
-      }, speedMultiplier);
+      );
 
       const rolledDiceById: Record<string, Die> = {};
       for (const id of Object.keys(counts)) {
@@ -192,8 +180,7 @@ function DicePickedControls() {
   );
   
   // Determine if dice are currently rolling
-  const pendingDice = useDiceRollStore((state) => state.pendingDice);
-  const isRolling = pendingDice.length > 0;
+  const isRolling = useDiceRollStore(selectIsRolling);
 
   return (
     <>

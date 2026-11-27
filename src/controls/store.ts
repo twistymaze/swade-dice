@@ -5,6 +5,7 @@ import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
+import { createWildDie } from "../helpers/wildDie";
 
 export type DiceCounts = Record<string, number>;
 type RollModeSelection = 'AUTO' | 'TRAIT' | 'DAMAGE' | 'STANDARD';
@@ -285,12 +286,7 @@ export function getDiceToRoll(
   
   // Add wild die if in trait mode, wild die is enabled, AND there are regular dice
   if (isTraitMode && wildDieEnabled && dice.length > 0) {
-    // Wild die always uses Nebula style to distinguish it
-    dice.push({ 
-      id: generateDiceId(), 
-      style: "NEBULA", 
-      type: "D6"
-    });
+    dice.push(createWildDie());
   }
   
   return dice;

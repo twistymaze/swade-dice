@@ -1,15 +1,9 @@
 import { DiceType } from "../types/DiceType";
+import { getMaxValueForDie } from "./explosionHelpers";
 
 /**
- * Get the maximum value for a given die type
+ * Get the maximum value for a given die type (0 for an unknown type)
  */
 export function getMaxValue(dieType: DiceType | string): number {
-  switch (dieType) {
-    case "D4": return 4;
-    case "D6": return 6;
-    case "D8": return 8;
-    case "D10": return 10;
-    case "D12": return 12;
-    default: return 0;
-  }
+  return getMaxValueForDie(dieType);
 }
