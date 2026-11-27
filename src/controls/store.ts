@@ -265,7 +265,7 @@ export function getDiceToRoll(
   counts: DiceCounts,
   diceById: Record<string, Die>,
   wildDieEnabled?: boolean,
-  diceStyle?: string,
+  _diceStyle?: string,
   isTraitMode?: boolean
 ) {
   const dice: (Die | Dice)[] = [];

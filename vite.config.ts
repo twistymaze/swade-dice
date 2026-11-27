@@ -1,9 +1,8 @@
 import { defineConfig } from "vite";
-// @ts-expect-error - path module import needed for Vite config
-import { resolve } from "path";
+import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 
-declare const __dirname: string;
+const entry = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,9 +15,9 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        background: resolve(__dirname, "background.html"),
-        popover: resolve(__dirname, "popover.html"),
+        main: entry("./index.html"),
+        background: entry("./background.html"),
+        popover: entry("./popover.html"),
       },
     },
   },
