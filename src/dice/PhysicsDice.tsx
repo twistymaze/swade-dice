@@ -20,6 +20,13 @@ import { DiceThrow } from "../types/DiceThrow";
 import { DiceTransform } from "../types/DiceTransform";
 import { DiceCollider } from "../colliders/DiceCollider";
 import { getRestDecision } from "./rollFinished";
+import {
+  getFaceCandidates,
+  getInvalidFaceAction,
+  getNearestValidFace,
+  getRethrowVelocities,
+} from "./invalidFace";
+import { random } from "../helpers/random";
 
 /** Cool down in MS before dice audio can get played again */
 const AUDIO_COOLDOWN = 200;
@@ -67,11 +74,12 @@ export function PhysicsDice({
 }: ThreeElements["group"] & {
   die: Die;
   dieThrow: DiceThrow;
+  /** Return `false` to reject the face: the die is re-thrown (A-08) */
   onRollFinished?: (
     id: string,
     number: number,
     transform: DiceTransform
-  ) => void;
+  ) => boolean | void;
   fixedTransform?: DiceTransform;
   isFinished?: boolean;
 }) {
@@ -118,6 +126,7 @@ export function PhysicsDice({
   // Check once per fixed physics step (simulated time), not per render frame, so the
   // result and the resting pose do not depend on the frame rate or on a hidden pane.
   const stepsRef = useRef(0);
+  const rethrowsRef = useRef(0);
   useAfterPhysicsStep(() => {
     const rigidBody = rigidBodyRef.current;
     const group = ref.current;
@@ -150,7 +159,24 @@ export function PhysicsDice({
         w: rotation.w,
       },
     };
-    onRollFinished?.(die.id, value, transform);
+    if (onRollFinished?.(die.id, value, transform) !== false) {
+      return;
+    }
+    // The face was rejected (no locator up, cocked die): re-throw it a few
+    // times, then use the nearest valid face so the roll always completes.
+    if (getInvalidFaceAction(rethrowsRef.current) === "rethrow") {
+      rethrowsRef.current += 1;
+      const { linvel, angvel } = getRethrowVelocities(random);
+      rigidBody.setEnabledRotations(true, true, true, false);
+      rigidBody.setEnabledTranslations(true, true, true, false);
+      rigidBody.setLinvel(linvel, true);
+      rigidBody.setAngvel(angvel, true);
+      lockedRef.current = false;
+      stepsRef.current = 0;
+      return;
+    }
+    const nearest = getNearestValidFace(getFaceCandidates(group, die.type), die.type, random);
+    onRollFinished(die.id, nearest, transform);
   });
 
   // Lock the dice when we have a manual transform or when it's marked as finished

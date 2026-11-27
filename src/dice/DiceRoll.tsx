@@ -29,7 +29,7 @@ export function DiceRoll({
     id: string,
     number: number,
     transform: DiceTransform
-  ) => void;
+  ) => boolean | void;
   finishedTransforms?: Record<string, DiceTransform>;
   /** An updated ref of the current dice transforms */
   transformsRef?: React.MutableRefObject<Record<

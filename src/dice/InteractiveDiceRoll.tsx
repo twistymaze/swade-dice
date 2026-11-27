@@ -20,7 +20,8 @@ export function InteractiveDiceRoll() {
   const handleDieFinished = useCallback((id: string, value: number, transform: DiceTransform) => {
     // Check for explosions and update Savage Worlds state in store
     // This will also spawn explosion dice if needed
-    checkAndProcessExplosion(id, value, transform);
+    // `false` = invalid face: PhysicsDice re-throws the die (A-08)
+    return checkAndProcessExplosion(id, value, transform);
   }, [checkAndProcessExplosion]);
 
   if (!roll) {
