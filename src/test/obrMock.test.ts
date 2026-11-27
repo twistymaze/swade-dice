@@ -125,6 +125,36 @@ describe("obrMock", () => {
       expect(await OBR.player.getMetadata()).toEqual({ k: 1 });
     });
 
+    it("a write fires party.onChange on the others with the new metadata (doc 13.3)", async () => {
+      const p2 = createClient();
+      const cb = vi.fn();
+      OBR.party.onChange(cb);
+      await p2.player.setMetadata({ k: 2 });
+      await flushObr();
+      expect(cb).toHaveBeenLastCalledWith([expect.objectContaining({ metadata: { k: 2 } })]);
+    });
+
+    it("subscriptions deliver no initial value (doc 6.3)", async () => {
+      await OBR.player.setMetadata({ k: 1 });
+      await flushObr();
+      const party = vi.fn();
+      const player = vi.fn();
+      OBR.party.onChange(party);
+      OBR.player.onChange(player);
+      await flushObr();
+      expect(party).not.toHaveBeenCalled();
+      expect(player).not.toHaveBeenCalled();
+    });
+
+    it("a page reload is a new connection: its player metadata starts empty (doc 5.1)", async () => {
+      const p2 = createClient({ id: "user-2" });
+      await p2.player.setMetadata({ k: 1 });
+      p2.leave();
+      const reloaded = createClient({ id: "user-2" });
+      expect(await reloaded.player.getMetadata()).toEqual({});
+      expect((await OBR.party.getPlayers()).map((p) => p.metadata)).toEqual([{}]);
+    });
+
     it("returns clones, not shared references", async () => {
       await OBR.player.setMetadata({ a: { n: 1 } });
       const m = await OBR.player.getMetadata();
