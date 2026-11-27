@@ -39,7 +39,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
     return null;
   }
   
-  // Helper to render explosion chain for a single die
+  // Explosion chain of one die, rendered flat (no nesting per roll, C-06)
   const renderExplosionChain = (rolls: number[], dieType: DiceType) => (
     <>
       {rolls.map((value: number, index: number) => {
@@ -52,7 +52,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
             {!isLastRoll && " + "}
           </span>
         );
-      }).reduce((prev: React.ReactNode, curr: React.ReactNode) => <>{prev}{curr}</>, <></>)}
+      })}
     </>
   );
   
@@ -66,14 +66,14 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
     
     diceDisplay = (
       <>
-        {regularChains.map(chain => (
-          <Typography key={chain.dieId} variant="body2" color="white">
+        {regularChains.map((chain, index) => (
+          <Typography key={`trait-${index}`} variant="body2" color="white">
             Trait ({chain.dieType.toLowerCase()}): {renderExplosionChain(chain.rolls, chain.dieType)}
             {chain.rolls.length > 1 && ` = ${chain.total}`}
           </Typography>
         ))}
-        {wildDieEnabled && wildChains.map(chain => (
-          <Typography key={chain.dieId} variant="body2" color="white">
+        {wildDieEnabled && wildChains.map((chain, index) => (
+          <Typography key={`wild-${index}`} variant="body2" color="white">
             Wild ({chain.dieType.toLowerCase()}): {renderExplosionChain(chain.rolls, chain.dieType)}
             {chain.rolls.length > 1 && ` = ${chain.total}`}
           </Typography>
@@ -81,25 +81,24 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
       </>
     );
   } else {
-    // Damage roll - group by die type
-    const groupedByType: Record<DiceType, DieChain[]> = {} as Record<DiceType, DieChain[]>;
+    // Damage roll - group by die type (a Map: no prototype keys from a payload, C-05)
+    const groupedByType = new Map<DiceType, DieChain[]>();
     dieChains.forEach(chain => {
-      if (!groupedByType[chain.dieType]) {
-        groupedByType[chain.dieType] = [];
-      }
-      groupedByType[chain.dieType].push(chain);
+      const group = groupedByType.get(chain.dieType);
+      if (group) group.push(chain);
+      else groupedByType.set(chain.dieType, [chain]);
     });
     
     diceDisplay = (
       <>
-        {Object.entries(groupedByType).map(([dieType, chains]) => {
+        {[...groupedByType.entries()].map(([dieType, chains]) => {
           const groupTotal = chains.reduce((sum, c) => sum + c.total, 0);
           const needsTotal = chains.length > 1 || chains.some(c => c.rolls.length > 1);
           return (
             <Typography key={dieType} variant="body2" color="white">
               {chains.length}{dieType.toLowerCase()}: {
                 chains.map((chain, chainIndex) => (
-                  <span key={chain.dieId}>
+                  <span key={chainIndex}>
                     {chainIndex > 0 && " + "}
                     {renderExplosionChain(chain.rolls, chain.dieType as DiceType)}
                   </span>
