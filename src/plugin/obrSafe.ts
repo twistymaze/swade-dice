@@ -1,5 +1,5 @@
 /**
- * Catch and log a rejected OBR promise (D-02). An OBR call can reject (not ready, rate limit,
+ * Catch and log a rejected OBR promise. An OBR call can reject (not ready, rate limit,
  * timeout, room closed); a call that nobody awaits must not become an unhandled rejection.
  * Resolves to undefined after a failure.
  */

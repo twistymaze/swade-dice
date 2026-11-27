@@ -6,7 +6,7 @@
 export const EXPLOSION_SPEED_MULTIPLIER = 1.5;
 
 /**
- * One Wild Die per roll (A-10, SWADE "One Wild Die per Action"). With several trait dice (Rate of
+ * One Wild Die per roll (SWADE "One Wild Die per Action"). With several trait dice (Rate of
  * Fire, Frenzy) it replaces the worst trait die when it is higher. A Multi-Action is several
  * separate rolls, each with its own Wild Die.
  */

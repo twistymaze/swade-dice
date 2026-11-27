@@ -15,7 +15,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("D-02 OBR promises are caught", () => {
+describe("OBR promises are caught", () => {
   it("obrSafe passes a value through and turns a rejection into a log and undefined", async () => {
     await expect(obrSafe(Promise.resolve(3), "x")).resolves.toBe(3);
     await expect(obrSafe(Promise.reject(new Error("RateLimitHit")), "x")).resolves.toBeUndefined();

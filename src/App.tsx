@@ -25,7 +25,7 @@ export function App() {
         </Box>
         
         <PluginGate>
-          {/* A bad history entry must not unmount the tray, the controls or the sender (C-01) */}
+          {/* A bad history entry must not unmount the tray, the controls or the sender */}
           <ErrorBoundary
             name="RollHistoryTray"
             fallback={() => (

@@ -7,9 +7,9 @@ import { createRollSender, RollSender, RollSenderOptions } from "./rollSender";
  * Send this client's finished rolls to the table (broadcast) and keep the player's roll history in
  * player metadata. The sending rules are in `rollSender.ts`. Rendered inside `PluginGate`.
  *
- * The result is `useSavageWorldsResults()`, so a post-roll edit of TN, modifier or Wild Die (OD-1)
- * sends a new revision of the same roll. `hidden` and `rollId` come from the finished roll itself
- * (B-12), not from live control state.
+ * The result is `useSavageWorldsResults()`, so a post-roll edit of TN, modifier or Wild Die
+ * sends a new revision of the same roll. `hidden` and `rollId` come from the finished roll itself,
+ * not from live control state.
  */
 export function DiceRollSync(props: { options?: RollSenderOptions }) {
   const result = useSavageWorldsResults();

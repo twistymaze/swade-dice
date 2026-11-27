@@ -1,4 +1,4 @@
-/** T-51 error boundaries around the receivers (D-02, C-01): one bad render hides only itself. */
+/** Error boundaries around the receivers: one bad render hides only itself. */
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient, flushObr, hub, ObrClient, resetObrMock } from "../test/obrMock";
@@ -51,7 +51,7 @@ async function send(data: unknown) {
   });
 }
 
-describe("T-51 receiver error boundaries", () => {
+describe("receiver error boundaries", () => {
   it("a history entry that throws hides only itself; the other entries and later rolls show", async () => {
     flags.throwPillTotal = 13; // the damage fixture
     render(<RollHistoryTray />);
@@ -62,7 +62,7 @@ describe("T-51 receiver error boundaries", () => {
     expect(screen.getAllByText("Wren")).toHaveLength(2);
   });
 
-  it("C-01 a toast that throws collapses the popover (no empty iframe blocks clicks); the next toast shows", async () => {
+  it("a toast that throws collapses the popover (no empty iframe blocks clicks); the next toast shows", async () => {
     const self = hub().currentClient;
     await self.popover.open(popoverOpenFixture);
     render(<NotificationPopover />);

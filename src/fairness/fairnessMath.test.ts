@@ -9,7 +9,7 @@ import {
 } from "./fairnessMath";
 
 describe("fairness math", () => {
-  it("T-B4 the expectation uses the rolled count, not the planned count", () => {
+  it("the expectation uses the rolled count, not the planned count", () => {
     // 60 rolls of a d6 made (stopped early of 500 planned), perfectly even
     const values = Array.from({ length: 60 }, (_, i) => (i % 6) + 1);
     const s = summarizeFairness(values, "D6");
@@ -18,7 +18,7 @@ describe("fairness math", () => {
     expect(s.isFair).toBe(true);
   });
 
-  it("T-B5 critical values are for df = sides - 1 at p = 0.05", () => {
+  it("critical values are for df = sides - 1 at p = 0.05", () => {
     expect(CHI_SQUARED_CRITICAL_005).toEqual({ D4: 7.815, D6: 11.07, D8: 14.067, D10: 16.919, D12: 19.675 });
   });
 
@@ -33,11 +33,11 @@ describe("fairness math", () => {
     expect(summarizeFairness(values, "D4").isFair).toBe(false);
   });
 
-  it("T-B6 values out of range (0, 7, 2.5, NaN for a d6) are not counted", () => {
+  it("values out of range (0, 7, 2.5, NaN for a d6) are not counted", () => {
     expect(countFaces([0, 7, 2.5, Number.NaN, 1, 6, 6], 6)).toEqual([1, 0, 0, 0, 0, 2]);
   });
 
-  it("T-B7 Start needs exactly one die and at least one roll", () => {
+  it("Start needs exactly one die and at least one roll", () => {
     expect(canStartFairnessTest({ a: 1 }, 500)).toBe(true);
     expect(canStartFairnessTest({ a: 1 }, 0)).toBe(false);
     expect(canStartFairnessTest({ a: 2 }, 500)).toBe(false);
@@ -46,7 +46,7 @@ describe("fairness math", () => {
   });
 });
 
-describe("T-30 fairness statistics (chi-squared)", () => {
+describe("fairness statistics (chi-squared)", () => {
   it("a perfectly uniform d6, 600 rolls -> statistic 0, expected 100, fair", () => {
     const values = Array.from({ length: 600 }, (_, i) => (i % 6) + 1);
     const s = summarizeFairness(values, "D6");
@@ -93,7 +93,7 @@ describe("T-30 fairness statistics (chi-squared)", () => {
     expect(s.counts).toHaveLength(4);
   });
 
-  it("an unknown die type throws (D20/D100 were removed, OD-8)", () => {
+  it("an unknown die type throws (D20/D100 were removed)", () => {
     expect(() => summarizeFairness([1], "D20" as never)).toThrow(/Unknown die type/);
   });
 });

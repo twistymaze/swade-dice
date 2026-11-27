@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { resolveConfig } from "vite";
 import config, { CONTENT_SECURITY_POLICY, OWLBEAR_ORIGINS, cspPlugin } from "../../vite.config";
 
-describe("C-10 dev server and build config", () => {
+describe("dev server and build config", () => {
   it("dev CORS allows only the Owlbear Rodeo origins", () => {
     expect(config.server?.cors).toEqual({ origin: OWLBEAR_ORIGINS });
     expect(OWLBEAR_ORIGINS).toEqual(["https://www.owlbear.rodeo", "https://owlbear.rodeo"]);
@@ -14,7 +14,7 @@ describe("C-10 dev server and build config", () => {
   });
 });
 
-describe("C-09 production Content Security Policy", () => {
+describe("production Content Security Policy", () => {
   const plugin = cspPlugin();
 
   it("applies to the build only, not to the dev server", async () => {

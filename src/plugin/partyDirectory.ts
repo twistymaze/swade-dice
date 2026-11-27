@@ -1,5 +1,5 @@
 /**
- * Who is who in the room, from the OBR host only (C-02, B-05, B-10, C-03, C-07).
+ * Who is who in the room, from the OBR host only.
  *
  * A broadcast's sender is `event.connectionId` (set by the host). It is resolved through
  * `OBR.party` (the other players) and `OBR.player` (this client). Name, color and role are never

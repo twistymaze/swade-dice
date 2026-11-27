@@ -18,7 +18,7 @@ let clock = 1_000_000;
 const live = (s: HistoryState, item: IncomingRoll, now = (clock += FLOOD_WINDOW_MS)) =>
   historyReducer(s, { type: "broadcast", item, now });
 
-describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
+describe("history order by arrival, not sender clock", () => {
   it("a roll with an old sender timestamp is appended at the end", () => {
     let s = EMPTY_HISTORY;
     for (let i = 0; i < HISTORY_LIMIT; i++) s = live(s, roll(`c${i}`, `r${i}`, 0, base, 2_000_000 + i));
@@ -45,7 +45,7 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
     expect(live(after, roll("a", "1", 2, changed))).toBe(after);
   });
 
-  it("T-46 a late joiner that missed rev 0 gets a revision: the entry is added, not dropped", () => {
+  it("a late joiner that missed rev 0 gets a revision: the entry is added, not dropped", () => {
     const s1 = live(EMPTY_HISTORY, roll("a", "1", 3, changed));
     expect(keys(s1)).toEqual(["a:1"]);
     expect(s1.entries[0]).toMatchObject({ rev: 3, result: changed });
@@ -58,7 +58,7 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
     expect(s.entries[0]!.result).toEqual(changed);
   });
 
-  it("T-49 the same rollId from another connection is another entry (no overwrite)", () => {
+  it("the same rollId from another connection is another entry (no overwrite)", () => {
     let s = live(EMPTY_HISTORY, roll("a", "same"));
     s = live(s, roll("b", "same", 5, changed));
     expect(keys(s)).toEqual(["a:same", "b:same"]);
@@ -89,7 +89,7 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
   });
 });
 
-describe("T-14 / OD-2 initial load from player metadata", () => {
+describe("initial load from player metadata", () => {
   it("orders by sender timestamp clamped to the local clock, keeps the newest 20", () => {
     const now = 3_000_000;
     const items = [

@@ -14,8 +14,8 @@ function Sibling() {
   return <button onClick={() => setN(n + 1)}>sibling {n}</button>;
 }
 
-describe("T-51 ErrorBoundary (D-02)", () => {
-  it("T-51 shows the fallback, keeps siblings, logs once, and reset renders the child again", () => {
+describe("ErrorBoundary", () => {
+  it("shows the fallback, keeps siblings, logs once, and reset renders the child again", () => {
     shouldThrow = true;
     const onError = vi.fn();
     // React logs caught render errors to console.error; keep the test output clean.
@@ -50,7 +50,7 @@ describe("T-51 ErrorBoundary (D-02)", () => {
     consoleError.mockRestore();
   });
 
-  it("T-51 without onError the error is logged with the boundary name", () => {
+  it("without onError the error is logged with the boundary name", () => {
     shouldThrow = true;
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     render(

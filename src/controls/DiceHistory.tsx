@@ -32,8 +32,8 @@ export function DiceHistory() {
   const currentWildDieEnabled = useDiceControlsStore((state) => state.wildDieEnabled);
 
   function handleRoll(roll: RecentRoll) {
-    // Restore Savage Worlds settings from history. The mode goes with the roll itself (D-05), so the
-    // controls that edit the finished roll follow it (T-62).
+    // Restore Savage Worlds settings from history. The mode goes with the roll itself, so the
+    // controls that edit the finished roll follow it.
     if (roll.rollMode) {
       // Set modifiers based on roll type
       if (roll.rollMode === 'TRAIT' && roll.traitModifier !== undefined) {

@@ -10,7 +10,7 @@ import { DiceType } from "../types/DiceType";
 
 const die = (id: string, type: DiceType = "D6", style: DiceStyle = "GALAXY"): Die => ({ id, type, style });
 
-describe("T-42 type guards and dice flattening", () => {
+describe("type guards and dice flattening", () => {
   it("isPlainObject: {} and Object.create(null) true; array, Date, class instance, null false", () => {
     class Thing {}
     expect(isPlainObject({})).toBe(true);
@@ -49,7 +49,7 @@ describe("T-42 type guards and dice flattening", () => {
   });
 });
 
-describe("T-44 low-risk helpers", () => {
+describe("low-risk helpers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.resetModules();

@@ -38,7 +38,7 @@ beforeEach(() => {
   });
 });
 
-describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
+describe("recalculation after a post-roll edit", () => {
   it("null without a result", () => {
     const { result } = renderHook(() => useSavageWorldsResults());
     expect(result.current).toBeNull();
@@ -65,7 +65,7 @@ describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
     expect(result.current!.timestamp).toBe(timestamp);
   });
 
-  it("T-54 a modifier raised after the roll keeps the crit; Wild Die off -> possible", () => {
+  it("a modifier raised after the roll keeps the crit; Wild Die off -> possible", () => {
     rollTrait(1, 1);
     const { result } = renderHook(() => useSavageWorldsResults());
     expect(result.current!.outcomes[0]).toMatchObject({ criticalFailure: true, success: false });
@@ -77,7 +77,7 @@ describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
     expect(result.current!.outcomes[0]!.success).toBe(true);
   });
 
-  it("DAMAGE (OD-5): the damage modifier updates the total; a TN change adds no success/raises", () => {
+  it("DAMAGE: the damage modifier updates the total; a TN change adds no success/raises", () => {
     setStoredResult((damageFixture as unknown as { result: SavageRollResult }).result);
     const { result } = renderHook(() => useSavageWorldsResults());
     act(() => controls().setDamageModifier(5));
@@ -87,7 +87,7 @@ describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
     expect(result.current!.outcomes[0]).not.toHaveProperty("raises");
   });
 
-  it("STANDARD (A-03): the shown modifier is the applied one (0) after damage modifier edits", () => {
+  it("STANDARD: the shown modifier is the applied one (0) after damage modifier edits", () => {
     setStoredResult((standardFixture as unknown as { result: SavageRollResult }).result);
     const { result } = renderHook(() => useSavageWorldsResults());
     act(() => controls().setDamageModifier(2));
@@ -100,7 +100,7 @@ describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
     expect(result.current!.outcomes.map((o) => o.total)).toEqual([3, 12]);
   });
 
-  it("T-06 memo returns the same object when nothing relevant changed", () => {
+  it("memo returns the same object when nothing relevant changed", () => {
     rollTrait(4, 2);
     const { result } = renderHook(() => useSavageWorldsResults());
     const first = result.current;
@@ -108,7 +108,7 @@ describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
     expect(result.current).toBe(first);
   });
 
-  it("T-61 the hook equals the rules module for the live settings", () => {
+  it("the hook equals the rules module for the live settings", () => {
     rollTrait(5, 3);
     act(() => {
       controls().setTargetNumber(6);

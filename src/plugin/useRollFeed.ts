@@ -21,7 +21,7 @@ export interface RollFeedHandlers {
   /** A valid roll broadcast from a known connection (also this client's own, `identity.isSelf`). */
   onBroadcast?: (event: BroadcastRoll) => void;
   /**
-   * Rolls read from the players' history metadata (OD-2). `initial` is the first read after the
+   * Rolls read from the players' history metadata. `initial` is the first read after the
    * party is known; later calls carry only players whose history changed.
    */
   onMetadata?: (items: IncomingRoll[], initial: boolean) => void;

@@ -21,7 +21,7 @@ export type DieInfo = {
   parentDieId?: string;
 };
 
-/** How to start a roll. The roll records its own mode and settings (D-05). */
+/** How to start a roll. The roll records its own mode and settings. */
 export interface StartRollOptions {
   mode: SavageRollMode;
   speedMultiplier?: number;
@@ -32,7 +32,7 @@ export interface StartRollOptions {
 export interface RerollOptions {
   /**
    * Whether the new roll has a Wild Die (TRAIT only). Pass the current setting, so a reroll after
-   * the Wild Die was turned off throws no Wild Die (A-07). Default: as the old roll.
+   * the Wild Die was turned off throws no Wild Die. Default: as the old roll.
    */
   wildDieEnabled?: boolean;
   settings?: RollSettings;
@@ -78,20 +78,20 @@ export interface DiceRollState {
   explosionResults: Record<string, ExplosionResult>;
   /**
    * The finished result with its own identity: `rollId` (same for every revision) and `hidden`, copied
-   * from the roll when it finished. The sender reads `hidden` from here, never from live state (B-12).
+   * from the roll when it finished. The sender reads `hidden` from here, never from live state.
    */
   currentRollResult: StoredRollResult | null;
 
   // Actions
   startRoll: (roll: DiceRoll, options: StartRollOptions) => void;
   clearRoll: () => void;
-  /** Roll the same dice again with new ids, in one synchronous update (A-06). */
+  /** Roll the same dice again with new ids, in one synchronous update. */
   reroll: (options?: RerollOptions) => void;
   /**
    * Report the face value of a die that stopped. Returns `false` when the value is not a valid face
-   * for the die (for example 0 when no face was found, A-08): nothing is stored and the die stays
+   * for the die (for example 0 when no face was found): nothing is stored and the die stays
    * pending, so the caller can read it again. Returns `true` otherwise, also when the id is unknown
-   * (stale die) or the die already has a value (a second report is ignored, A-05).
+   * (stale die) or the die already has a value (a second report is ignored).
    */
   checkAndProcessExplosion: (id: string, value: number, transform: DiceTransform) => boolean;
 }

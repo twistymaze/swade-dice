@@ -85,10 +85,10 @@ export function computeRollMode(modeChoice: RollModeSelection, counts: DiceCount
 
 /**
  * At most this many dice in one roll (plus the Wild Die), so every roll fits the 16 kB broadcast and
- * the receivers' limits (B-08, `src/plugin/rollWire.ts` LIMITS).
+ * the receivers' limits (`src/plugin/rollWire.ts` LIMITS).
  */
 export const MAX_DICE_PER_ROLL = 40;
-/** Modifiers are clamped to the range the receivers accept (B-08). */
+/** Modifiers are clamped to the range the receivers accept. */
 export const MAX_ABS_MODIFIER = 99;
 const clampModifier = (m: number) =>
   Number.isFinite(m) ? Math.max(-MAX_ABS_MODIFIER, Math.min(MAX_ABS_MODIFIER, Math.trunc(m))) : 0;
@@ -99,7 +99,7 @@ export const MIN_TARGET_NUMBER = 1;
 export const MAX_TARGET_NUMBER = 99;
 
 /**
- * A valid target number: an integer in 1..99. Not a finite number -> the default 4 (A-11, C-08).
+ * A valid target number: an integer in 1..99. Not a finite number -> the default 4.
  * Strings are parsed like `parseInt` ("7.9" -> 7, " 8" -> 8, "abc" -> 4).
  */
 export function parseTargetNumber(value: unknown): number {
@@ -130,7 +130,7 @@ const { wildDieEnabled: initialWildDie, targetNumber: initialTN } = loadSavageWo
 
 export const useDiceControlsStore = create<DiceControlsState>()(
   immer((set, _get) => {
-    /** Every change of counts or mode choice goes through here, so `rollMode` stays derived (D-08). */
+    /** Every change of counts or mode choice goes through here, so `rollMode` stays derived. */
     const setDerived = (fn: (state: DiceControlsState) => void) =>
       set((state) => {
         fn(state);

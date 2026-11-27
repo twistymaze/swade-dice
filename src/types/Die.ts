@@ -7,7 +7,7 @@ export interface Die {
   id: string;
   style: DiceStyle;
   type: DiceType;
-  /** Set on the Wild Die that `getDiceToRoll` adds (D-12). The dice store reads this flag. */
+  /** Set on the Wild Die that `getDiceToRoll` adds. The dice store reads this flag. */
   isWildDie?: boolean;
 }
 

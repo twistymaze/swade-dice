@@ -9,7 +9,7 @@ import TextField from "@mui/material/TextField";
 
 import { MAX_ABS_MODIFIER } from "./store";
 
-/** The steppers show only values the store keeps (W-01). */
+/** The steppers show only values the store keeps. */
 const clampToStore = (value: number) => Math.max(-MAX_ABS_MODIFIER, Math.min(MAX_ABS_MODIFIER, value));
 
 interface ModifierControlConfig {

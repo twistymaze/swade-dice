@@ -89,7 +89,7 @@ function randomAngularVelocity(rng: RandomRange): DiceVector3 {
 }
 
 /**
- * A random throw. `rng` is injectable for tests (D-10); the default draws from `Math.random` in the
+ * A random throw. `rng` is injectable for tests; the default draws from `Math.random` in the
  * same order as before, so throws in the app are unchanged.
  */
 export function getRandomDiceThrow(speedMultiplier?: number, rng: RandomRange = random): DiceThrow {

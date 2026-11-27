@@ -77,7 +77,7 @@ export function FairnessTester() {
 
   const [active, setActive] = useState(false);
 
-  // Values are collected in a ref and copied to state in batches (E-11)
+  // Values are collected in a ref and copied to state in batches
   const valuesRef = useRef<number[]>([]);
   const lastResultRef = useRef<SavageRollResult | null>(null);
   const [rolledValues, setRolledValues] = useState<number[]>([]);

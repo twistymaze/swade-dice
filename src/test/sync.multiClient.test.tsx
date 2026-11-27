@@ -1,5 +1,5 @@
 /**
- * Multi-client sync tests through the OBR mock (test plan section 3.2, sync safety 7b).
+ * Multi-client sync tests through the OBR mock.
  *
  * Model: one process = one room. Client A runs the real app sender (`DiceRollSync` + dice store, as
  * the current client). The receivers of other clients (`RollHistoryTray`, `NotificationPopover`) are
@@ -109,7 +109,7 @@ const v1 = (rollId: string, rev: number, result: unknown, from: ObrClient, playe
 const pills = (container: HTMLElement, name: string) =>
   within(container).queryAllByText(name).map((el) => el.parentElement as HTMLElement);
 
-describe("T-04 a roll on one client reaches all clients with the same result", () => {
+describe("a roll on one client reaches all clients with the same result", () => {
   it("GM, A and B each show one entry with identical text; A sent once", async () => {
     const trays = {
       gm: await mountAs(gm, <RollHistoryTray />),
@@ -144,8 +144,8 @@ describe("T-04 a roll on one client reaches all clients with the same result", (
   });
 });
 
-describe("T-46 / OD-1 a post-roll edit reaches every client", () => {
-  it("TN 4 -> 8 and modifier +1: one revision, one entry, new values, 'vs TN 8' (OD-6)", async () => {
+describe("a post-roll edit reaches every client", () => {
+  it("TN 4 -> 8 and modifier +1: one revision, one entry, new values, 'vs TN 8'", async () => {
     vi.useFakeTimers();
     const gmTray = await mountAs(gm, <RollHistoryTray />);
     const bTray = await mountAs(b, <RollHistoryTray />);
@@ -180,7 +180,7 @@ describe("T-46 / OD-1 a post-roll edit reaches every client", () => {
     expect(stored.rolls.at(-1)).toMatchObject({ rev: 1, tn: 8, mod: 1 });
   });
 
-  it("T-16 clearing the roll sends nothing and remote histories keep the entry; a later TN change sends nothing", async () => {
+  it("clearing the roll sends nothing and remote histories keep the entry; a later TN change sends nothing", async () => {
     const bTray = await mountAs(b, <RollHistoryTray />);
     await mountAs(a, <DiceRollSync />);
     await rollOnA(3, 2);
@@ -192,7 +192,7 @@ describe("T-46 / OD-1 a post-roll edit reaches every client", () => {
   });
 });
 
-describe("T-03 / OD-3 hidden rolls", () => {
+describe("hidden rolls", () => {
   it("are never sent or stored, also after an edit; receivers show nothing", async () => {
     vi.useFakeTimers();
     const bTray = await mountAs(b, <RollHistoryTray />);
@@ -216,7 +216,7 @@ describe("T-03 / OD-3 hidden rolls", () => {
   });
 });
 
-describe("T-15 / OD-2 history rebuilt from player metadata; players joining and leaving", () => {
+describe("history rebuilt from player metadata; players joining and leaving", () => {
   it("a late joiner and a reload see the earlier rolls in order; the roller's own remount too", async () => {
     await mountAs(a, <DiceRollSync />);
     await rollOnA(2, 1);
@@ -277,7 +277,7 @@ describe("T-15 / OD-2 history rebuilt from player metadata; players joining and 
   });
 });
 
-describe("T-05 bad and hostile payloads: rejected without crashing, valid rolls still shown", () => {
+describe("bad and hostile payloads: rejected without crashing, valid rolls still shown", () => {
   const valid = structuredClone(traitWildDie);
   const bad: [string, unknown][] = [
     ["null", null],
@@ -312,7 +312,7 @@ describe("T-05 bad and hostile payloads: rejected without crashing, valid rolls 
     expect(await screen.findByText("Ava:")).toBeInTheDocument();
   });
 
-  it("C-03/C-07 payload name and CSS color are ignored: OBR name and color are shown", async () => {
+  it("payload name and CSS color are ignored: OBR name and color are shown", async () => {
     const gmTray = await mountAs(gm, <RollHistoryTray />);
     await sendRaw(b, { ...valid, player: { ...valid.player, name: "<img src=x onerror=alert(1)>", color: "#000;background-image:url(https://evil)}body{display:none" } });
     const [pill] = pills(gmTray.container, "Bram");
@@ -322,7 +322,7 @@ describe("T-05 bad and hostile payloads: rejected without crashing, valid rolls 
   });
 });
 
-describe("T-49 sender identity from event.connectionId (C-02, B-05, B-10)", () => {
+describe("sender identity from event.connectionId", () => {
   it("B cannot pose as the GM or overwrite A's entry", async () => {
     const gmTray = await mountAs(gm, <RollHistoryTray />);
     await mountAs(a, <DiceRollSync />);
@@ -369,7 +369,7 @@ describe("T-49 sender identity from event.connectionId (C-02, B-05, B-10)", () =
   }
 });
 
-describe("T-60 mixed versions in one room", () => {
+describe("mixed versions in one room", () => {
   it("an old client's payload and a new client's roll both show, in arrival order; old revisions replace", async () => {
     const gmTray = await mountAs(gm, <RollHistoryTray />);
     await mountAs(a, <DiceRollSync />);
@@ -382,7 +382,7 @@ describe("T-60 mixed versions in one room", () => {
   });
 });
 
-describe("T-59 / T-26 / OD-7 notification popover", () => {
+describe("notification popover", () => {
   async function mountPopover() {
     await b.popover.open(popoverOpenFixture);
     await mountAs(b, <NotificationPopover />);
@@ -411,7 +411,7 @@ describe("T-59 / T-26 / OD-7 notification popover", () => {
     expect(screen.getByText("Ava:").parentElement?.textContent).toContain("[d8-2]");
   });
 
-  it("OD-6 shows 'vs TN n' only when the TN is not 4", async () => {
+  it("shows 'vs TN n' only when the TN is not 4", async () => {
     await mountPopover();
     await sendRaw(a, v1("r4", 0, traitWildDie.result, a));
     expect(screen.queryByText(/vs TN/)).not.toBeInTheDocument();
@@ -419,7 +419,7 @@ describe("T-59 / T-26 / OD-7 notification popover", () => {
     expect(screen.getByText(/vs TN 6/)).toBeInTheDocument();
   });
 
-  it("B-11 no toast for this client's own roll; one broadcast subscription over 5 open/close toggles", async () => {
+  it("no toast for this client's own roll; one broadcast subscription over 5 open/close toggles", async () => {
     await mountPopover();
     await sendRaw(b, v1("mine", 0, traitWildDie.result, b));
     expect(screen.queryByText("Bram:")).not.toBeInTheDocument();
@@ -432,7 +432,7 @@ describe("T-59 / T-26 / OD-7 notification popover", () => {
     expect(b.emitters.broadcast.get(ROLL_CHANNEL)?.size).toBe(1);
   });
 
-  it("C-07 a long name is cut (CSS ellipsis) and capped at 64 characters", async () => {
+  it("a long name is cut (CSS ellipsis) and capped at 64 characters", async () => {
     await act(async () => {
       a.setName("N".repeat(200));
       await flushObr();

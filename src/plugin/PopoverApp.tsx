@@ -6,7 +6,7 @@ import { PluginThemeProvider } from "./PluginThemeProvider";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { getPluginId } from "./getPluginId";
 
-/** After a crash, make the popover 0 x 0 so an empty iframe does not block clicks in OBR (C-01). */
+/** After a crash, make the popover 0 x 0 so an empty iframe does not block clicks in OBR. */
 function CollapsePopover() {
   useEffect(() => {
     const id = getPluginId("notification-popover");

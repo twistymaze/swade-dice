@@ -15,7 +15,7 @@ function seeded(seed: number): () => number {
 
 const rangeFrom = (next: () => number): RandomRange => (min, max) => next() * (max - min) + min;
 
-describe("D-10 injectable RNG in DiceThrower", () => {
+describe("injectable RNG in DiceThrower", () => {
   afterEach(() => vi.restoreAllMocks());
 
   it("the same seeded rng gives the same throw", () => {
@@ -45,7 +45,7 @@ describe("D-10 injectable RNG in DiceThrower", () => {
   });
 });
 
-describe("D-10 no audio listener at import", () => {
+describe("no audio listener at import", () => {
   it("importing getAudioBuffer adds no window listener", async () => {
     const add = vi.spyOn(window, "addEventListener");
     vi.resetModules();
@@ -55,7 +55,7 @@ describe("D-10 no audio listener at import", () => {
   });
 });
 
-describe("T-43 throw generation", () => {
+describe("throw generation", () => {
   const len = (v: { x: number; y: number; z: number }) => Math.hypot(v.x, v.y, v.z);
 
   it("position in range, unit quaternion, velocity toward the tray center, angular 2..6", () => {

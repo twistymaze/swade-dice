@@ -35,7 +35,7 @@ const settings = (s: Partial<RollSettings> = {}): RollSettings => ({
 const trait = (chains: DieChain[], s: Partial<RollSettings> = {}) => computeOutcomes("TRAIT", chains, settings(s));
 
 describe("SWADE helpers", () => {
-  it("T-06 raises: TN exactly -> 0, TN+3 -> 0, TN+4 -> 1, TN+8 -> 2, failure -> 0", () => {
+  it("raises: TN exactly -> 0, TN+3 -> 0, TN+4 -> 1, TN+8 -> 2, failure -> 0", () => {
     expect(countRaises(4, 4)).toBe(0);
     expect(countRaises(7, 4)).toBe(0);
     expect(countRaises(8, 4)).toBe(1);
@@ -44,7 +44,7 @@ describe("SWADE helpers", () => {
     expect(countRaises(-6, 4)).toBe(0);
   });
 
-  it("OD-4 threshold is MORE than half, not half or more", () => {
+  it("threshold is MORE than half, not half or more", () => {
     expect(isMoreThanHalf(2, 4)).toBe(false);
     expect(isMoreThanHalf(3, 4)).toBe(true);
     expect(isMoreThanHalf(2, 3)).toBe(true);
@@ -52,7 +52,7 @@ describe("SWADE helpers", () => {
   });
 });
 
-describe("T-07 single-die trait test with Wild Die", () => {
+describe("single-die trait test with Wild Die", () => {
   it("wild higher (d8 3, wild 5, +1, TN 4) -> wild used, total 6, success, 0 raises (golden)", () => {
     const [o] = trait([chain("D8", [3]), wild(5)], { traitModifier: 1 });
     expect(o).toMatchObject({ total: 6, replacedByWild: true, success: true, raises: 0, modifier: 1 });
@@ -81,18 +81,18 @@ describe("T-07 single-die trait test with Wild Die", () => {
     ]);
   });
 
-  it("T-06 wild higher only after modifier: trait 3, wild 4, modifier -10 -> wild wins, total -6, failure, 0 raises", () => {
+  it("wild higher only after modifier: trait 3, wild 4, modifier -10 -> wild wins, total -6, failure, 0 raises", () => {
     const [o] = trait([chain("D8", [3]), wild(4)], { traitModifier: -10 });
     expect(o).toMatchObject({ total: -6, replacedByWild: true, success: false, raises: 0 });
   });
 
-  it("T-06 Wild Die on, but the roll was made without a wild chain -> no wild outcome appears", () => {
+  it("Wild Die on, but the roll was made without a wild chain -> no wild outcome appears", () => {
     const outcomes = trait([chain("D8", [2])], { wildDieEnabled: true });
     expect(outcomes).toHaveLength(1);
     expect(outcomes[0]!.replacedByWild).toBe(false);
   });
 
-  it("T-06 Wild Die turned off after the roll -> the wild chain is ignored", () => {
+  it("Wild Die turned off after the roll -> the wild chain is ignored", () => {
     const [o] = trait([chain("D8", [2]), wild(6)], { wildDieEnabled: false });
     expect(o).toMatchObject({ total: 2, replacedByWild: false, success: false });
   });
@@ -102,7 +102,7 @@ describe("T-07 single-die trait test with Wild Die", () => {
   });
 });
 
-describe("T-08 multi-die trait test, Wild Die replaces the worst die", () => {
+describe("multi-die trait test, Wild Die replaces the worst die", () => {
   it("2d8 [2, 6] + wild 4 -> [wild 4, 6] (golden)", () => {
     const out = trait([chain("D8", [2]), chain("D8", [6]), wild(4)]);
     expect(out.map((o) => [o.total, o.replacedByWild])).toEqual([
@@ -132,39 +132,39 @@ describe("T-08 multi-die trait test, Wild Die replaces the worst die", () => {
     expect(out[1]!.replacedByWild).toBe(true);
   });
 
-  it("A-10 one Wild Die per roll: it replaces at most one trait die and adds no extra outcome", () => {
+  it("one Wild Die per roll: it replaces at most one trait die and adds no extra outcome", () => {
     const out = trait([chain("D8", [1]), chain("D8", [1]), chain("D8", [2]), wild(6)]);
     expect(out).toHaveLength(3);
     expect(out.filter((o) => o.replacedByWild)).toHaveLength(1);
   });
 });
 
-describe("T-10 / T-54 Critical Failure (OD-4 book rule)", () => {
+describe("Critical Failure (book rule)", () => {
   const status = (chains: DieChain[], wildDieEnabled: boolean | undefined = true, mode: SavageRollMode = "TRAIT") =>
     getCriticalFailureStatusForChains(mode, chains, wildDieEnabled);
 
-  it("T-10 single trait 1 + wild 1, wild enabled -> critical", () => {
+  it("single trait 1 + wild 1, wild enabled -> critical", () => {
     expect(status([chain("D8", [1]), wild(1)]).isCritical).toBe(true);
   });
 
-  it("T-10 trait 1 + wild 2 -> not critical, not possible", () => {
+  it("trait 1 + wild 2 -> not critical, not possible", () => {
     expect(status([chain("D8", [1]), wild(2)])).toEqual({ isCritical: false, isPossible: false });
   });
 
-  it("T-10 trait 1, no wild chain -> possible", () => {
+  it("trait 1, no wild chain -> possible", () => {
     expect(status([chain("D8", [1])])).toMatchObject({ isCritical: false, isPossible: true });
   });
 
-  it("T-10 trait 1, wild chain present but Wild Die off -> possible", () => {
+  it("trait 1, wild chain present but Wild Die off -> possible", () => {
     expect(status([chain("D8", [1]), wild(1)], false)).toMatchObject({ isCritical: false, isPossible: true });
   });
 
-  it("T-10 trait 1 with wildDieEnabled undefined (old payload) -> possible", () => {
+  it("trait 1 with wildDieEnabled undefined (old payload) -> possible", () => {
     const chains = [chain("D8", [1]), wild(1)];
     expect(getCriticalFailureStatusForChains("TRAIT", chains, undefined)).toMatchObject({ isPossible: true });
   });
 
-  it("T-10 / T-54 DAMAGE and STANDARD with 1s -> never crit", () => {
+  it("DAMAGE and STANDARD with 1s -> never crit", () => {
     expect(status([chain("D6", [1]), chain("D6", [1])], true, "DAMAGE")).toEqual({ isCritical: false, isPossible: false });
     expect(status([chain("D6", [1])], true, "STANDARD")).toEqual({ isCritical: false, isPossible: false });
     for (const mode of ["DAMAGE", "STANDARD"] as const) {
@@ -175,17 +175,17 @@ describe("T-10 / T-54 Critical Failure (OD-4 book rule)", () => {
     }
   });
 
-  it("T-54 trait 1 + wild 1, +3, TN 4 -> success false, raises 0, criticalFailure true", () => {
+  it("trait 1 + wild 1, +3, TN 4 -> success false, raises 0, criticalFailure true", () => {
     const [o] = trait([chain("D6", [1]), wild(1)], { traitModifier: 3 });
     expect(o).toMatchObject({ total: 4, success: false, raises: 0, criticalFailure: true });
   });
 
-  it("T-54 both 1, TN 1, no modifier -> crit (a crit fail is a failure even at the TN)", () => {
+  it("both 1, TN 1, no modifier -> crit (a crit fail is a failure even at the TN)", () => {
     const [o] = trait([chain("D6", [1]), wild(1)], { targetNumber: 1 });
     expect(o).toMatchObject({ success: false, raises: 0, criticalFailure: true });
   });
 
-  it("T-54 crit lifted by a high modifier stays a failure", () => {
+  it("crit lifted by a high modifier stays a failure", () => {
     const [o] = trait([chain("D6", [1]), wild(1)], { traitModifier: 20 });
     expect(o).toMatchObject({ total: 21, success: false, raises: 0, criticalFailure: true });
   });
@@ -197,7 +197,7 @@ describe("T-10 / T-54 Critical Failure (OD-4 book rule)", () => {
     ["[1,5,5] + wild 1 -> no crit (2 of 4 is not more than half)", [1, 5, 5], 1, false],
     ["[1,1,4] + wild 1 -> crit (3 of 4)", [1, 1, 4], 1, true],
     ["[1,4,5] + wild 1 -> no crit", [1, 4, 5], 1, false],
-  ])("T-54 multi-die with Wild Die (A-02): %s", (_label, rolls, wildRoll, expected) => {
+  ])("multi-die with Wild Die: %s", (_label, rolls, wildRoll, expected) => {
     const chains = [...(rolls as number[]).map((r) => chain("D8", [r])), wild(wildRoll as number)];
     expect(status(chains).isCritical).toBe(expected);
     const outcomes = trait(chains, { targetNumber: 1 });
@@ -213,7 +213,7 @@ describe("T-10 / T-54 Critical Failure (OD-4 book rule)", () => {
     ["[1,5] -> possible", [1, 5], true],
     ["[1,5,5] -> none", [1, 5, 5], false],
     ["[1,1,1] -> possible", [1, 1, 1], true],
-  ])("T-54 Extras, no Wild Die (A-09): %s", (_label, rolls, expected) => {
+  ])("Extras, no Wild Die: %s", (_label, rolls, expected) => {
     const chains = (rolls as number[]).map((r) => chain("D8", [r]));
     expect(status(chains, false)).toMatchObject({ isCritical: false, isPossible: expected });
     const outcomes = trait(chains, { wildDieEnabled: false });
@@ -225,7 +225,7 @@ describe("T-10 / T-54 Critical Failure (OD-4 book rule)", () => {
   });
 });
 
-describe("T-11 damage roll results (OD-5: no success/raises)", () => {
+describe("damage roll results (no success/raises)", () => {
   it("d6 + d8 + 2 (golden values) -> one outcome, total 13, no success/raises keys", () => {
     const out = computeOutcomes("DAMAGE", [chain("D6", [4]), chain("D8", [7])], settings({ damageModifier: 2, traitModifier: 5 }));
     expect(out).toHaveLength(1);
@@ -244,21 +244,21 @@ describe("T-11 damage roll results (OD-5: no success/raises)", () => {
     expect(o!.total).toBe(-2);
   });
 
-  it("T-11 single die in forced DAMAGE mode -> one outcome, die + damage modifier", () => {
+  it("single die in forced DAMAGE mode -> one outcome, die + damage modifier", () => {
     const out = computeOutcomes("DAMAGE", [chain("D8", [5])], settings({ damageModifier: 1 }));
     expect(out).toHaveLength(1);
     expect(out[0]!.total).toBe(6);
     expect(out[0]).not.toHaveProperty("success");
   });
 
-  it("T-11 a wild chain in DAMAGE data (remote payload) is counted in the total", () => {
+  it("a wild chain in DAMAGE data (remote payload) is counted in the total", () => {
     const [o] = computeOutcomes("DAMAGE", [chain("D6", [4]), wild(3)], settings({ damageModifier: 1 }));
     expect(o!.total).toBe(8);
     expect(o!.replacedByWild).toBe(false);
   });
 });
 
-describe("T-25 raises and success math", () => {
+describe("raises and success math", () => {
   const one = (total: number, targetNumber: number) => {
     // a d12 chain of 6, the modifier brings it to the wanted total
     const [o] = trait([chain("D12", [6])], { traitModifier: total - 6, targetNumber, wildDieEnabled: false });
@@ -300,7 +300,7 @@ describe("T-25 raises and success math", () => {
   });
 });
 
-describe("T-12 STANDARD mode results (A-03: no modifier)", () => {
+describe("STANDARD mode results (no modifier)", () => {
   it("d4 + d12 showing 12 -> one raw outcome per die, modifier 0, no TN fields", () => {
     const out = computeOutcomes("STANDARD", [chain("D4", [3]), chain("D12", [12])], settings({ damageModifier: 2, traitModifier: 1 }));
     expect(out.map((o) => [o.total, o.modifier])).toEqual([
@@ -313,7 +313,7 @@ describe("T-12 STANDARD mode results (A-03: no modifier)", () => {
     }
   });
 
-  it("T-06 STANDARD with damage modifier +2 -> the result modifier is 0 and total - modifier = raw value", () => {
+  it("STANDARD with damage modifier +2 -> the result modifier is 0 and total - modifier = raw value", () => {
     const r = computeRollResult(
       { mode: "STANDARD", dieChains: [chain("D4", [3])], isComplete: true, timestamp: 1 },
       settings({ damageModifier: 2 })
@@ -344,7 +344,7 @@ describe("golden broadcasts recalculated by the engine", () => {
     expect(computeRollResult(golden, settingsOf(golden))).toEqual(golden);
   });
 
-  it("traitNoWild.rolledOne (A-01 contract addition): golden fields kept, possibleCriticalFailure added", () => {
+  it("traitNoWild.rolledOne (contract addition): golden fields kept, possibleCriticalFailure added", () => {
     const golden = asResult(rolledOne);
     const result = computeRollResult(golden, settingsOf(golden));
     expect(result.outcomes[0]).toEqual({
@@ -357,7 +357,7 @@ describe("golden broadcasts recalculated by the engine", () => {
   it.each([
     ["damage", damage],
     ["damageExploding", damageExploding],
-  ])("%s (OD-5 contract change): same totals, success and raises removed", (_name, fixture) => {
+  ])("%s (contract change): same totals, success and raises removed", (_name, fixture) => {
     const golden = asResult(fixture);
     const result = computeRollResult(golden, settingsOf(golden));
     const expected = {
@@ -367,14 +367,14 @@ describe("golden broadcasts recalculated by the engine", () => {
     expect(result).toEqual(expected);
   });
 
-  it("T-06 TRAIT + wild: modifier +1 -> -2 gives the modifierChanged golden (total 3, failure, 0 raises), timestamp kept", () => {
+  it("TRAIT + wild: modifier +1 -> -2 gives the modifierChanged golden (total 3, failure, 0 raises), timestamp kept", () => {
     const golden = asResult(traitWildDie);
     const changed = computeRollResult(golden, { ...settingsOf(golden), traitModifier: -2 });
     expect(changed).toEqual(asResult(modifierChanged));
     expect(changed.timestamp).toBe(golden.timestamp);
   });
 
-  it("T-06 TRAIT + wild: TN 4 -> 8 changes success and raises", () => {
+  it("TRAIT + wild: TN 4 -> 8 changes success and raises", () => {
     const golden = asResult(explodingChain);
     const r = computeRollResult(golden, { ...settingsOf(golden), targetNumber: 8 });
     expect(r.targetNumber).toBe(8);
@@ -383,7 +383,7 @@ describe("golden broadcasts recalculated by the engine", () => {
     expect(r2.outcomes[0]).toMatchObject({ success: false, raises: 0 });
   });
 
-  it("T-06 trait modifier change during a DAMAGE result -> no change (and damage modifier during TRAIT)", () => {
+  it("trait modifier change during a DAMAGE result -> no change (and damage modifier during TRAIT)", () => {
     const d = asResult(damage);
     const base = settingsOf(d);
     expect(computeRollResult(d, { ...base, traitModifier: 7 })).toEqual(computeRollResult(d, base));
@@ -393,7 +393,7 @@ describe("golden broadcasts recalculated by the engine", () => {
   });
 });
 
-describe("T-54 receivers: crit status from the payload field, or computed for old payloads", () => {
+describe("receivers: crit status from the payload field, or computed for old payloads", () => {
   it("old payload without crit fields (golden traitNoWild.rolledOne) -> computed locally: possible", () => {
     const r = asResult(rolledOne);
     expect(getOutcomeCriticalStatus(r, 0)).toMatchObject({ isCritical: false, isPossible: true });
@@ -430,7 +430,7 @@ function rng(seed: number) {
   };
 }
 
-describe("T-46 / T-61 invariants on 2000 seeded generated rolls", () => {
+describe("invariants on 2000 seeded generated rolls", () => {
   const types: DiceType[] = ["D4", "D6", "D8", "D10", "D12"];
   const max: Record<DiceType, number> = { D4: 4, D6: 6, D8: 8, D10: 10, D12: 12 };
 

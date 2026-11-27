@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * T-28 Physics determinism and face reading (test plan section 3.3 / 4).
+ * Physics determinism and face reading.
  * The world is built from the app's own data (tray layout, collider vertices,
  * face locators, roll-finished rules) and the face is read with the app's
  * getValueFromDiceGroup.
@@ -48,9 +48,9 @@ const bits = (values: number[]) => {
 
 const die = (type: DiceType, style: Die["style"] = "GALAXY"): Die => ({ id: `t-${type}`, type, style });
 
-describe("T-28 physics determinism and face reading (Rapier in Node)", () => {
+describe("physics determinism and face reading (Rapier in Node)", () => {
   for (const type of TYPES) {
-    it(`T-28 ${type}: the same throw twice gives the same pose and face`, () => {
+    it(`${type}: the same throw twice gives the same pose and face`, () => {
       for (const dieThrow of THROWS) {
         const a = rollDie(die(type), dieThrow);
         const b = rollDie(die(type), dieThrow);
@@ -66,7 +66,7 @@ describe("T-28 physics determinism and face reading (Rapier in Node)", () => {
     });
   }
 
-  it("T-28 explosion throw (speed x1.5) and heavy dice also come to rest with a valid face", () => {
+  it("explosion throw (speed x1.5) and heavy dice also come to rest with a valid face", () => {
     const fast: DiceThrow = {
       ...THROWS[0]!,
       linearVelocity: { x: -0.37 * 1.5, y: 0, z: 1.4 * 1.5 },
@@ -79,7 +79,7 @@ describe("T-28 physics determinism and face reading (Rapier in Node)", () => {
     expect(a.face).toBeLessThanOrEqual(6);
   });
 
-  it("T-28 a die that never settles is forced after 600 steps and still yields a face", () => {
+  it("a die that never settles is forced after 600 steps and still yields a face", () => {
     // No gravity: the die spins in place inside the tray and never comes to rest.
     const spinning: DiceThrow = {
       position: { x: 0, y: 0.5, z: 0 },
@@ -94,7 +94,7 @@ describe("T-28 physics determinism and face reading (Rapier in Node)", () => {
     expect(a.face).toBeLessThanOrEqual(8);
   });
 
-  it("T-28 golden throw -> face table (a Rapier or collider change that alters results fails here)", () => {
+  it("golden throw -> face table (a Rapier or collider change that alters results fails here)", () => {
     const table = TYPES.flatMap((type) =>
       THROWS.map((dieThrow, i) => {
         const { face, steps } = rollDie(die(type), dieThrow);

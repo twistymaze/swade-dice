@@ -18,7 +18,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
   const isTraitTest = mode === "TRAIT";
   const isMultiDieTrait = isTraitTest && outcomes.length > 1;
   const isStandard = mode === "STANDARD";
-  // A Critical Failure is never a success, also in old payloads that say success (A-01)
+  // A Critical Failure is never a success, also in old payloads that say success
   const critStatusOf = (index: number) => getCriticalFailureStatus(result, index);
   const isSuccess = (index: number) =>
     outcomes[index]?.success === true && !critStatusOf(index).isCritical;
@@ -39,7 +39,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
     return null;
   }
   
-  // Explosion chain of one die, rendered flat (no nesting per roll, C-06)
+  // Explosion chain of one die, rendered flat (no nesting per roll)
   const renderExplosionChain = (rolls: number[], dieType: DiceType) => (
     <>
       {rolls.map((value: number, index: number) => {
@@ -81,7 +81,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
       </>
     );
   } else {
-    // Damage roll - group by die type (a Map: no prototype keys from a payload, C-05)
+    // Damage roll - group by die type (a Map: no prototype keys from a payload)
     const groupedByType = new Map<DiceType, DieChain[]>();
     dieChains.forEach(chain => {
       const group = groupedByType.get(chain.dieType);
@@ -117,7 +117,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
       {/* Display dice */}
       {diceDisplay}
       
-      {/* Show modifier if non-zero. STANDARD rolls have no modifier (A-03). */}
+      {/* Show modifier if non-zero. STANDARD rolls have no modifier. */}
       {!isStandard && modifier !== undefined && modifier !== 0 && (
         <Typography variant="body2" color="white">
           Modifier: {modifier > 0 ? '+' : ''}{modifier}
@@ -159,7 +159,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
           ))}
         </>
       ) : isStandard && outcomes.length > 1 ? (
-        // STANDARD: one raw value per die (T-B1)
+        // STANDARD: one raw value per die
         <>
           <Typography variant="body2" color="white" sx={{ borderTop: '1px solid rgba(255,255,255,0.3)', pt: 0.5, mt: 0.5 }}>
             Results:

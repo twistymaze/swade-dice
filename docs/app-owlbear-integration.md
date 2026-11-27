@@ -83,7 +83,7 @@ interface RollBroadcastV1 {
 interface DieChain { dieId: string; dieType: "D4"|"D6"|"D8"|"D10"|"D12"; rolls: number[]; total: number; isWildDie: boolean }
 interface RollOutcome {
   chains: DieChain[]; modifier: number; total: number; replacedByWild: boolean;
-  success?: boolean; raises?: number;                  // TRAIT only (DAMAGE/STANDARD: absent, OD-5)
+  success?: boolean; raises?: number;                  // TRAIT only (DAMAGE/STANDARD: absent)
   criticalFailure?: true; possibleCriticalFailure?: true; criticalFailureReason?: string;  // TRAIT only
 }
 ```
@@ -106,7 +106,8 @@ The rules are in `src/plugin/rollSender.ts`:
 - Size guard: before a roll is queued, the payload is built with 64-character placeholder ids and name,
   measured, and parsed with the receivers' parser. If it is over 16 000 bytes or would be rejected, it is
   neither sent nor stored, and the roller sees "This roll is too large to share with the table".
-  With 40 dice the largest possible roll fits (test `T-57`).
+  With 40 dice the largest possible roll fits (`src/plugin/rollWire.test.ts`, "the largest roll the app
+  can produce fits one broadcast and the receivers accept it").
 - Sender info (`getId`, `getConnectionId`, `getName`, `getColor`, `getRole`) is read when a send runs,
   so a roll that finishes before player info is ready is still sent.
 
@@ -120,8 +121,8 @@ Changing the TN, a modifier or the Wild Die after a roll is a feature: the resul
 - A change that does not alter the result (for example the damage modifier during a TRAIT result), or
   a change back to the last sent value within the window, sends nothing.
 - Every client replaces its entry for that roll, in place. The entry shows the new modifier, and the
-  TN when it is not 4 ("vs TN 6", OD-6).
-- A revised roll toasts once on other clients, 1.5 s after the last revision, marked "(revised)" (OD-7).
+  TN when it is not 4 ("vs TN 6").
+- A revised roll toasts once on other clients, 1.5 s after the last revision, marked "(revised)".
 - The revision is also written to the roller's history metadata, so late joiners see the edited values.
 
 ### 5.4 Receiving and validation
@@ -141,7 +142,7 @@ and `OBR.player.onChange`, made once.
 - Defaults for fields old senders may omit: `targetNumber` 4, `modifier` 0, `wildDieEnabled` false (crit
   then shows as "possible" only), `isWildDie` / `replacedByWild` false.
 - Invalid payloads are dropped with one `console.warn` per sender connection and source.
-- **Identity (C-02):** the sender is `event.connectionId` (set by the OBR host), resolved through
+- **Identity:** the sender is `event.connectionId` (set by the OBR host), resolved through
   `OBR.party.getPlayers()` / `onChange` and `OBR.player` (self). Name (max 64 characters) and color
   (`#rrggbb` only, else `#888888`) come from OBR. If the connection is unknown, the party is fetched once
   more; if it is still unknown, the message is dropped with a warning.
@@ -190,7 +191,7 @@ interface HistoryMetadataV1 {
 - Compact: outcomes are not stored. A reader recomputes them with the rules engine
   (`computeRollResult`), so stored data cannot carry wrong totals. A typical trait roll costs under
   200 bytes; 10 rolls of the largest possible size are under 32 kB, half of the 64 kB per-update limit
-  (test `T-57`).
+  (`src/plugin/rollWire.test.ts`, "ten max-size rolls fit well under the 64 kB player metadata limit (< 32 kB)").
 - Written after each send through the same queue (awaited, retried, ERROR notice on final failure).
 - On start, the sender reads its own key first, so a remount of the action popover on the same
   connection keeps the earlier rolls.
@@ -247,8 +248,9 @@ Legacy: before commit `2a374c3` ("migrate to broadcasts"), the app wrote player 
   `result` with exactly the golden result keys), so old clients show new rolls. Old clients key entries on
   `playerId + timestamp`; both stay constant across revisions.
 - Old clients do not read or write the history key. Their rolls appear in new clients' history only while
-  the new client is open (as before). Tests: `T-60` in `src/plugin/rollWire.test.ts` and
-  `src/test/sync.multiClient.test.tsx`, and `src/test/golden.compat.test.tsx`.
+  the new client is open (as before). Tests: "a new payload is readable by an old client" in
+  `src/plugin/rollWire.test.ts`, "mixed versions in one room" in `src/test/sync.multiClient.test.tsx`, and
+  `src/test/golden.compat.test.tsx`.
 
 ### 8.4 Browser storage
 

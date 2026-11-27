@@ -8,7 +8,7 @@ import { useRollFeed } from "./useRollFeed";
 
 /**
  * The party roll history (action popover). Built from the players' history metadata on load and
- * on party changes (OD-2), plus live roll broadcasts, in arrival order (see `rollHistory.ts`).
+ * on party changes, plus live roll broadcasts, in arrival order (see `rollHistory.ts`).
  */
 export function RollHistoryTray() {
   const [history, dispatch] = useReducer(historyReducer, EMPTY_HISTORY);

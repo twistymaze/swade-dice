@@ -1,5 +1,5 @@
 /**
- * What a die does when its face cannot be read (A-08): no locator found, or a
+ * What a die does when its face cannot be read: no locator found, or a
  * value the store rejects, for example a die cocked against a wall. Like at the
  * table, the die is re-thrown a few times; after that the nearest valid face is
  * used, so a roll always completes.

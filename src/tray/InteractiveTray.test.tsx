@@ -62,8 +62,8 @@ beforeEach(() => {
   controls.fairnessTesterOpen = false;
 });
 
-describe("T-52 InteractiveTray context loss (E-02)", () => {
-  it("T-52 a lost context shows one Reload tray overlay; restore hides it and invalidates", () => {
+describe("InteractiveTray context loss", () => {
+  it("a lost context shows one Reload tray overlay; restore hides it and invalidates", () => {
     render(<InteractiveTray />);
     expect(screen.queryByText("Reload tray")).toBeNull();
 
@@ -78,7 +78,7 @@ describe("T-52 InteractiveTray context loss (E-02)", () => {
     expect(canvasState.invalidate).toHaveBeenCalledTimes(1);
   });
 
-  it("T-52 Reload tray remounts the Canvas", () => {
+  it("Reload tray remounts the Canvas", () => {
     render(<InteractiveTray />);
     expect(canvasState.mounts).toBe(1);
     lose();
@@ -90,7 +90,7 @@ describe("T-52 InteractiveTray context loss (E-02)", () => {
     expect(screen.getByText("Reload tray")).toBeInTheDocument();
   });
 
-  it("T-52 after unmount a context event does nothing", () => {
+  it("after unmount a context event does nothing", () => {
     const { unmount } = render(<InteractiveTray />);
     const el = canvas();
     const remove = vi.spyOn(el, "removeEventListener");
@@ -100,8 +100,8 @@ describe("T-52 InteractiveTray context loss (E-02)", () => {
   });
 });
 
-describe("T-51 InteractiveTray error boundary (D-02)", () => {
-  it("T-51 a 3D error shows the fallback, the roll controls stay, Reload tray recovers", () => {
+describe("InteractiveTray error boundary", () => {
+  it("a 3D error shows the fallback, the roll controls stay, Reload tray recovers", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     canvasState.throwError = true;
     render(<InteractiveTray />);
@@ -117,8 +117,8 @@ describe("T-51 InteractiveTray error boundary (D-02)", () => {
   });
 });
 
-describe("D-11 fairness tester loads on first open", () => {
-  it("D-11 is not rendered until opened", async () => {
+describe("fairness tester loads on first open", () => {
+  it("is not rendered until opened", async () => {
     const { rerender } = render(<InteractiveTray />);
     expect(screen.queryByText("fairness tester")).toBeNull();
     controls.fairnessTesterOpen = true;

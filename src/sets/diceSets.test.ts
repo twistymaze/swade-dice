@@ -6,7 +6,7 @@ import ids from "../test/fixtures/golden/ids.json";
 
 const STYLES = ["GALAXY", "GEMSTONE", "GLASS", "IRON", "NEBULA", "SUNRISE", "SUNSET", "WALNUT"];
 
-describe("T-41 ids and constants", () => {
+describe("ids and constants", () => {
   it("getPluginId gives the golden broadcast channel and popover id", () => {
     expect(getPluginId("roll-result")).toBe(ids.broadcastChannels.rollResult);
     expect(ROLL_CHANNEL).toBe(ids.broadcastChannels.rollResult);

@@ -19,7 +19,7 @@ interface Toast {
   revised: boolean;
 }
 
-/** Collapses the popover when a toast fails to render, so no empty iframe blocks clicks (C-01). */
+/** Collapses the popover when a toast fails to render, so no empty iframe blocks clicks. */
 function ToastCrashed({ onCrash }: { onCrash: () => void }) {
   useEffect(() => {
     onCrash();
@@ -28,7 +28,7 @@ function ToastCrashed({ onCrash }: { onCrash: () => void }) {
 }
 
 /**
- * Toasts other players' rolls while the action popover is closed (B-11, OD-7).
+ * Toasts other players' rolls while the action popover is closed.
  * - One subscription per event type, made once; the open state is kept in a ref.
  * - No toast for this client's own roll.
  * - A new roll toasts at once. A revision of a roll toasts once after the edits settle, marked

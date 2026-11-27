@@ -30,8 +30,8 @@ class FakeGroup {
   }
 }
 
-describe("T-63 collision sound cleanup (E-04)", () => {
-  it("T-63 removes and disconnects the sound when playback ends", () => {
+describe("collision sound cleanup", () => {
+  it("removes and disconnects the sound when playback ends", () => {
     const group = new FakeGroup();
     const sound = new FakeSound();
     attachOneShotCleanup(sound, group);
@@ -48,7 +48,7 @@ describe("T-63 collision sound cleanup (E-04)", () => {
     expect(sound.isPlaying).toBe(false);
   });
 
-  it("T-63 documents the old bug: onEnded set after play() never runs", () => {
+  it("documents the old bug: onEnded set after play() never runs", () => {
     const group = new FakeGroup();
     const sound = new FakeSound();
     sound.play();
@@ -58,7 +58,7 @@ describe("T-63 collision sound cleanup (E-04)", () => {
     expect(group.children).toHaveLength(1);
   });
 
-  it("T-63 25 plays leave no children after all end", () => {
+  it("25 plays leave no children after all end", () => {
     const group = new FakeGroup();
     const sounds = Array.from({ length: 25 }, () => {
       const sound = new FakeSound();
@@ -72,7 +72,7 @@ describe("T-63 collision sound cleanup (E-04)", () => {
     expect(group.children).toHaveLength(0);
   });
 
-  it("T-63 releaseSound disconnects a sound stopped by hand", () => {
+  it("releaseSound disconnects a sound stopped by hand", () => {
     const sound = new FakeSound();
     releaseSound(sound);
     expect(sound.disconnect).toHaveBeenCalledTimes(1);

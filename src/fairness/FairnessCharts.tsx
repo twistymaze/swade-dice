@@ -49,7 +49,7 @@ export default function FairnessCharts({
             data: xAxis,
             scaleType: "band",
             position: "bottom",
-            // Room for the tick labels and the axis label (F-07). x-charts blanks a
+            // Room for the tick labels and the axis label. x-charts blanks a
             // tick label whose measured height exceeds the space left by even a
             // fraction of a pixel; at 125 % zoom 45 left exactly the label height
             // (15.2 px), so keep a few pixels of slack.
@@ -58,7 +58,7 @@ export default function FairnessCharts({
         ]}
         yAxis={[
           {
-            // No fixed max: the domain covers the bars and the expected line (F-07)
+            // No fixed max: the domain covers the bars and the expected line
             id: "number-rolls",
             position: "left",
           },

@@ -8,10 +8,10 @@ const entry = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 export const OWLBEAR_ORIGINS = ["https://www.owlbear.rodeo", "https://owlbear.rodeo"];
 
 /**
- * Content Security Policy for the production pages (C-09). OBR loads each page in an iframe from
+ * Content Security Policy for the production pages. OBR loads each page in an iframe from
  * the extension origin and talks to it with postMessage, so the pages only need their own origin:
  * - script-src 'wasm-unsafe-eval': Rapier compiles its WebAssembly module.
- * - style-src 'unsafe-inline': MUI/Emotion inject style elements. Google Fonts (Inter, OD-10).
+ * - style-src 'unsafe-inline': MUI/Emotion inject style elements. Google Fonts (Inter).
  * - img/media/connect 'self' data: blob:: GLTF embedded textures (blob:), inlined small assets
  *   (data:), and textures, models, HDR and audio fetched from the build.
  * frame-ancestors is not set: a meta CSP ignores it (header only).
@@ -57,11 +57,11 @@ export default defineConfig({
   assetsInclude: ["**/*.glb", "**/*.hdr"],
   server: {
     // OBR (https://www.owlbear.rodeo) fetches the dev manifest and assets cross-origin from
-    // localhost:5173. Allow only the Owlbear origins, not every site (C-10).
+    // localhost:5173. Allow only the Owlbear origins, not every site.
     cors: { origin: OWLBEAR_ORIGINS },
   },
   build: {
-    // Maps are written for debugging but not linked from the bundles (C-10).
+    // Maps are written for debugging but not linked from the bundles.
     sourcemap: "hidden",
     rollupOptions: {
       input: {

@@ -2,7 +2,7 @@
  * Golden compatibility tests: the cross-client and persisted CONTRACT of the app.
  *
  * Fixtures: src/test/fixtures/golden/ (see docs/app-owlbear-integration.md section 13). These tests run against the current code and
- * must keep passing after refactors, unless a verified finding changes the contract on purpose.
+ * must keep passing after refactors, unless a deliberate change alters the contract.
  *
  * Contract:
  * - One broadcast channel, `rodeo.owlbear.savage-worlds-dice/roll-result`, sent with destination ALL.
@@ -13,15 +13,15 @@
  * - Settings persist in three localStorage keys with string values.
  * - No room/scene metadata is written.
  *
- * Deliberate contract changes (verified findings), each with a test below:
- * - OD-5 / A-04: DAMAGE outcomes no longer carry `success`/`raises`. Old payloads with them are still read.
- * - A-03: STANDARD results have `modifier: 0` (result and outcomes), whatever the damage modifier.
- * - A-01 / A-02 / A-09: TRAIT outcomes may carry `criticalFailure: true` (then `success: false`,
+ * Deliberate contract changes, each with a test below:
+ * - DAMAGE outcomes no longer carry `success`/`raises`. Old payloads with them are still read.
+ * - STANDARD results have `modifier: 0` (result and outcomes), whatever the damage modifier.
+ * - TRAIT outcomes may carry `criticalFailure: true` (then `success: false`,
  *   `raises: 0`) or `possibleCriticalFailure: true`, plus `criticalFailureReason`. The keys are absent
  *   otherwise, so non-crit payloads keep the golden key structure. Old payloads without them are read
  *   and the crit status is computed locally.
- * - OD-2: each player writes its last 10 rolls to ONE player metadata key, `.../history`.
- * - C-02: receivers take the sender name/color from OBR (the remote client here is named "Wren", like the
+ * - each player writes its last 10 rolls to ONE player metadata key, `.../history`.
+ * - receivers take the sender name/color from OBR (the remote client here is named "Wren", like the
  *   fixtures), not from the payload `player` block, which is still sent for old readers.
  */
 import { act, render, screen, within } from "@testing-library/react";
@@ -123,7 +123,7 @@ describe("ids", () => {
     expect(ids.popovers.notification).toBe(NOTIFICATION_POPOVER);
   });
 
-  it("the golden app wrote no OBR metadata; OD-2 adds one player metadata key", () => {
+  it("the golden app wrote no OBR metadata; the roll history adds one player metadata key", () => {
     expect(ids.playerMetadataKeys).toEqual([]);
     expect(HISTORY_METADATA_KEY).toBe("rodeo.owlbear.savage-worlds-dice/history");
     expect(ids.roomMetadataKeys).toEqual([]);
@@ -206,7 +206,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
 });
 
 describe("old payloads are still read after the contract changes", () => {
-  it("OD-5: the old damage payload (with success/raises) shows its total and no success mark", async () => {
+  it("the old damage payload (with success/raises) shows its total and no success mark", async () => {
     await mountTray();
     const f = fixture("damage");
     expect(f.result.outcomes[0]).toHaveProperty("success", true);
@@ -216,7 +216,7 @@ describe("old payloads are still read after the contract changes", () => {
     expect(within(pill!).queryByText("✓")).not.toBeInTheDocument();
   });
 
-  it("A-01: the old traitNoWild.rolledOne payload (no crit fields) shows the possible crit, computed locally", async () => {
+  it("the old traitNoWild.rolledOne payload (no crit fields) shows the possible crit, computed locally", async () => {
     await mountTray();
     const f = fixture("traitNoWild.rolledOne");
     await sendFromRemote(f);
@@ -258,7 +258,7 @@ describe("NotificationPopover receives golden broadcasts", () => {
 
 describe("DiceRollSync sends the golden payload", () => {
   type StoreFixture = Record<string, Json>;
-  /** The finished result carries its own identity (rollId, and hidden copied from the roll, B-12). */
+  /** The finished result carries its own identity (rollId, and hidden copied from the roll). */
   const withIdentity = (s: StoreFixture) => {
     const state = structuredClone(s) as Record<string, unknown> & {
       roll?: { hidden?: boolean } | null;
@@ -295,7 +295,7 @@ describe("DiceRollSync sends the golden payload", () => {
     return calls[calls.length - 1] as unknown as [string, RollFixture, { destination: string }];
   };
 
-  it("T-02 a finished roll is sent on the roll channel with destination ALL and the golden key structure", async () => {
+  it("a finished roll is sent on the roll channel with destination ALL and the golden key structure", async () => {
     const client = await mountSync();
     const received = vi.fn();
     hub().createClient({ name: "Other" }).broadcast.onMessage(CHANNEL, received);
@@ -311,14 +311,14 @@ describe("DiceRollSync sends the golden payload", () => {
     expect(payload).toMatchObject({ v: 1, rollId: "golden-roll", rev: 0 });
     // The result is fully determined by the store + controls, so it matches the golden values.
     expect(payload.result).toEqual(golden.result);
-    // B-10: real role and connection id from OBR (the block is kept for old readers)
+    // Real role and connection id from OBR (the block is kept for old readers)
     expect(payload.player).toMatchObject({ name: "Self", role: "PLAYER", connectionId: "self-conn" });
     expect(payload.playerId).toBe("self-conn");
     // Other clients get it as { data, connectionId } with the sender's connection id.
     expect(received).toHaveBeenCalledWith({ data: payload, connectionId: client.state.player.connectionId });
   });
 
-  it("T-02 changing the modifier after the roll re-sends the same timestamp, rev + 1 (modifierChanged fixture)", async () => {
+  it("changing the modifier after the roll re-sends the same timestamp, rev + 1 (modifierChanged fixture)", async () => {
     vi.useFakeTimers();
     try {
       const client = await mountSync();
@@ -346,7 +346,7 @@ describe("DiceRollSync sends the golden payload", () => {
     return state;
   }
 
-  it("OD-5 contract change: a finished DAMAGE roll is sent without success/raises, other fields as golden", async () => {
+  it("contract change: a finished DAMAGE roll is sent without success/raises, other fields as golden", async () => {
     act(() => useDiceControlsStore.setState({ traitModifier: 0, damageModifier: 2 }));
     const client = await mountSync();
     const golden = fixture("damage");
@@ -361,7 +361,7 @@ describe("DiceRollSync sends the golden payload", () => {
     expect(payload.result.outcomes[0]).not.toHaveProperty("raises");
   });
 
-  it("A-03 contract change: a STANDARD roll is sent with modifier 0 even with a damage modifier set", async () => {
+  it("contract change: a STANDARD roll is sent with modifier 0 even with a damage modifier set", async () => {
     act(() => useDiceControlsStore.setState({ traitModifier: 0, damageModifier: 3 }));
     const client = await mountSync();
     const golden = fixture("standard");
@@ -371,7 +371,7 @@ describe("DiceRollSync sends the golden payload", () => {
     expect(payload.result).toEqual(golden.result);
   });
 
-  it("A-01 contract addition: a double-1 trait roll is sent as a crit failure, even when the modifier reaches the TN", async () => {
+  it("contract addition: a double-1 trait roll is sent as a crit failure, even when the modifier reaches the TN", async () => {
     act(() => useDiceControlsStore.setState({ traitModifier: 3 }));
     const client = await mountSync();
     const golden = fixture("traitWildDie");
@@ -412,7 +412,7 @@ describe("DiceRollSync sends the golden payload", () => {
     expect(client.broadcast.sendMessage).not.toHaveBeenCalled();
   });
 
-  it("T-03 does not send or store a hidden roll (the roll's own flag)", async () => {
+  it("does not send or store a hidden roll (the roll's own flag)", async () => {
     const client = await mountSync();
     const hidden = structuredClone(storeFinishedTraitWild) as StoreFixture & { roll: { hidden: boolean } };
     hidden.roll.hidden = true;
@@ -422,7 +422,7 @@ describe("DiceRollSync sends the golden payload", () => {
     expect(client.player.setMetadata).not.toHaveBeenCalled();
   });
 
-  it("OD-2 contract addition: writes only the history key to player metadata", async () => {
+  it("contract addition: writes only the history key to player metadata", async () => {
     const client = await mountSync();
     await setStore(storeFinishedTraitWild);
     await act(flushObr);

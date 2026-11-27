@@ -1,4 +1,4 @@
-/** T-37 result text per mode (and the T-11 damage grouping text). */
+/** Result text per mode, and the damage grouping text. */
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SavageWorldsResultsSummary } from "./SavageWorldsResultsSummary";
@@ -27,7 +27,7 @@ const make = (mode: SavageRollMode, dieChains: DieChain[], s: Partial<RollSettin
   );
 const text = (c: HTMLElement) => c.textContent!.replace(/\s+/g, " ").trim();
 
-describe("T-37 result summary text", () => {
+describe("result summary text", () => {
   it("single trait die, multi-line: 'Result:' and '6 ✓'", () => {
     const { container } = render(<SavageWorldsResultsSummary result={fixture(traitWildDie)} />);
     expect(text(container)).toBe("Result:6 ✓");
@@ -46,7 +46,7 @@ describe("T-37 result summary text", () => {
     expect(text(container)).toBe("Results: 4 ✓, 5 ✓");
   });
 
-  it("damage: 'Total:' and no ✓/✗ (OD-5)", () => {
+  it("damage: 'Total:' and no ✓/✗", () => {
     const { container } = render(<SavageWorldsResultsSummary result={fixture(damage)} singleLine />);
     expect(text(container)).toBe("Total: 13");
   });
@@ -87,10 +87,10 @@ describe("T-37 result summary text", () => {
     expect(text(container)).toBe("[2d6] 11");
     const withWild = make("DAMAGE", [chain("1", "D6", [4]), chain("2", "D6", [3], true)]);
     rerender(<SavageWorldsResultsSummary result={withWild} singleLine hidePrefix showDicePrefix />);
-    expect(text(container)).toBe("[d6] 7"); // T-11: excluded from the prefix, included in the total
+    expect(text(container)).toBe("[d6] 7"); // Excluded from the prefix, included in the total
   });
 
-  it("mode icon: 🎯 for trait, ⚔️ for damage; 'vs TN n' only when TN != 4 (OD-6)", () => {
+  it("mode icon: 🎯 for trait, ⚔️ for damage; 'vs TN n' only when TN != 4", () => {
     const { container, rerender } = render(<SavageWorldsResultsSummary result={fixture(traitWildDie)} singleLine hidePrefix showModeIcon showTargetNumber />);
     expect(text(container)).toBe("🎯6 ✓");
     const tn8 = make("TRAIT", [chain("1", "D8", [3]), chain("2", "D6", [5], true)], { targetNumber: 8, traitModifier: 1 });
@@ -115,7 +115,7 @@ describe("T-37 result summary text", () => {
   });
 });
 
-describe("T-37 / T-11 result details text", () => {
+describe("result details text", () => {
   it("modifier line only when the modifier is not 0", () => {
     const { rerender } = render(<SavageWorldsResults result={fixture(traitWildDie)} />);
     expect(screen.getByText("Modifier: +1")).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe("T-37 / T-11 result details text", () => {
     expect(screen.getByText("Success vs TN 4 with 1 raise!")).toBeInTheDocument();
   });
 
-  it("T-11 damage grouping: '2d6: 6💥 + 2 + 3 = 11' and 'Total: 11'", () => {
+  it("damage grouping: '2d6: 6💥 + 2 + 3 = 11' and 'Total: 11'", () => {
     const { container } = render(<SavageWorldsResults result={fixture(damageExploding)} />);
     expect(text(container)).toContain("2d6: 6💥 + 2 + 3 = 11");
     expect(screen.getByText("Total: 11")).toBeInTheDocument();

@@ -1,4 +1,4 @@
-/** T-38 component smoke tests: each renders from a fixture, shows one key text, logs no error. */
+/** Component smoke tests: each renders from a fixture, shows one key text, logs no error. */
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushObr, obr, resetObrMock } from "./obrMock";
@@ -107,7 +107,7 @@ function finishGoldenTrait() {
   });
 }
 
-describe("T-38 component smoke tests", () => {
+describe("component smoke tests", () => {
   it("RollHistoryPanel with the golden entries: one pill per entry with the player name", () => {
     render(<RollHistoryPanel entries={entries} identities={identities} />);
     expect(screen.getAllByText("Wren").length).toBe(entries.length);

@@ -1,4 +1,4 @@
-/** T-39 plugin gate and theme, T-40 action width. */
+/** Plugin gate, plugin theme and action width. */
 import { act, render, screen } from "@testing-library/react";
 import { useTheme } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,7 +20,7 @@ function Mode() {
   return <p>mode {theme.palette.mode} {theme.palette.primary.main}</p>;
 }
 
-describe("T-39 plugin gate", () => {
+describe("plugin gate", () => {
   it("not available -> children hidden", () => {
     resetObrMock({ available: false });
     render(<PluginGate><p>inside</p></PluginGate>);
@@ -42,7 +42,7 @@ describe("T-39 plugin gate", () => {
   });
 });
 
-describe("T-39 plugin theme", () => {
+describe("plugin theme", () => {
   it("outside OBR -> the default dark theme, no OBR theme call", () => {
     resetObrMock({ available: false, ready: false });
     render(<PluginThemeProvider><Mode /></PluginThemeProvider>);
@@ -91,7 +91,7 @@ describe("T-39 plugin theme", () => {
   });
 });
 
-describe("T-40 action width", () => {
+describe("action width", () => {
   beforeEach(() => {
     resetObrMock();
     vi.useFakeTimers();

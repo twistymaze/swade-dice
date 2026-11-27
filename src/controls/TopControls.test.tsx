@@ -1,4 +1,4 @@
-/** T-34 / T-35 top-bar controls: enabled state, TN and modifier inputs. */
+/** Top-bar controls: enabled state, TN and modifier inputs. */
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { TopControls } from "./TopControls";
@@ -40,7 +40,7 @@ function finishTrait(face: number, wildFace?: number) {
   });
 }
 
-describe("T-34 enable/disable logic of the top-bar controls", () => {
+describe("enable/disable logic of the top-bar controls", () => {
   it("no dice and no roll -> all four controls enabled for the next roll", () => {
     render(<TopControls />);
     for (const b of [wildButton(), tnButton(), traitButton()]) expect(b).toBeEnabled();
@@ -110,7 +110,7 @@ describe("T-34 enable/disable logic of the top-bar controls", () => {
   });
 });
 
-describe("T-35 TN and modifier inputs", () => {
+describe("TN and modifier inputs", () => {
   const openMenu = (button: HTMLElement) => fireEvent.click(button, { shiftKey: true });
   const input = () => screen.getByRole("spinbutton") as HTMLInputElement;
 
@@ -182,7 +182,7 @@ describe("T-35 TN and modifier inputs", () => {
     expect(controls().targetNumber).toBe(99);
   });
 
-  it("modifier custom \"abc\" ignored; \"-120\" accepted and clamped to -99 (B-08); Clear Modifier -> 0", () => {
+  it("modifier custom \"abc\" ignored; \"-120\" accepted and clamped to -99; Clear Modifier -> 0", () => {
     render(<TopControls />);
     openMenu(traitButton());
     fireEvent.change(input(), { target: { value: "abc" } });
@@ -221,7 +221,7 @@ describe("T-35 TN and modifier inputs", () => {
   });
 });
 
-describe("T-35 modifier steppers at the limit (W-01)", () => {
+describe("modifier steppers at the limit", () => {
   it("the custom field never shows a value outside -99..99 that the store did not apply", () => {
     act(() => controls().setTraitModifier(-99));
     render(<TopControls />);

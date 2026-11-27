@@ -1,4 +1,4 @@
-/** T-26 notification popover timing and size (fake timers). */
+/** Notification popover timing and size (fake timers). */
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient, flushObr, ObrClient, resetObrMock } from "../test/obrMock";
@@ -40,7 +40,7 @@ async function mount() {
 }
 const advance = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 
-describe("T-26 notification popover", () => {
+describe("notification popover", () => {
   it("before any roll the popover stays 0 x 0", async () => {
     await mount();
     expect(size()).toMatchObject({ width: 0, height: 0 });

@@ -55,7 +55,7 @@ export function SavageWorldsResultsSummaryContainer() {
           <IconButton
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              // A Wild Die only when it is on now (A-07)
+              // A Wild Die only when it is on now
               reroll({ wildDieEnabled });
             }}
             sx={{ color: "white" }}

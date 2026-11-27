@@ -18,7 +18,7 @@ export interface RollOutcome {
   chains: DieChain[];     // The die chain(s) that contributed to this result
   modifier: number;       // Modifier applied to this result
   total: number;          // Final total including modifier
-  /** vs target number. TRAIT only: DAMAGE and STANDARD outcomes have no success (OD-5). */
+  /** vs target number. TRAIT only: DAMAGE and STANDARD outcomes have no success. */
   success?: boolean;
   /** Number of raises, 0 on a failure. TRAIT only. */
   raises?: number;
@@ -82,6 +82,6 @@ export interface ExplosionResult {
 export interface StoredRollResult extends SavageRollResult {
   /** Unique per finished roll, the same for every revision (post-roll edit). */
   rollId: string;
-  /** The roll was hidden (private) when it finished: it is never sent or stored (OD-3). */
+  /** The roll was hidden (private) when it finished: it is never sent or stored. */
   hidden: boolean;
 }

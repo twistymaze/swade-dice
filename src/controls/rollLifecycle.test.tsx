@@ -1,5 +1,5 @@
 /**
- * T-22 (component part) and T-55 (component and send parts): the Roll button, the dice picker,
+ * The roll lifecycle in the UI: the Roll button, the dice picker,
  * the recent-roll replay and the fairness tester while dice still roll.
  */
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -63,7 +63,7 @@ function pressRoll(seconds: number) {
   fireEvent.pointerUp(button);
 }
 
-describe("T-22 the Roll button builds the roll (component part)", () => {
+describe("the Roll button builds the roll (component part)", () => {
   it.each([
     [0, 1],
     [0.2, 1],
@@ -127,7 +127,7 @@ describe("T-22 the Roll button builds the roll (component part)", () => {
   });
 });
 
-describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent", () => {
+describe("roll lifecycle in the UI: no partial or stale roll is ever sent", () => {
   async function mountSync() {
     render(<DiceRollSync />);
     await act(flushObr);
@@ -200,7 +200,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     act(() => dice().clearRoll());
   });
 
-  it("B-12 a new hidden roll after a shared result: the hidden roll is never sent", async () => {
+  it("a new hidden roll after a shared result: the hidden roll is never sent", async () => {
     await mountSync();
     act(() => controls().changeDieCount(ids()[2]!, 1));
     render(<DiceRollControls />);
@@ -235,7 +235,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
   });
 });
 
-describe("T-46 an edit with no finished roll sends nothing", () => {
+describe("an edit with no finished roll sends nothing", () => {
   async function mountSync() {
     render(<DiceRollSync />);
     await act(flushObr);

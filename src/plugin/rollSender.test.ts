@@ -38,7 +38,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("T-47 send once per change: dedupe and debounce (B-02, OD-1)", () => {
+describe("send once per change: dedupe and debounce", () => {
   it("a finished roll sends exactly once, at once, rev 0, and stores it in player metadata", async () => {
     const sender = createRollSender();
     sender.update({ rollId: "r1", hidden: false }, result());
@@ -93,7 +93,7 @@ describe("T-47 send once per change: dedupe and debounce (B-02, OD-1)", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("T-03 a hidden roll is never sent or stored, also after edits (OD-3, B-12)", async () => {
+  it("a hidden roll is never sent or stored, also after edits", async () => {
     const sender = createRollSender();
     sender.update({ rollId: "h", hidden: true }, result());
     sender.update({ rollId: "h", hidden: true }, result({ targetNumber: 8 }));
@@ -130,7 +130,7 @@ describe("T-47 send once per change: dedupe and debounce (B-02, OD-1)", () => {
   });
 });
 
-describe("T-48 rate limit, retry and error notice (B-02, D-02)", () => {
+describe("rate limit, retry and error notice", () => {
   it("one RateLimitHit is retried with backoff; receivers get one entry with the final value", async () => {
     const other = createClient({ name: "Other" });
     const received = vi.fn();
@@ -193,7 +193,7 @@ describe("T-48 rate limit, retry and error notice (B-02, D-02)", () => {
     expect(revs).toEqual([1]);
   });
 
-  it("B-09 a roll is sent although OBR player info is slow", async () => {
+  it("a roll is sent although OBR player info is slow", async () => {
     const getName = obr().player.getName;
     const real = getName.getMockImplementation()!;
     getName.mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(real()), 3000)));
@@ -206,7 +206,7 @@ describe("T-48 rate limit, retry and error notice (B-02, D-02)", () => {
   });
 });
 
-describe("T-57 payload size guard (B-08)", () => {
+describe("payload size guard", () => {
   it("a roll the receivers would reject is not sent or stored; the roller gets a notice", async () => {
     const huge: DieChain[] = Array.from({ length: 60 }, (_, i) => ({
       dieId: String(i + 1),
@@ -228,7 +228,7 @@ describe("T-57 payload size guard (B-08)", () => {
 type SentPayload = { playerId: string; player: { id: string; name: string; color: string; role: string; connectionId: string } };
 const sentPlayers = () => obr().broadcast.sendMessage.mock.calls.map((c) => (c[1] as SentPayload).player);
 
-describe("B-10 / T-27 the payload carries the real OBR role", () => {
+describe("the payload carries the real OBR role", () => {
   it("a GM client sends role GM; a player client sends role PLAYER (a hard-coded role fails one of them)", async () => {
     resetObrMock({ id: "g1", connectionId: "cg", name: "Gina", color: "#00aa00", role: "GM" });
     const gm = createRollSender();
@@ -257,7 +257,7 @@ describe("B-10 / T-27 the payload carries the real OBR role", () => {
   });
 });
 
-describe("T-58 player info that rejects: no placeholder identity is sent (B-09)", () => {
+describe("player info that rejects: no placeholder identity is sent", () => {
   const placeholder = "x".repeat(64);
 
   it.each(["getName", "getColor", "getRole", "getId", "getConnectionId"] as const)(

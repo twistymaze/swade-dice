@@ -17,7 +17,7 @@ const chain = (dieId: string, dieType: DieChain["dieType"], rolls: number[], isW
   isWildDie,
 });
 
-/** d6 trait + Wild Die both 1, trait modifier +3, TN 4 (the A-01 scenario). */
+/** d6 trait + Wild Die both 1, trait modifier +3, TN 4. */
 function liftedCrit(): SavageRollResult {
   return computeRollResult(
     { mode: "TRAIT", dieChains: [chain("1", "D6", [1]), chain("2", "D6", [1], true)], isComplete: true, timestamp: 1 },
@@ -32,7 +32,7 @@ function oldPayloadLiftedCrit(): SavageRollResult {
   return r;
 }
 
-describe("T-54 / A-01 a Critical Failure lifted by a modifier is shown as CRIT, not as a success", () => {
+describe("a Critical Failure lifted by a modifier is shown as CRIT, not as a success", () => {
   it.each([
     ["new payload", liftedCrit],
     ["old payload (crit computed locally)", oldPayloadLiftedCrit],
@@ -65,14 +65,14 @@ describe("T-54 / A-01 a Critical Failure lifted by a modifier is shown as CRIT, 
   });
 });
 
-describe("T-12 / T-B1 STANDARD details panel", () => {
+describe("STANDARD details panel", () => {
   it("lists every die (d4: 3, d12: 12), not only the first", () => {
     render(<SavageWorldsResults result={fixture(standard)} />);
     expect(screen.getByText("d4: 3")).toBeInTheDocument();
     expect(screen.getByText("d12: 12")).toBeInTheDocument();
   });
 
-  it("A-03 an old STANDARD payload with a modifier shows no modifier line or prefix modifier", () => {
+  it("an old STANDARD payload with a modifier shows no modifier line or prefix modifier", () => {
     const r = fixture(standard);
     r.modifier = 2;
     r.outcomes = r.outcomes.map((o) => ({ ...o, modifier: 2 }));

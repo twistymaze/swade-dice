@@ -17,9 +17,9 @@ export interface DiceState {
  * Unified hook to determine the current dice mode and state
  * Used by various UI components to enable/disable features.
  * While a roll is in the tray, the mode is the roll's own mode, so the controls that edit a
- * finished roll (TN, modifiers, Wild Die) follow the shown result (D-08, T-62). Otherwise it is the
+ * finished roll (TN, modifiers, Wild Die) follow the shown result. Otherwise it is the
  * mode of the current dice selection. A STANDARD roll has no modifier, so neither modifier control
- * applies to it (A-03).
+ * applies to it.
  */
 export function useDiceMode(): DiceState {
   const diceCounts = useDiceControlsStore((state) => state.diceCounts);

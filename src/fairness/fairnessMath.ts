@@ -2,7 +2,7 @@ import { DiceType } from "../types/DiceType";
 import { getMaxValueForDie } from "../helpers/explosionHelpers";
 
 /**
- * Chi-squared critical values at p = 0.05 for df = sides - 1 (T-B5).
+ * Chi-squared critical values at p = 0.05 for df = sides - 1.
  * A fair die passes when the statistic is below the value.
  */
 export const CHI_SQUARED_CRITICAL_005: Record<DiceType, number> = {
@@ -19,12 +19,12 @@ export function getSides(dieType: DiceType): number {
   return sides;
 }
 
-/** True when the value is a face of a die with this many sides (T-B6). */
+/** True when the value is a face of a die with this many sides. */
 export function isFaceValue(value: number, sides: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= sides;
 }
 
-/** Count of each face 1..sides. Values out of range are not counted (T-B6). */
+/** Count of each face 1..sides. Values out of range are not counted. */
 export function countFaces(values: readonly number[], sides: number): number[] {
   const counts = new Array<number>(sides).fill(0);
   for (const value of values) {
@@ -33,7 +33,7 @@ export function countFaces(values: readonly number[], sides: number): number[] {
   return counts;
 }
 
-/** Expected count per face from the rolls actually made, not the planned count (T-B4). */
+/** Expected count per face from the rolls actually made, not the planned count. */
 export function expectedPerFace(counts: readonly number[]): number {
   const rolled = counts.reduce((sum, count) => sum + count, 0);
   return counts.length > 0 ? rolled / counts.length : 0;
@@ -67,11 +67,11 @@ export function summarizeFairness(values: readonly number[], dieType: DiceType):
   };
 }
 
-/** Start is possible with exactly one die selected and at least one roll planned (T-B7). */
+/** Start is possible with exactly one die selected and at least one roll planned. */
 export function canStartFairnessTest(counts: Record<string, number>, numberRolls: number): boolean {
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
   return total === 1 && numberRolls >= 1;
 }
 
-/** Push the chart data to React state every this many rolls, not every roll (E-11). */
+/** Push the chart data to React state every this many rolls, not every roll. */
 export const FAIRNESS_UPDATE_EVERY = 50;

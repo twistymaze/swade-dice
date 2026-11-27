@@ -3,8 +3,8 @@ import { getMaxValueForDie, isValidFaceValue, shouldDieExplode } from "./explosi
 import { getMaxValue } from "./explosionDisplay";
 import { getParentDieId, createExplosionDie, createDieChains } from "../dice/storeHelpers";
 
-describe("T-24 explosion helpers", () => {
-  it("T-B2 one max-value function: D4..D12, 0 (no throw) for unknown types", () => {
+describe("explosion helpers", () => {
+  it("one max-value function: D4..D12, 0 (no throw) for unknown types", () => {
     expect(["D4", "D6", "D8", "D10", "D12"].map(getMaxValueForDie)).toEqual([4, 6, 8, 10, 12]);
     for (const t of ["D20", "D100", "__proto__", "constructor", ""]) {
       expect(getMaxValueForDie(t)).toBe(0);
@@ -17,13 +17,13 @@ describe("T-24 explosion helpers", () => {
     expect(shouldDieExplode(3, "D4")).toBe(false);
   });
 
-  it("A-08 valid face values are integers in 1..max", () => {
+  it("valid face values are integers in 1..max", () => {
     expect(isValidFaceValue(1, "D6")).toBe(true);
     expect(isValidFaceValue(6, "D6")).toBe(true);
     for (const v of [0, 7, -1, 2.5, Number.NaN]) expect(isValidFaceValue(v, "D6")).toBe(false);
   });
 
-  it("getParentDieId and createExplosionDie ids; T-B3 the style is copied, no lowercase fallback", () => {
+  it("getParentDieId and createExplosionDie ids; the style is copied, no lowercase fallback", () => {
     expect(getParentDieId("5_explosion_2")).toBe("5");
     expect(getParentDieId("5")).toBe("5");
     const { die } = createExplosionDie("5", 2, { id: "5", type: "D8", style: "IRON" });

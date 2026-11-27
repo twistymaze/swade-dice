@@ -1,12 +1,12 @@
 /**
  * The cross-client data of the app: the roll broadcast and the per-player history in player
- * metadata. One validating parser for both (C-01, B-07, C-05, C-06, C-11, C-12, D-09).
+ * metadata. One validating parser for both.
  *
  * Rules:
  * - Never trust received data. Read only known own keys, check every type and range, build new
  *   objects (no spread of input, so no prototype keys), drop what does not pass.
  * - Sender identity (name, color, role) is NOT read from the payload: it comes from the OBR host
- *   (`event.connectionId` resolved through `OBR.party`, C-02). The `player`/`playerId` block is still
+ *   (`event.connectionId` resolved through `OBR.party`). The `player`/`playerId` block is still
  *   SENT so that clients on an older version (which read it) keep working.
  * - Payload version `v` (new, optional). Missing = a client before this change (legacy, "v0"): its
  *   roll id is derived from the result timestamp. `v >= 1` is read with the v1 rules: a later version
@@ -19,11 +19,11 @@ import { computeRollResult } from "../rules/outcomes";
 import { getPluginId } from "./getPluginId";
 
 export const ROLL_CHANNEL = getPluginId("roll-result");
-/** Player metadata key: this player's last completed, not hidden rolls (OD-2). */
+/** Player metadata key: this player's last completed, not hidden rolls. */
 export const HISTORY_METADATA_KEY = getPluginId("history");
 export const PAYLOAD_VERSION = 1;
 export const HISTORY_METADATA_VERSION = 1;
-/** Rolls kept per player in player metadata (OD-2). */
+/** Rolls kept per player in player metadata. */
 export const HISTORY_PER_PLAYER = 10;
 
 /** Broadcast limit is 16 kB per message (owlbear-platform.md 8); keep a margin. */
@@ -70,7 +70,7 @@ export interface RollBroadcastV1 {
   v: typeof PAYLOAD_VERSION;
   /** Unique per roll; the same for every revision of the roll. */
   rollId: string;
-  /** +1 per revision (post-roll edit, OD-1). Receivers keep the highest. */
+  /** +1 per revision (post-roll edit). Receivers keep the highest. */
   rev: number;
   /** The sender's connection id (legacy readers key on it). */
   playerId: string;
@@ -141,7 +141,7 @@ function optionalBool(o: Rec, key: string): boolean | undefined | null {
   return typeof v === "boolean" ? v : null;
 }
 
-/** A player color for display: `#rrggbb` only, else a neutral gray (C-03). */
+/** A player color for display: `#rrggbb` only, else a neutral gray. */
 export function safeColor(value: unknown): string {
   return typeof value === "string" && HEX_COLOR.test(value) ? value : FALLBACK_COLOR;
 }
@@ -156,7 +156,7 @@ export function contrastTextColor(color: unknown): "black" | "white" {
   return luminance > 0.5 ? "black" : "white";
 }
 
-/** A player name for display: a string, at most 64 characters (C-07). */
+/** A player name for display: a string, at most 64 characters. */
 export function safeName(value: unknown): string {
   if (typeof value !== "string") return "Unknown";
   const chars = Array.from(value);

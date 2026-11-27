@@ -13,7 +13,7 @@ const die = (type: Die["type"], style: Die["style"] = "GALAXY"): Die => ({ id: g
 const finish = (id: string, value: number) => store().checkAndProcessExplosion(id, value, T);
 const SETTINGS = { targetNumber: 4, traitModifier: 1, damageModifier: 2, wildDieEnabled: true };
 
-/** D-07 invariant: pending empty <=> every value set <=> result set. */
+/** Invariant: pending empty <=> every value set <=> result set. */
 function expectProgressInvariant() {
   const s = store();
   const pending = selectPendingDiceIds(s);
@@ -27,8 +27,8 @@ beforeEach(() => {
   store().clearRoll();
 });
 
-describe("T-23 start / clear state shape", () => {
-  it("startRoll marks all dice pending, one throw per die, the flagged die as wild (D-12)", () => {
+describe("start / clear state shape", () => {
+  it("startRoll marks all dice pending, one throw per die, the flagged die as wild", () => {
     const trait = die("D8");
     const wild = createWildDie();
     store().startRoll({ dice: [trait, wild] }, { mode: "TRAIT", settings: SETTINGS });
@@ -41,7 +41,7 @@ describe("T-23 start / clear state shape", () => {
     expectProgressInvariant();
   });
 
-  it("D-12 a NEBULA D6 without the flag is not the Wild Die", () => {
+  it("a NEBULA D6 without the flag is not the Wild Die", () => {
     const nebula = die("D6", "NEBULA");
     store().startRoll({ dice: [nebula] }, { mode: "TRAIT" });
     expect(store().dieInfo[nebula.id]!.isWildDie).toBe(false);
@@ -60,7 +60,7 @@ describe("T-23 start / clear state shape", () => {
     expect(selectPendingDiceIds(store())).toEqual([a.id, b.id]);
   });
 
-  it("T-B8 clearRoll resets rollMode and settings", () => {
+  it("clearRoll resets rollMode and settings", () => {
     store().startRoll({ dice: [die("D4")] }, { mode: "STANDARD", settings: SETTINGS });
     store().clearRoll();
     expect(store().rollMode).toBe("TRAIT");
@@ -69,7 +69,7 @@ describe("T-23 start / clear state shape", () => {
   });
 });
 
-describe("T-09 explosion processing", () => {
+describe("explosion processing", () => {
   it("d4 explodes on 4: chain 4, 4, 1 -> rolls [4,4,1], total 9, ids X_explosion_1, X_explosion_2", () => {
     const d4 = die("D4");
     store().startRoll({ dice: [d4] }, { mode: "DAMAGE", settings: SETTINGS });
@@ -153,7 +153,7 @@ describe("T-09 explosion processing", () => {
   });
 });
 
-describe("T-18 duplicate 'die finished' calls are idempotent (A-05)", () => {
+describe("duplicate 'die finished' calls are idempotent", () => {
   it("same id twice with value 3 -> rolls [3], not [3,3]", () => {
     const a = die("D6");
     const b = die("D6");
@@ -195,7 +195,7 @@ describe("T-18 duplicate 'die finished' calls are idempotent (A-05)", () => {
   });
 });
 
-describe("T-56 face value validation when a die finishes (A-08)", () => {
+describe("face value validation when a die finishes", () => {
   it.each([0, Number.NaN, -1, 2.5, 7])("value %s for a D6 -> rejected, not stored, die stays pending", (value) => {
     const a = die("D6");
     store().startRoll({ dice: [a] }, { mode: "DAMAGE" });
@@ -213,7 +213,7 @@ describe("T-56 face value validation when a die finishes (A-08)", () => {
   });
 });
 
-describe("T-19 / T-55 reroll (A-06, A-07, D-06)", () => {
+describe("reroll", () => {
   it("reroll is synchronous: new ids, hidden kept, mode kept, no timer", () => {
     vi.useFakeTimers();
     try {
@@ -263,7 +263,7 @@ describe("T-19 / T-55 reroll (A-06, A-07, D-06)", () => {
     expect(selectPendingDiceIds(store())).toHaveLength(1);
   });
 
-  it("A-07 reroll after the Wild Die was turned off -> no wild die thrown", () => {
+  it("reroll after the Wild Die was turned off -> no wild die thrown", () => {
     const t = die("D8");
     const w = createWildDie();
     store().startRoll({ dice: [t, w] }, { mode: "TRAIT" });
@@ -289,7 +289,7 @@ describe("T-19 / T-55 reroll (A-06, A-07, D-06)", () => {
   });
 });
 
-describe("T-61 / D-05 the roll records its own mode", () => {
+describe("the roll records its own mode", () => {
   it("changing the controls rollMode after startRoll does not change the result mode", () => {
     const d = die("D8");
     store().startRoll({ dice: [d] }, { mode: "TRAIT", settings: SETTINGS });

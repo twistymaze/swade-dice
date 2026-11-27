@@ -1,5 +1,5 @@
 /**
- * The party roll history (pure reducer, B-04, C-04, OD-2, OD-7).
+ * The party roll history (pure reducer).
  *
  * - Entry key: `<sender connectionId>:<rollId>`. Only the original connection can revise its entry.
  * - Order: by arrival in this client, never by the sender's clock. A revision keeps the position.

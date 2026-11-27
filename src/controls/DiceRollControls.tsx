@@ -111,7 +111,7 @@ function DicePickedControls() {
       const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
       
-      // The roll records its own mode and settings (D-05)
+      // The roll records its own mode and settings
       startRoll(
         { dice, hidden },
         {

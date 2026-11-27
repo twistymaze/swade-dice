@@ -18,7 +18,7 @@ interface SavageWorldsResultsSummaryProps {
   showModeIcon?: boolean;
   textColor?: string;
   isDarkBackground?: boolean;
-  /** Chips and toasts: add "vs TN n" to a trait roll when the TN is not 4 (OD-6). */
+  /** Chips and toasts: add "vs TN n" to a trait roll when the TN is not 4. */
   showTargetNumber?: boolean;
 }
 
@@ -42,7 +42,7 @@ export function SavageWorldsResultsSummary({
   
   const { mode, outcomes, isComplete } = result;
   const isTraitTest = mode === "TRAIT";
-  // A Critical Failure is never a success, also in old payloads that say success (A-01)
+  // A Critical Failure is never a success, also in old payloads that say success
   const isSuccess = (index: number) =>
     outcomes[index]?.success === true && !getCriticalFailureStatus(result, index).isCritical;
   const isMultiDieTrait = isTraitTest && outcomes.length > 1;
@@ -98,7 +98,7 @@ export function SavageWorldsResultsSummary({
         count > 1 ? `${count}${dieType}` : dieType
       );
       
-      // STANDARD rolls have no modifier (A-03)
+      // STANDARD rolls have no modifier
       const modifier = mode === "STANDARD" ? 0 : outcome.modifier || 0;
       const modifierText = modifier !== 0 ? (modifier > 0 ? `+${modifier}` : `${modifier}`) : '';
       
@@ -162,7 +162,7 @@ export function SavageWorldsResultsSummary({
                     ) : null}
                   </>
                 )}
-                {/* Critical failure indicator: from the rules, not from !success (A-01) */}
+                {/* Critical failure indicator: from the rules, not from !success */}
                 {(() => {
                   const critStatus = getCriticalFailureStatus(result, index);
                   if (critStatus.isCritical || (critStatus.isPossible && !isSuccess(index))) {
@@ -225,7 +225,7 @@ export function SavageWorldsResultsSummary({
                     ) : null}
                   </>
                 )}
-                {/* Critical failure indicator for multi-line (A-01) */}
+                {/* Critical failure indicator for multi-line */}
                 {(() => {
                   const critStatus = getCriticalFailureStatus(result, index);
                   if (critStatus.isCritical || (critStatus.isPossible && !isSuccess(index))) {

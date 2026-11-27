@@ -10,8 +10,8 @@ const lose = (canvas: HTMLCanvasElement) => {
 const restore = (canvas: HTMLCanvasElement) =>
   canvas.dispatchEvent(new Event("webglcontextrestored"));
 
-describe("T-52 WebGL context-loss handler (E-02)", () => {
-  it("T-52 lost: preventDefault and onLost; restored: onRestored then invalidate", () => {
+describe("WebGL context-loss handler", () => {
+  it("lost: preventDefault and onLost; restored: onRestored then invalidate", () => {
     const canvas = document.createElement("canvas");
     const cb = { invalidate: vi.fn(), onLost: vi.fn(), onRestored: vi.fn() };
     attachContextLossHandlers(canvas, cb);
@@ -26,7 +26,7 @@ describe("T-52 WebGL context-loss handler (E-02)", () => {
     expect(cb.invalidate).toHaveBeenCalledTimes(1);
   });
 
-  it("T-52 the returned cleanup removes both listeners", () => {
+  it("the returned cleanup removes both listeners", () => {
     const canvas = document.createElement("canvas");
     const cb = { invalidate: vi.fn(), onLost: vi.fn(), onRestored: vi.fn() };
     const detach = attachContextLossHandlers(canvas, cb);
@@ -38,7 +38,7 @@ describe("T-52 WebGL context-loss handler (E-02)", () => {
     expect(cb.invalidate).not.toHaveBeenCalled();
   });
 
-  it("T-52 hook: lost flag, two losses stay one flag, restore clears it and invalidates", () => {
+  it("hook: lost flag, two losses stay one flag, restore clears it and invalidates", () => {
     const canvas = document.createElement("canvas");
     const invalidate = vi.fn();
     const { result } = renderHook(() => useWebGLContextLoss());
@@ -58,7 +58,7 @@ describe("T-52 WebGL context-loss handler (E-02)", () => {
     expect(invalidate).toHaveBeenCalledTimes(1);
   });
 
-  it("T-52 hook: reload clears the flag, changes the canvas key and detaches the old canvas", () => {
+  it("hook: reload clears the flag, changes the canvas key and detaches the old canvas", () => {
     const canvas = document.createElement("canvas");
     const { result } = renderHook(() => useWebGLContextLoss());
     act(() => result.current.onCreated({ gl: { domElement: canvas }, invalidate: vi.fn() }));
@@ -78,7 +78,7 @@ describe("T-52 WebGL context-loss handler (E-02)", () => {
     expect(result.current.lost).toBe(false);
   });
 
-  it("T-52 hook: unmount removes the listeners", () => {
+  it("hook: unmount removes the listeners", () => {
     const canvas = document.createElement("canvas");
     const remove = vi.spyOn(canvas, "removeEventListener");
     const { result, unmount } = renderHook(() => useWebGLContextLoss());

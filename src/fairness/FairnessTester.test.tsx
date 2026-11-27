@@ -1,4 +1,4 @@
-/** T-31 fairness tester flow, driven through the dice store. */
+/** Fairness tester flow, driven through the dice store. */
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -48,7 +48,7 @@ function selectOne() {
   return id;
 }
 
-describe("T-31 fairness tester flow", () => {
+describe("fairness tester flow", () => {
   it("Start needs exactly one die and more than 0 rolls; warnings say why", () => {
     render(<FairnessTester />);
     expect(start()).toBeDisabled();

@@ -1,4 +1,4 @@
-/** T-32 recent-rolls menu (max 6) and replay. */
+/** Recent-rolls menu (max 6) and replay. */
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { DiceHistory } from "./DiceHistory";
@@ -33,7 +33,7 @@ function openMenu() {
 }
 const chips = (menu: HTMLElement) => Array.from(menu.querySelectorAll(".MuiChip-root")) as HTMLElement[];
 
-describe("T-32 recent-rolls store (max 6)", () => {
+describe("recent-rolls store (max 6)", () => {
   it("the 7th push drops the oldest", () => {
     const rolls = golden();
     for (let i = 0; i < 7; i++) history().pushRecentRoll({ ...rolls[i % rolls.length]!, targetNumber: i + 1 });
@@ -47,7 +47,7 @@ describe("T-32 recent-rolls store (max 6)", () => {
   });
 });
 
-describe("T-32 recent-rolls menu", () => {
+describe("recent-rolls menu", () => {
   it("empty -> 'No History'", () => {
     const menu = openMenu();
     expect(within(menu).getByText("No History")).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe("T-32 recent-rolls menu", () => {
   });
 });
 
-describe("T-32 replay", () => {
+describe("replay", () => {
   function replay(roll: RecentRoll) {
     act(() => useDiceHistoryStore.setState({ recentRolls: [roll] }));
     fireEvent.click(chips(openMenu())[0]!);

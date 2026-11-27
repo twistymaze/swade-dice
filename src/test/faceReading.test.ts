@@ -1,5 +1,5 @@
 // @vitest-environment node
-/** T-29 Face reading from a die pose with the app's getValueFromDiceGroup and mesh locators. */
+/** Face reading from a die pose with the app's getValueFromDiceGroup and mesh locators. */
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 
@@ -16,10 +16,10 @@ function faceOf(name: string, type: DiceType) {
   return n === 0 && type === "D10" ? 10 : n;
 }
 
-describe("T-29 face reading from a die pose", () => {
+describe("face reading from a die pose", () => {
   for (const sharp of [false, true]) {
     for (const type of TYPES) {
-      it(`T-29 ${sharp ? "sharp" : "rounded"} ${type}: each locator turned up reads its face, also tilted 20 degrees`, () => {
+      it(`${sharp ? "sharp" : "rounded"} ${type}: each locator turned up reads its face, also tilted 20 degrees`, () => {
         for (const { name, position } of LOCATORS[sharp ? "sharp" : "rounded"][type]) {
           const { root, physicsGroup } = buildDieGroup(type, sharp);
           const direction = new THREE.Vector3(...position!).normalize();
@@ -35,7 +35,7 @@ describe("T-29 face reading from a die pose", () => {
     }
   }
 
-  it("T-29 sharp and rounded locators have the same names: 1..N, D10 0..9", () => {
+  it("sharp and rounded locators have the same names: 1..N, D10 0..9", () => {
     for (const type of TYPES) {
       const names = (kind: "sharp" | "rounded") => LOCATORS[kind][type].map((l) => l.name).sort();
       expect(names("sharp")).toEqual(names("rounded"));
@@ -45,14 +45,14 @@ describe("T-29 face reading from a die pose", () => {
     }
   });
 
-  it("T-29 D10 locator 0 reads as 10", () => {
+  it("D10 locator 0 reads as 10", () => {
     const { root, physicsGroup } = buildDieGroup("D10");
     const zero = LOCATORS.rounded.D10.find((l) => l.name.endsWith("_0"))!;
     root.quaternion.setFromUnitVectors(new THREE.Vector3(...zero.position!).normalize(), UP);
     expect(getValueFromDiceGroup(physicsGroup, "D10")).toBe(10);
   });
 
-  it("T-29 tilted 30 degrees still reads the nearest face", () => {
+  it("tilted 30 degrees still reads the nearest face", () => {
     for (const sharp of [false, true]) {
       for (const type of TYPES) {
         for (const { name, position } of LOCATORS[sharp ? "sharp" : "rounded"][type]) {
@@ -66,7 +66,7 @@ describe("T-29 face reading from a die pose", () => {
     }
   });
 
-  it("T-29 a locator name that does not parse reads NaN (the store rejects it, A-08)", () => {
+  it("a locator name that does not parse reads NaN (the store rejects it)", () => {
     const group = new THREE.Group();
     const dice = new THREE.Group();
     dice.name = "dice";
@@ -80,7 +80,7 @@ describe("T-29 face reading from a die pose", () => {
     expect(getValueFromDiceGroup(group, "D6")).toBeNaN();
   });
 
-  it("T-29 a group without a \"dice\" child reads 0", () => {
+  it("a group without a \"dice\" child reads 0", () => {
     expect(getValueFromDiceGroup(new THREE.Group(), "D6")).toBe(0);
   });
 });

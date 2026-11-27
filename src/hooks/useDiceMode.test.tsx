@@ -25,7 +25,7 @@ beforeEach(() => {
   act(() => dice().clearRoll());
 });
 
-describe("T-62 controls that edit a finished roll follow the roll's mode (D-08)", () => {
+describe("controls that edit a finished roll follow the roll's mode", () => {
   it("a replayed TRAIT roll after resetDiceCounts (AUTO, 0 dice) keeps the trait controls on", () => {
     rollTrait(4, 2);
     act(() => controls().resetDiceCounts());
@@ -45,7 +45,7 @@ describe("T-62 controls that edit a finished roll follow the roll's mode (D-08)"
     act(() => controls().setModeChoice("AUTO"));
   });
 
-  it("A-03 a STANDARD roll enables neither modifier", () => {
+  it("a STANDARD roll enables neither modifier", () => {
     const d = { id: generateDiceId(), type: "D8" as const, style: "GALAXY" as const };
     act(() => dice().startRoll({ dice: [d] }, { mode: "STANDARD" }));
     const { result } = renderHook(() => useDiceMode());
@@ -61,7 +61,7 @@ describe("T-62 controls that edit a finished roll follow the roll's mode (D-08)"
   });
 });
 
-describe("T-33 dice mode hook", () => {
+describe("dice mode hook", () => {
   it("no selection and no roll -> \"none\"", () => {
     act(() => controls().resetDiceCounts());
     const { result } = renderHook(() => useDiceMode());

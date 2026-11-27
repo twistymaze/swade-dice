@@ -15,7 +15,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("T-20 controls store: localStorage parsing (A-11, C-08)", () => {
+describe("controls store: localStorage parsing", () => {
   it.each([
     ["abc", 4],
     ["", 4],
@@ -82,7 +82,7 @@ describe("T-20 controls store: localStorage parsing (A-11, C-08)", () => {
   });
 });
 
-describe("T-21 roll mode is derived from mode choice and counts (D-08)", () => {
+describe("roll mode is derived from mode choice and counts", () => {
   it("computeRollMode: AUTO 0 -> DAMAGE, 1 -> TRAIT, 2 -> DAMAGE; explicit choices win", () => {
     expect(computeRollMode("AUTO", {})).toBe("DAMAGE");
     expect(computeRollMode("AUTO", { a: 1 })).toBe("TRAIT");
@@ -127,7 +127,7 @@ describe("T-21 roll mode is derived from mode choice and counts (D-08)", () => {
   });
 });
 
-describe("T-22 building the dice for a roll (D-12)", () => {
+describe("building the dice for a roll", () => {
   const byId: Record<string, Die> = {
     a: { id: "a", type: "D8", style: "GALAXY" },
     b: { id: "b", type: "D6", style: "GALAXY" },
@@ -149,7 +149,7 @@ describe("T-22 building the dice for a roll (D-12)", () => {
   });
 });
 
-describe("T-57 / B-08 limits the receivers accept", () => {
+describe("limits the receivers accept", () => {
   it("the dice count per roll stops at MAX_DICE_PER_ROLL; changeDieCount clamps", async () => {
     const store = await freshStore({});
     const { MAX_DICE_PER_ROLL } = await import("./store");
@@ -173,7 +173,7 @@ describe("T-57 / B-08 limits the receivers accept", () => {
   });
 });
 
-describe("T-21 controls store actions", () => {
+describe("controls store actions", () => {
   it("changeDiceSet GALAXY -> IRON keeps counts by index and type (2 d8 stay 2 d8) and saves the set id", async () => {
     const store = await freshStore({ "swade-diceSetId": "GALAXY_STANDARD" });
     const { diceSets } = await import("../sets/diceSets");

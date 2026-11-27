@@ -31,7 +31,7 @@ export type CriticalFailureStatus = {
 
 const NO_CRIT: CriticalFailureStatus = { isCritical: false, isPossible: false };
 
-/** The modifier that applies to a mode. STANDARD rolls are raw values with no modifier (A-03). */
+/** The modifier that applies to a mode. STANDARD rolls are raw values with no modifier. */
 export function modifierForMode(mode: SavageRollMode, settings: Pick<RollSettings, "traitModifier" | "damageModifier">): number {
   if (mode === "TRAIT") return settings.traitModifier;
   if (mode === "DAMAGE") return settings.damageModifier;
@@ -53,7 +53,7 @@ function isNaturalOne(chain: DieChain): boolean {
 }
 
 /**
- * Critical Failure status of a trait roll (book rule, OD-4).
+ * Critical Failure status of a trait roll (book rule).
  * - With a Wild Die: critical when the Wild Die is a natural 1 AND more than half of all dice
  *   (Wild Die included) are natural 1s. For one trait die this is "1 on both".
  * - Without a Wild Die (Extras, or Wild Die off): "possible" when the roll would be critical if a
@@ -124,7 +124,7 @@ function traitOutcome(chain: DieChain, modifier: number, targetNumber: number, r
  * - TRAIT: one outcome per trait die. When the Wild Die is on and its chain exists, it replaces the
  *   worst trait die if it is strictly higher (the first worst on a tie). Every outcome has
  *   `success` and `raises`. A Critical Failure makes every outcome a failure with 0 raises.
- * - DAMAGE: one outcome, all chains summed plus the damage modifier. No `success`/`raises` (OD-5).
+ * - DAMAGE: one outcome, all chains summed plus the damage modifier. No `success`/`raises`.
  * - STANDARD: one outcome per chain, raw value, modifier 0.
  */
 export function computeOutcomes(
@@ -194,7 +194,7 @@ export type RollResultBase = Pick<SavageRollResult, "mode" | "dieChains" | "time
 
 /**
  * Build the full result (all fields recalculated) from the die chains and the current settings.
- * Calling it again after a TN, modifier or Wild Die change recalculates every field (OD-1).
+ * Calling it again after a TN, modifier or Wild Die change recalculates every field.
  */
 export function computeRollResult(base: RollResultBase, settings: RollSettings): SavageRollResult {
   return {
@@ -211,7 +211,7 @@ export function computeRollResult(base: RollResultBase, settings: RollSettings):
 
 /**
  * Crit status of an outcome for display. New payloads carry the fields on the outcome; old payloads
- * (from clients before the A-01 fix) do not, so the status is computed from the chains.
+ * (from clients before the crit fields were added) do not, so the status is computed from the chains.
  */
 export function getOutcomeCriticalStatus(result: SavageRollResult, outcomeIndex: number): CriticalFailureStatus {
   const outcome = result.outcomes[outcomeIndex];

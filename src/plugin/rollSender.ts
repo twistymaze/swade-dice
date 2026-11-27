@@ -1,17 +1,17 @@
 /**
- * The one sender of this client's rolls (B-02, B-03, B-08, B-09, B-12, OD-1, OD-2).
+ * The one sender of this client's rolls.
  *
  * - A finished, not hidden roll is broadcast at once (rev 0). A post-roll edit (TN, modifier, Wild
- *   Die; OD-1) is sent after the controls settle (trailing debounce) with rev + 1. A change back to
+ *   Die) is sent after the controls settle (trailing debounce) with rev + 1. A change back to
  *   the last sent value, or a change that does not alter the payload, sends nothing.
  * - One serial queue: every OBR write is awaited; an error (rate limit, timeout) is retried with
  *   backoff; only the newest revision of a roll is sent. A final failure shows the roller an ERROR
  *   notification.
  * - After each send the player's own history (last 10 rolls, compact) is written to player metadata.
- * - Hidden rolls are never sent and never stored (OD-3). The flag comes from the roll itself.
+ * - Hidden rolls are never sent and never stored. The flag comes from the roll itself.
  * - A payload over the broadcast limit, or one the receivers would reject, is not sent: notice.
  * - Sender name/color/role are read from OBR when a send runs, so a roll that finishes before player
- *   info has loaded is still sent (B-09).
+ *   info has loaded is still sent.
  */
 import OBR from "@owlbear-rodeo/sdk";
 import { SavageRollResult } from "../types/SavageWorldsTypes";
@@ -177,7 +177,7 @@ export function createRollSender(options: RollSenderOptions = {}) {
   function flush(rollId: string, state: RollState, result: SavageRollResult, key: string) {
     state.timer = undefined;
     const rev = state.lastKey === null ? 0 : state.rev + 1;
-    // The payload must be within the size limit and readable by every receiver (B-08, C-11).
+    // The payload must be within the size limit and readable by every receiver.
     const probe = buildRollBroadcast(rollId, rev, result, PLACEHOLDER_SENDER);
     if (jsonByteLength(probe) > BROADCAST_MAX_BYTES || parseRollBroadcast(probe) === null) {
       if (state.lastKey === null) notify(TOO_LARGE_MESSAGE);

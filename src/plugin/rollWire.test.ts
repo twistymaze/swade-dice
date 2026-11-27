@@ -70,9 +70,9 @@ afterEach(() => {
   resetInvalidWarnings();
 });
 
-describe("T-50 parseRollBroadcast: accepts", () => {
+describe("parseRollBroadcast: accepts", () => {
   it.each(Object.keys(goldens).map((k) => k.replace(/^.*broadcast\.rollResult\.|\.json$/g, "")))(
-    "T-01/T-60 golden %s (legacy, no v): result unchanged, rollId from the timestamp",
+    "golden %s (legacy, no v): result unchanged, rollId from the timestamp",
     (name) => {
       const p = golden(name);
       const parsed = parseRollBroadcast(p);
@@ -130,7 +130,7 @@ describe("T-50 parseRollBroadcast: accepts", () => {
   });
 });
 
-describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (null), never thrown", () => {
+describe("parseRollBroadcast: hostile and bad payloads are rejected (null), never thrown", () => {
   const cases: [string, unknown][] = [
     ["null", null],
     ["undefined", undefined],
@@ -160,7 +160,7 @@ describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (n
     ["raises 1e9", mutated((p) => (p.result.outcomes[0]!.raises = 1e9))],
     ["reason 201 chars", mutated((p) => (p.result.outcomes[0]!.criticalFailureReason = "x".repeat(201)))],
     ["dieType D3", mutated((p) => (p.result.dieChains[0]!.dieType = "D3"))],
-    ["dieType D20 (removed, OD-8)", mutated((p) => (p.result.dieChains[0]!.dieType = "D20"))],
+    ["dieType D20 (removed)", mutated((p) => (p.result.dieChains[0]!.dieType = "D20"))],
     ["dieType __proto__", mutated((p) => (p.result.dieChains[0]!.dieType = "__proto__"))],
     ["dieType constructor", mutated((p) => (p.result.dieChains[0]!.dieType = "constructor"))],
     ["dieType toString", mutated((p) => (p.result.dieChains[0]!.dieType = "toString"))],
@@ -200,7 +200,7 @@ describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (n
     expect(({} as Record<string, unknown>).isComplete).toBeUndefined();
   });
 
-  it("C-06 a 7000-roll chain is rejected quickly", () => {
+  it("a 7000-roll chain is rejected quickly", () => {
     const p = mutated((p) =>
       Object.assign(p.result.dieChains[0]!, { rolls: Array(7000).fill(8), total: 56000 })
     );
@@ -209,7 +209,7 @@ describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (n
     expect(performance.now() - start).toBeLessThan(50);
   });
 
-  it("the payload player block is ignored (identity comes from OBR, C-02)", () => {
+  it("the payload player block is ignored (identity comes from OBR)", () => {
     const p = mutated((p) => {
       p.player = { name: "<img src=x onerror=alert(1)>", color: "#000;background:url(x)}body{display:none" };
       p.playerId = 42;
@@ -221,7 +221,7 @@ describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (n
   });
 });
 
-describe("C-03/C-07 display helpers", () => {
+describe("display helpers", () => {
   it.each([
     ["#4e9a06", "#4e9a06"],
     ["#ABCDEF", "#ABCDEF"],
@@ -235,7 +235,7 @@ describe("C-03/C-07 display helpers", () => {
     expect(safeColor(input)).toBe(expected);
   });
 
-  it("contrast text color never throws (TP-B15)", () => {
+  it("contrast text color never throws", () => {
     expect(contrastTextColor("#ffffff")).toBe("black");
     expect(contrastTextColor("#000000")).toBe("white");
     expect(contrastTextColor(undefined)).toBe("black"); // the gray fallback
@@ -250,7 +250,7 @@ describe("C-03/C-07 display helpers", () => {
     ["rgb(0,0,0)", "black"],
     ["red", "black"],
     [undefined, "black"],
-  ])("T-36 pill text color on %s -> %s", (color, expected) => {
+  ])("pill text color on %s -> %s", (color, expected) => {
     expect(contrastTextColor(color)).toBe(expected);
   });
 
@@ -270,8 +270,8 @@ describe("C-03/C-07 display helpers", () => {
   });
 });
 
-describe("T-57 size limits", () => {
-  it("B-08 the largest roll the app can produce fits one broadcast and the receivers accept it", () => {
+describe("size limits", () => {
+  it("the largest roll the app can produce fits one broadcast and the receivers accept it", () => {
     for (const mode of ["TRAIT", "DAMAGE", "STANDARD"] as const) {
       const payload = buildRollBroadcast("x".repeat(36), LIMITS.maxRev, maxRoll(mode), PLAYERS_64);
       expect(jsonByteLength(payload), mode).toBeLessThanOrEqual(BROADCAST_MAX_BYTES);
@@ -279,7 +279,7 @@ describe("T-57 size limits", () => {
     }
   });
 
-  it("OD-2 ten max-size rolls fit well under the 64 kB player metadata limit (< 32 kB)", () => {
+  it("ten max-size rolls fit well under the 64 kB player metadata limit (< 32 kB)", () => {
     const items: HistoryItem[] = Array.from({ length: HISTORY_PER_PLAYER }, (_, i) => ({
       rollId: `${"r".repeat(34)}${i.toString().padStart(2, "0")}`,
       rev: LIMITS.maxRev,
@@ -297,7 +297,7 @@ describe("T-57 size limits", () => {
   });
 });
 
-describe("OD-2 parseHistoryMetadata", () => {
+describe("parseHistoryMetadata", () => {
   const result = (name: string) => parseRollResult(golden(name).result) as SavageRollResult;
 
   it("round-trips: outcomes are recomputed with the rules engine", () => {
@@ -343,7 +343,7 @@ describe("OD-2 parseHistoryMetadata", () => {
   });
 });
 
-describe("T-60 a new payload is readable by an old client", () => {
+describe("a new payload is readable by an old client", () => {
   /** The paths the pre-change receivers read (RollHistoryTray / NotificationPopover / pill / summary). */
   it("every path old code reads is present with the old type; player is kept", () => {
     const result = parseRollResult(golden("multiTraitWildDie").result) as SavageRollResult;

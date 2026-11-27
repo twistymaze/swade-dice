@@ -21,7 +21,7 @@ export function RollHistoryPanel({
   entries: HistoryEntry[];
   identities: Record<string, SenderIdentity>;
 }) {
-  // The list is capped by the reducer; cap the render too (OD-2)
+  // The list is capped by the reducer; cap the render too
   const rollHistory = entries.slice(-HISTORY_LIMIT);
   const containerRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
@@ -89,7 +89,7 @@ export function RollHistoryPanel({
           ) : (
             <Stack spacing={0.5}>
               {rollHistory.map(entry => (
-                // One bad entry hides only itself (D-02, C-01)
+                // One bad entry hides only itself
                 <ErrorBoundary key={entry.key} name="PlayerRollPill" fallback={() => null}>
                   <PlayerRollPill
                     player={identities[entry.connectionId] ?? UNKNOWN_PLAYER}

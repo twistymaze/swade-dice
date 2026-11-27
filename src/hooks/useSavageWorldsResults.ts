@@ -6,7 +6,7 @@ import { computeRollResult } from "../rules/outcomes";
 
 /**
  * The current Savage Worlds roll result, recalculated with the live TN, modifiers and Wild Die
- * setting (post-roll edits, OD-1). Every field is recalculated by the one rules engine
+ * setting (post-roll edits). Every field is recalculated by the one rules engine
  * (`src/rules/outcomes.ts`), so this is also what is shown in the history and broadcast.
  */
 export function useSavageWorldsResults(): SavageRollResult | null {

@@ -7,7 +7,7 @@ import { SavageWorldsResults } from "../controls/SavageWorldsResults";
 import { SavageRollResult } from "../types/SavageWorldsTypes";
 import { contrastTextColor, safeColor } from "./rollWire";
 
-/** Who rolled: name and color from OBR (never from a payload, C-02). */
+/** Who rolled: name and color from OBR (never from a payload). */
 export interface PillPlayer {
   name: string;
   color: string;
@@ -22,7 +22,7 @@ export interface PlayerRollPillProps {
 export function PlayerRollPill({ player, result, showDicePrefix = false }: PlayerRollPillProps) {
   const theme = useTheme();
   const hasResult = result && result.outcomes && result.outcomes.length > 0;
-  // Only a validated hex color reaches the styles (C-03)
+  // Only a validated hex color reaches the styles
   const color = safeColor(player.color);
 
   const pillContent = (

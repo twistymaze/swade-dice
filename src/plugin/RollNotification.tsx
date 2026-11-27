@@ -5,10 +5,10 @@ import { useTheme } from "@mui/material/styles";
 import { SavageRollResult } from "../types/SavageWorldsTypes";
 
 export interface RollNotificationProps {
-  /** Sender name from OBR (never from the payload, C-02). Long names are cut with an ellipsis (C-07). */
+  /** Sender name from OBR (never from the payload). Long names are cut with an ellipsis. */
   name: string;
   result: SavageRollResult;
-  /** The roller changed TN, modifier or Wild Die after the roll (OD-7). */
+  /** The roller changed TN, modifier or Wild Die after the roll. */
   revised?: boolean;
 }
 

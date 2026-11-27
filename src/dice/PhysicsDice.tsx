@@ -74,7 +74,7 @@ export function PhysicsDice({
 }: ThreeElements["group"] & {
   die: Die;
   dieThrow: DiceThrow;
-  /** Return `false` to reject the face: the die is re-thrown (A-08) */
+  /** Return `false` to reject the face: the die is re-thrown */
   onRollFinished?: (
     id: string,
     number: number,

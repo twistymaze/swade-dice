@@ -75,7 +75,7 @@ let buffersRequested = false;
 
 /**
  * Start loading the collision and shake sounds (once). Called on the first click in the tray, when
- * the audio listener is created (browsers allow audio only after a user gesture). Before D-10 this
+ * the audio listener is created (browsers allow audio only after a user gesture). Earlier, this
  * module added a window click listener at import time.
  */
 export function loadAudioBuffers() {
