@@ -241,6 +241,19 @@ describe("C-03/C-07 display helpers", () => {
     expect(contrastTextColor(undefined)).toBe("black"); // the gray fallback
   });
 
+  it.each([
+    ["#ffffff", "black"],
+    ["#000000", "white"],
+    ["#4e9a06", "white"], // golden player color
+    ["#ffeb3b", "black"],
+    ["#fff", "black"], // not 6-digit hex -> gray fallback
+    ["rgb(0,0,0)", "black"],
+    ["red", "black"],
+    [undefined, "black"],
+  ])("T-36 pill text color on %s -> %s", (color, expected) => {
+    expect(contrastTextColor(color)).toBe(expected);
+  });
+
   it("names are strings of at most 64 characters", () => {
     expect(safeName("Wren")).toBe("Wren");
     expect(Array.from(safeName("x".repeat(200)))).toHaveLength(64);
