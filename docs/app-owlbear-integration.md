@@ -110,7 +110,7 @@ The rules are in `src/plugin/rollSender.ts`:
 - Sender info (`getId`, `getConnectionId`, `getName`, `getColor`, `getRole`) is read when a send runs,
   so a roll that finishes before player info is ready is still sent.
 
-### 5.3 Post-roll edits (owner decision OD-1)
+### 5.3 Post-roll edits
 
 Changing the TN, a modifier or the Wild Die after a roll is a feature: the result is recalculated
 (every field, by the rules engine) and sent again as a new revision of the same roll.
@@ -164,7 +164,7 @@ and `OBR.player.onChange`, made once.
 
 ## 7. Roll history
 
-### 7.1 Player metadata (owner decision OD-2)
+### 7.1 Player metadata
 
 | Key | Written by | Value |
 |---|---|---|
