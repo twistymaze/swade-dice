@@ -120,22 +120,11 @@ function loadBuffers() {
 
 window.addEventListener("click", loadBuffers);
 
-export function getAudioBuffers(
+function getAudioBuffers(
   weightClass: WeightClass,
   physicalMaterial: PhysicalMaterial
 ) {
   return buffers[weightClass][physicalMaterial];
-}
-
-export function getRandomBuffer(
-  weightClass: WeightClass,
-  physicalMaterial: PhysicalMaterial
-) {
-  const buffers = getAudioBuffers(weightClass, physicalMaterial);
-  if (buffers.length === 0) {
-    return null;
-  }
-  return buffers[Math.floor(Math.random() * buffers.length)];
 }
 
 /**

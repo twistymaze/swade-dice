@@ -74,7 +74,7 @@ export interface ExplosionResult {
 export type PlayerRollResult = SavageRollResult;
 
 // Player display info interface compatible with OBR SDK to avoid circular dependency
-export interface PlayerDisplayInfo {
+interface PlayerDisplayInfo {
   id: string;
   name: string;
   color: string;

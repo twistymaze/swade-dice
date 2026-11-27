@@ -15,7 +15,7 @@ const MAX_LAUNCH_VELOCITY = 2;
 const MIN_ANGULAR_VELOCITY = 2;
 const MAX_ANGULAR_VELOCITY = 6;
 
-export function randomPosition(): DiceVector3 {
+function randomPosition(): DiceVector3 {
   return {
     x: random(MIN_X, MAX_X),
     y: random(MIN_Y, MAX_Y),
@@ -24,7 +24,7 @@ export function randomPosition(): DiceVector3 {
 }
 
 /** Adapted from https://stackoverflow.com/a/56794499 */
-export function randomRotation(): DiceQuaternion {
+function randomRotation(): DiceQuaternion {
   let x, y, z, u, v, w;
   do {
     x = random(-1, 1);
@@ -50,7 +50,7 @@ export function randomRotation(): DiceQuaternion {
  * Always launches from where the dice is towards the center of the tray
  * This better simulates a throwing motion compared to a complete random velocity
  */
-export function randomLinearVelocity(
+function randomLinearVelocity(
   position: DiceVector3,
   speedMultiplier?: number
 ): DiceVector3 {
@@ -76,22 +76,7 @@ export function randomLinearVelocity(
   return velocity;
 }
 
-export function randomLinearVelocityFromDirection(
-  direction: DiceVector3,
-  speedMultiplier?: number
-): DiceVector3 {
-  const speed =
-    random(MIN_LAUNCH_VELOCITY, MAX_LAUNCH_VELOCITY) * (speedMultiplier || 1);
-  const velocity: DiceVector3 = {
-    x: direction.x * speed,
-    y: direction.y * speed,
-    z: direction.z * speed,
-  };
-
-  return velocity;
-}
-
-export function randomAngularVelocity(): DiceVector3 {
+function randomAngularVelocity(): DiceVector3 {
   return {
     x: random(MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY),
     y: random(MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY),

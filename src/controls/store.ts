@@ -7,7 +7,7 @@ import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
 
 export type DiceCounts = Record<string, number>;
-export type RollModeSelection = 'AUTO' | 'TRAIT' | 'DAMAGE' | 'STANDARD';
+type RollModeSelection = 'AUTO' | 'TRAIT' | 'DAMAGE' | 'STANDARD';
 
 interface DiceControlsState {
   diceSet: DiceSet;

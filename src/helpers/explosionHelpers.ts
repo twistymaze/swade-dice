@@ -3,7 +3,7 @@ import { DiceType } from "../types/DiceType";
 /**
  * Get the maximum value for a given dice type
  */
-export function getMaxValueForDie(dieType: DiceType): number {
+function getMaxValueForDie(dieType: DiceType): number {
   switch (dieType) {
     case "D4":
       return 4;

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 
-export type DiceMode = "trait" | "damage" | "none";
+type DiceMode = "trait" | "damage" | "none";
 
 export interface DiceState {
   mode: DiceMode;
