@@ -33,8 +33,7 @@ export function updateExplosionResults(
 export function createExplosionDie(
   parentDieId: string,
   explosionCount: number,
-  originalDie: Die,
-  _dieIndex: number
+  originalDie: Die
 ): { die: Die; throw: DiceThrow } {
   const explosionId = `${parentDieId}_explosion_${explosionCount + 1}`;
   const newDie: Die = {
@@ -56,17 +55,8 @@ export function getParentDieId(id: string): string {
   return id;
 }
 
-// Helper function to get root die ID (for explosion seed calculation)
-export function getRootDieId(parentDieId: string): string {
-  let rootDieId = parentDieId;
-  while (rootDieId.includes('_explosion_')) {
-    rootDieId = rootDieId.substring(0, rootDieId.lastIndexOf('_explosion_'));
-  }
-  return rootDieId;
-}
-
 // Helper function to create a single roll outcome with optional target number
-export function createRollOutcome(
+function createRollOutcome(
   chains: DieChain[],
   modifier: number,
   replacedByWild: boolean,
@@ -111,7 +101,7 @@ export function processSingleDieTraitTest(
 }
 
 // Helper function to find worst result index
-export function findWorstResultIndex(results: RollOutcome[]): number {
+function findWorstResultIndex(results: RollOutcome[]): number {
   let worstIndex = 0;
   let worstTotal = results[0].total;
   

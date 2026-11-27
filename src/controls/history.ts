@@ -26,7 +26,6 @@ interface DiceHistoryState {
 export const useDiceHistoryStore = create<DiceHistoryState>()(
   immer((set) => ({
     recentRolls: [],
-    pinnedRolls: [],
     pushRecentRoll(roll) {
       set((state) => {
         if (state.recentRolls.length > 5) {

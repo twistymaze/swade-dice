@@ -21,7 +21,6 @@ import {
   updateExplosionResults,
   createExplosionDie,
   getParentDieId,
-  getRootDieId,
   processSingleDieTraitTest,
   processMultiDieTraitTest,
   processDamageRoll
@@ -29,14 +28,6 @@ import {
 
 interface DiceRollState {
   roll: DiceRoll | null;
-  /**
-   * Master seed for the current roll (for deterministic randomness)
-   */
-  /**
-   * Mapping from die ID to its index in the original dice array
-   * Used for deterministic seed derivation
-   */
-  dieIndices: Record<string, number>;
   /**
    * A mapping from the die ID to its roll result.
    * A value of `null` means the die hasn't finished rolling yet.
@@ -98,7 +89,6 @@ interface DiceRollState {
 export const useDiceRollStore = create<DiceRollState>()(
   immer((set, get) => ({
     roll: null,
-    dieIndices: {},
     rollValues: {},
     rollTransforms: {},
     rollThrows: {},
@@ -123,7 +113,6 @@ export const useDiceRollStore = create<DiceRollState>()(
         state.rollTransforms = {};
         state.rollThrows = {};
         state.dieInfo = {};
-        state.dieIndices = {};
         state.explosionDice = [];
         state.finishedDice = [];
         state.pendingDice = [];
@@ -132,10 +121,7 @@ export const useDiceRollStore = create<DiceRollState>()(
         
         // Set all values to null and mark as pending
         const dice = getDieFromDice(roll);
-        dice.forEach((die, index) => {
-          // Store the die's index
-          state.dieIndices[die.id] = index;
-          
+        dice.forEach((die) => {
           state.rollValues[die.id] = null;
           state.rollTransforms[die.id] = null;
           state.rollThrows[die.id] = getRandomDiceThrow(speedMultiplier);
@@ -149,7 +135,6 @@ export const useDiceRollStore = create<DiceRollState>()(
     clearRoll: () =>
       set((state) => {
         state.roll = null;
-        state.dieIndices = {};
         state.rollValues = {};
         state.rollTransforms = {};
         state.rollThrows = {};
@@ -187,10 +172,7 @@ export const useDiceRollStore = create<DiceRollState>()(
           
           // Set up the new roll exactly like startRoll does
           state.roll = newRoll;
-          newDice.forEach((die, index) => {
-            // Store the die's index
-            state.dieIndices[die.id] = index;
-            
+          newDice.forEach((die) => {
             state.rollValues[die.id] = null;
             state.rollTransforms[die.id] = null;
             state.rollThrows[die.id] = getRandomDiceThrow();
@@ -270,11 +252,7 @@ export const useDiceRollStore = create<DiceRollState>()(
     
     createExplosion: (parentDieId, info) => {
       const explosionCount = (get().explosionResults[parentDieId]?.rolls.length || 1) - 1;
-      const dieIndices = get().dieIndices;
-      const rootDieId = getRootDieId(parentDieId);
-      const dieIndex = dieIndices[rootDieId] ?? 0;
-      
-      const explosionData = createExplosionDie(parentDieId, explosionCount, info.die, dieIndex);
+      const explosionData = createExplosionDie(parentDieId, explosionCount, info.die);
       
       set((draft) => {
         draft.explosionResults[parentDieId].exploded = true;
