@@ -1,6 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { useEffect } from "react";
 import throttle from "lodash.throttle";
+import { obrSafe } from "./obrSafe";
 
 const THROTTLE_TIME = 100;
 const SIDEBAR_WIDTH = 40;
@@ -11,7 +12,7 @@ const SIDEBAR_WIDTH = 40;
 export function ResizeObserver() {
   useEffect(() => {
     const handleResize = throttle(() => {
-      OBR.action.setWidth(window.innerHeight / 2 + SIDEBAR_WIDTH);
+      void obrSafe(OBR.action.setWidth(window.innerHeight / 2 + SIDEBAR_WIDTH), "resizing the action popover");
     }, THROTTLE_TIME);
 
     handleResize();

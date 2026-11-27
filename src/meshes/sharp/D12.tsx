@@ -9,6 +9,7 @@ import { useGLTF } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 
 import glb from "./d12.glb";
+import { LOCATORS } from "../locators";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -27,62 +28,9 @@ export const D12 = React.forwardRef<
       <group name="dice">
         <mesh name="d12" castShadow receiveShadow geometry={nodes.d12.geometry}>
           {children}
-          <group
-            name="012_locator_1"
-            position={[0, -0.93, 0]}
-            rotation={[0, 0, Math.PI]}
-          />
-          <group
-            name="012_locator_10"
-            position={[0.68, -0.41, -0.48]}
-            rotation={[-1.86, 0.37, -0.89]}
-          />
-          <group
-            name="012_locator_11"
-            position={[0.27, 0.44, 0.79]}
-            rotation={[1.13, 0.13, -0.28]}
-          />
-          <group name="012_locator_12" position={[0, 0.96, 0]} />
-          <group
-            name="012_locator_2"
-            position={[-0.25, -0.41, -0.8]}
-            rotation={[-2.01, -0.14, 0.28]}
-          />
-          <group
-            name="012_locator_3"
-            position={[-0.67, 0.44, 0.5]}
-            rotation={[1.29, -0.37, 0.89]}
-          />
-          <group
-            name="012_locator_4"
-            position={[-0.84, -0.41, -0.01]}
-            rotation={[-1.57, -0.46, 1.57]}
-          />
-          <group
-            name="012_locator_5"
-            position={[0.67, -0.41, 0.5]}
-            rotation={[-1.29, 0.37, -2.25]}
-          />
-          <group
-            name="012_locator_6"
-            position={[-0.27, -0.41, 0.79]}
-            rotation={[-1.13, -0.13, 2.86]}
-          />
-          <group
-            name="012_locator_7"
-            position={[0.25, 0.44, -0.8]}
-            rotation={[2.01, 0.14, -2.86]}
-          />
-          <group
-            name="012_locator_8"
-            position={[-0.68, 0.44, -0.48]}
-            rotation={[1.86, -0.37, 2.25]}
-          />
-          <group
-            name="012_locator_9"
-            position={[0.84, 0.44, -0.01]}
-            rotation={[1.57, 0.46, -1.57]}
-          />
+          {LOCATORS.sharp.D12.map(({ name, ...transform }) => (
+            <group key={name} name={name} {...transform} />
+          ))}
         </mesh>
       </group>
     </group>

@@ -23,7 +23,11 @@ export function DiceHidden() {
 
   return (
     <Tooltip
-      title={hidden ? "Show Roll" : "Hide Roll"}
+      title={
+        hidden
+          ? "Private rolls: only you see the results. Nothing is sent to other players or saved in the party history. Click to share rolls."
+          : "Rolls are shared with the table. Click for private rolls (only you see them)."
+      }
       placement="top"
       disableInteractive
     >

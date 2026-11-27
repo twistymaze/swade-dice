@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import React, { useEffect, useState } from "react";
 import { AudioListenerContext } from "./useAudioListener";
+import { loadAudioBuffers } from "./getAudioBuffer";
 
 export function AudioListenerProvider({
   children,
@@ -17,6 +18,7 @@ export function AudioListenerProvider({
     if (listener === null) {
       const createListener = () => {
         setListener(new THREE.AudioListener());
+        loadAudioBuffers();
         window.removeEventListener("click", createListener);
       };
       window.addEventListener("click", createListener);

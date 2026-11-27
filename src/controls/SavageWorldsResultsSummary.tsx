@@ -18,6 +18,8 @@ interface SavageWorldsResultsSummaryProps {
   showModeIcon?: boolean;
   textColor?: string;
   isDarkBackground?: boolean;
+  /** Chips and toasts: add "vs TN n" to a trait roll when the TN is not 4. */
+  showTargetNumber?: boolean;
 }
 
 export function SavageWorldsResultsSummary({ 
@@ -30,7 +32,8 @@ export function SavageWorldsResultsSummary({
   showDicePrefix = false,
   showModeIcon = false,
   textColor = "white",
-  isDarkBackground = true
+  isDarkBackground = true,
+  showTargetNumber = false,
 }: SavageWorldsResultsSummaryProps) {
   
   if (!result) {
@@ -39,6 +42,9 @@ export function SavageWorldsResultsSummary({
   
   const { mode, outcomes, isComplete } = result;
   const isTraitTest = mode === "TRAIT";
+  // A Critical Failure is never a success, also in old payloads that say success
+  const isSuccess = (index: number) =>
+    outcomes[index]?.success === true && !getCriticalFailureStatus(result, index).isCritical;
   const isMultiDieTrait = isTraitTest && outcomes.length > 1;
   
   // Colors that work well on both dark and light backgrounds
@@ -62,10 +68,10 @@ export function SavageWorldsResultsSummary({
           dieType = nonWildChains[index].dieType;
         } else {
           // Fallback to the chain in the outcome
-          dieType = outcome.chains[0].dieType;
+          dieType = outcome.chains[0]!.dieType;
         }
       } else {
-        dieType = outcome.chains[0].dieType;
+        dieType = outcome.chains[0]!.dieType;
       }
       
       const modifier = outcome.modifier || 0;
@@ -92,7 +98,8 @@ export function SavageWorldsResultsSummary({
         count > 1 ? `${count}${dieType}` : dieType
       );
       
-      const modifier = outcome.modifier || 0;
+      // STANDARD rolls have no modifier
+      const modifier = mode === "STANDARD" ? 0 : outcome.modifier || 0;
       const modifierText = modifier !== 0 ? (modifier > 0 ? `+${modifier}` : `${modifier}`) : '';
       
       return (
@@ -143,22 +150,22 @@ export function SavageWorldsResultsSummary({
                 {isTraitTest && isComplete && outcome.success !== undefined && (
                   <>
                     {" "}
-                    {outcome.success ? (
+                    {isSuccess(index) ? (
                       <span style={{ color: successColor, fontWeight: "bold" }}>✓</span>
                     ) : (
                       <span style={{ color: errorColor,fontWeight: "bold"  }}>✗</span>
                     )}
-                    {outcome.raises && outcome.raises > 0 ? (
+                    {isSuccess(index) && outcome.raises && outcome.raises > 0 ? (
                       <span style={{ color: warningColor, fontWeight: "lighter"}}>{''}
                         {"⬆︎".repeat(Math.min(outcome.raises, 3))}
                       </span>
                     ) : null}
                   </>
                 )}
-                {/* Add critical failure indicator */}
-                {!outcome.success && (() => {
+                {/* Critical failure indicator: from the rules, not from !success */}
+                {(() => {
                   const critStatus = getCriticalFailureStatus(result, index);
-                  if (critStatus.isCritical || critStatus.isPossible) {
+                  if (critStatus.isCritical || (critStatus.isPossible && !isSuccess(index))) {
                     const color = critStatus.isCritical ? "#f44336" : "#ff9800";
                     return (
                       <span style={{ 
@@ -175,6 +182,9 @@ export function SavageWorldsResultsSummary({
               </span>
             </span>
           ))}
+          {showTargetNumber && isTraitTest && result.targetNumber !== 4 && (
+            <span style={{ opacity: 0.7, whiteSpace: "nowrap" }}> vs TN {result.targetNumber}</span>
+          )}
         </Typography>
       {/* // </Stack> */}
       </>
@@ -203,22 +213,22 @@ export function SavageWorldsResultsSummary({
               {isTraitTest && isComplete && outcome.success !== undefined && (
                 <>
                   {" "}
-                  {outcome.success ? (
+                  {isSuccess(index) ? (
                     <span style={{ color: successColor }}>✓</span>
                   ) : (
                     <span style={{ color: errorColor }}>✗</span>
                   )}
-                    {outcome.raises && outcome.raises > 0 ? (
+                    {isSuccess(index) && outcome.raises && outcome.raises > 0 ? (
                       <span style={{ color: warningColor, fontWeight: 200}}>{''}
                         {"⬆︎".repeat(Math.min(outcome.raises, 3))}
                       </span>
                     ) : null}
                   </>
                 )}
-                {/* Add critical failure indicator for multi-line */}
-                {!outcome.success && (() => {
+                {/* Critical failure indicator for multi-line */}
+                {(() => {
                   const critStatus = getCriticalFailureStatus(result, index);
-                  if (critStatus.isCritical || critStatus.isPossible) {
+                  if (critStatus.isCritical || (critStatus.isPossible && !isSuccess(index))) {
                     const color = critStatus.isCritical ? "#f44336" : "#ff9800";
                     const text = critStatus.isCritical ? "!! CRIT FAIL" : "?? POSSIBLE CRIT";
                     return (

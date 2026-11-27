@@ -22,14 +22,12 @@ import galaxyOrm from './galaxy/orm.jpg';
 import galaxyNormal from './galaxy/normal.jpg';
 
 // Material configuration types
-export type MaterialType = 'standard' | 'physical';
-
-export interface StandardMaterialConfig {
+interface StandardMaterialConfig {
   type: 'standard';
   metalness?: number;
 }
 
-export interface PhysicalMaterialConfig {
+interface PhysicalMaterialConfig {
   type: 'physical';
   clearcoat?: number;
   clearcoatRoughness?: number;

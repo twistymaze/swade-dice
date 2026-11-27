@@ -7,6 +7,8 @@ export interface Die {
   id: string;
   style: DiceStyle;
   type: DiceType;
+  /** Set on the Wild Die that `getDiceToRoll` adds. The dice store reads this flag. */
+  isWildDie?: boolean;
 }
 
 export function isDie(value: unknown): value is Die {

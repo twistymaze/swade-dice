@@ -1,0 +1,110 @@
+{
+  "roll": {
+    "dice": [
+      {
+        "id": "1",
+        "style": "GALAXY",
+        "type": "D8"
+      },
+      {
+        "id": "2",
+        "style": "NEBULA",
+        "type": "D6"
+      }
+    ],
+    "hidden": false,
+    "savageWorldsConfig": {
+      "rollType": "trait",
+      "modifier": 1,
+      "targetNumber": 4,
+      "wildDieId": "2"
+    }
+  },
+  "dieIndices": {
+    "1": 0,
+    "2": 1
+  },
+  "rollValues": {
+    "1": null,
+    "2": null
+  },
+  "rollTransforms": {
+    "1": null,
+    "2": null
+  },
+  "rollThrows": {
+    "1": {
+      "position": {
+        "x": -0.1505727037321776,
+        "y": 1.0800136916805059,
+        "z": -0.7071321800351144
+      },
+      "rotation": {
+        "x": -0.35529540153220296,
+        "y": 0.18142007058486342,
+        "z": -0.7356383274080718,
+        "w": 0.547437838377389
+      },
+      "linearVelocity": {
+        "x": 0.328578331561225,
+        "y": 0,
+        "z": 1.5430971626999916
+      },
+      "angularVelocity": {
+        "x": 2.500896729528904,
+        "y": 2.453798210248351,
+        "z": 5.29710846953094
+      }
+    },
+    "2": {
+      "position": {
+        "x": 0.1060119857545942,
+        "y": 1.1214747411664576,
+        "z": -0.18452021740376945
+      },
+      "rotation": {
+        "x": -0.9611073732376099,
+        "y": 0.26896956097334623,
+        "z": -0.05321973505320548,
+        "w": 0.033100637138484955
+      },
+      "linearVelocity": {
+        "x": -0.5530094366529404,
+        "y": 0,
+        "z": 0.962546081475646
+      },
+      "angularVelocity": {
+        "x": 4.042627289891243,
+        "y": 5.2224935963749886,
+        "z": 5.079686952754855
+      }
+    }
+  },
+  "dieInfo": {
+    "1": {
+      "die": {
+        "id": "1",
+        "style": "GALAXY",
+        "type": "D8"
+      },
+      "isWildDie": false
+    },
+    "2": {
+      "die": {
+        "id": "2",
+        "style": "NEBULA",
+        "type": "D6"
+      },
+      "isWildDie": true
+    }
+  },
+  "explosionDice": [],
+  "finishedDice": [],
+  "pendingDice": [
+    "1",
+    "2"
+  ],
+  "rollMode": "TRAIT",
+  "explosionResults": {},
+  "currentRollResult": null
+}

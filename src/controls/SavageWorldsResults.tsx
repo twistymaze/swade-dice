@@ -17,13 +17,29 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
   
   const isTraitTest = mode === "TRAIT";
   const isMultiDieTrait = isTraitTest && outcomes.length > 1;
+  const isStandard = mode === "STANDARD";
+  // A Critical Failure is never a success, also in old payloads that say success
+  const critStatusOf = (index: number) => getCriticalFailureStatus(result, index);
+  const isSuccess = (index: number) =>
+    outcomes[index]?.success === true && !critStatusOf(index).isCritical;
+  const renderCrit = (index: number, ml: number) => {
+    const critStatus = critStatusOf(index);
+    if (critStatus.isPossible && isSuccess(index)) return null;
+    const indicator = formatCriticalIndicator(critStatus, true);
+    if (!indicator) return null;
+    return (
+      <Typography variant="body2" sx={{ color: indicator.color, fontWeight: "bold", ml }}>
+        {critStatus.isCritical ? "!!" : "??"} {indicator.text}
+      </Typography>
+    );
+  };
   
   // Don't show anything if no results yet
   if (!dieChains || dieChains.length === 0) {
     return null;
   }
   
-  // Helper to render explosion chain for a single die
+  // Explosion chain of one die, rendered flat (no nesting per roll)
   const renderExplosionChain = (rolls: number[], dieType: DiceType) => (
     <>
       {rolls.map((value: number, index: number) => {
@@ -36,7 +52,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
             {!isLastRoll && " + "}
           </span>
         );
-      }).reduce((prev: React.ReactNode, curr: React.ReactNode) => <>{prev}{curr}</>, <></>)}
+      })}
     </>
   );
   
@@ -50,14 +66,14 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
     
     diceDisplay = (
       <>
-        {regularChains.map(chain => (
-          <Typography key={chain.dieId} variant="body2" color="white">
+        {regularChains.map((chain, index) => (
+          <Typography key={`trait-${index}`} variant="body2" color="white">
             Trait ({chain.dieType.toLowerCase()}): {renderExplosionChain(chain.rolls, chain.dieType)}
             {chain.rolls.length > 1 && ` = ${chain.total}`}
           </Typography>
         ))}
-        {wildDieEnabled && wildChains.map(chain => (
-          <Typography key={chain.dieId} variant="body2" color="white">
+        {wildDieEnabled && wildChains.map((chain, index) => (
+          <Typography key={`wild-${index}`} variant="body2" color="white">
             Wild ({chain.dieType.toLowerCase()}): {renderExplosionChain(chain.rolls, chain.dieType)}
             {chain.rolls.length > 1 && ` = ${chain.total}`}
           </Typography>
@@ -65,25 +81,24 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
       </>
     );
   } else {
-    // Damage roll - group by die type
-    const groupedByType: Record<DiceType, DieChain[]> = {} as Record<DiceType, DieChain[]>;
+    // Damage roll - group by die type (a Map: no prototype keys from a payload)
+    const groupedByType = new Map<DiceType, DieChain[]>();
     dieChains.forEach(chain => {
-      if (!groupedByType[chain.dieType]) {
-        groupedByType[chain.dieType] = [];
-      }
-      groupedByType[chain.dieType].push(chain);
+      const group = groupedByType.get(chain.dieType);
+      if (group) group.push(chain);
+      else groupedByType.set(chain.dieType, [chain]);
     });
     
     diceDisplay = (
       <>
-        {Object.entries(groupedByType).map(([dieType, chains]) => {
+        {[...groupedByType.entries()].map(([dieType, chains]) => {
           const groupTotal = chains.reduce((sum, c) => sum + c.total, 0);
           const needsTotal = chains.length > 1 || chains.some(c => c.rolls.length > 1);
           return (
             <Typography key={dieType} variant="body2" color="white">
               {chains.length}{dieType.toLowerCase()}: {
                 chains.map((chain, chainIndex) => (
-                  <span key={chain.dieId}>
+                  <span key={chainIndex}>
                     {chainIndex > 0 && " + "}
                     {renderExplosionChain(chain.rolls, chain.dieType as DiceType)}
                   </span>
@@ -102,8 +117,8 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
       {/* Display dice */}
       {diceDisplay}
       
-      {/* Show modifier if non-zero */}
-      {modifier !== undefined && modifier !== 0 && (
+      {/* Show modifier if non-zero. STANDARD rolls have no modifier. */}
+      {!isStandard && modifier !== undefined && modifier !== 0 && (
         <Typography variant="body2" color="white">
           Modifier: {modifier > 0 ? '+' : ''}{modifier}
         </Typography>
@@ -123,7 +138,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
                 {outcome.replacedByWild && " (wild)"}
               </Typography>
               {outcome.success !== undefined && (
-                outcome.success ? (
+                isSuccess(index) ? (
                   <>
                     <CheckIcon sx={{ fontSize: "14px", color: "#4caf50" }} />
                     <Typography variant="body2" color="#4caf50">
@@ -136,35 +151,38 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
                     <Typography variant="body2" color="#f44336">
                       Failed vs TN {targetNumber}
                     </Typography>
-                    {(() => {
-                      const critStatus = getCriticalFailureStatus(result, index);
-                      const indicator = formatCriticalIndicator(critStatus, true);
-                      if (!indicator) return null;
-                      return (
-                        <Typography variant="body2" sx={{ color: indicator.color, fontWeight: "bold", ml: 0.5 }}>
-                          {critStatus.isCritical ? "!!" : "??"} {indicator.text}
-                        </Typography>
-                      );
-                    })()}
+                    {renderCrit(index, 0.5)}
                   </>
                 )
               )}
             </Stack>
           ))}
         </>
+      ) : isStandard && outcomes.length > 1 ? (
+        // STANDARD: one raw value per die
+        <>
+          <Typography variant="body2" color="white" sx={{ borderTop: '1px solid rgba(255,255,255,0.3)', pt: 0.5, mt: 0.5 }}>
+            Results:
+          </Typography>
+          {outcomes.map((outcome, index) => (
+            <Typography key={index} variant="body2" color="white" sx={{ ml: 2 }}>
+              {outcome.chains[0]?.dieType.toLowerCase()}: {outcome.total}
+            </Typography>
+          ))}
+        </>
       ) : outcomes.length > 0 ? (
         // Single result (single trait test or damage)
         <>
           <Typography variant="body2" color="white" sx={{ borderTop: '1px solid rgba(255,255,255,0.3)', pt: 0.5, mt: 0.5 }}>
-            {isTraitTest ? "Result" : "Total"}: {outcomes[0].total}
+            {isTraitTest ? "Result" : "Total"}: {outcomes[0]!.total}
           </Typography>
-          {isTraitTest && isComplete && outcomes[0].success !== undefined && (
-            outcomes[0].success ? (
+          {isTraitTest && isComplete && outcomes[0]!.success !== undefined && (
+            isSuccess(0) ? (
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <CheckIcon sx={{ fontSize: "16px", color: "#4caf50" }} />
                 <Typography variant="body2" color="#4caf50">
                   Success vs TN {targetNumber}
-                  {outcomes[0].raises && outcomes[0].raises > 0 ? ` with ${outcomes[0].raises} raise${outcomes[0].raises > 1 ? 's' : ''}!` : ''}
+                  {outcomes[0]!.raises && outcomes[0]!.raises > 0 ? ` with ${outcomes[0]!.raises} raise${outcomes[0]!.raises > 1 ? 's' : ''}!` : ''}
                 </Typography>
               </Stack>
             ) : (
@@ -173,16 +191,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
                 <Typography variant="body2" color="#f44336">
                   Failed vs TN {targetNumber}
                 </Typography>
-                {(() => {
-                  const critStatus = getCriticalFailureStatus(result, 0);
-                  const indicator = formatCriticalIndicator(critStatus, true);
-                  if (!indicator) return null;
-                  return (
-                    <Typography variant="body2" sx={{ color: indicator.color, fontWeight: "bold", ml: 1 }}>
-                      {critStatus.isCritical ? "!!" : "??"} {indicator.text}
-                    </Typography>
-                  );
-                })()}
+                {renderCrit(0, 1)}
               </Stack>
             )
           )}

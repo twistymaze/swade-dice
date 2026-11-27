@@ -26,4 +26,9 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-document.body.addEventListener("keydown", onKeyDown);
+// Debug shortcuts are for development only. In production builds this block is
+// removed, so the flags above stay false.
+if (import.meta.env.DEV) {
+  document.body.addEventListener("keydown", onKeyDown);
+}
+

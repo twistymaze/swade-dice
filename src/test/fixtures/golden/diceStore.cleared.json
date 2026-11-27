@@ -1,0 +1,14 @@
+{
+  "roll": null,
+  "dieIndices": {},
+  "rollValues": {},
+  "rollTransforms": {},
+  "rollThrows": {},
+  "dieInfo": {},
+  "explosionDice": [],
+  "finishedDice": [],
+  "pendingDice": [],
+  "rollMode": "STANDARD",
+  "explosionResults": {},
+  "currentRollResult": null
+}

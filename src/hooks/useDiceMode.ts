@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 
-export type DiceMode = "trait" | "damage" | "none";
+type DiceMode = "trait" | "damage" | "none";
 
 export interface DiceState {
   mode: DiceMode;
@@ -15,11 +15,16 @@ export interface DiceState {
 
 /**
  * Unified hook to determine the current dice mode and state
- * Used by various UI components to enable/disable features
+ * Used by various UI components to enable/disable features.
+ * While a roll is in the tray, the mode is the roll's own mode, so the controls that edit a
+ * finished roll (TN, modifiers, Wild Die) follow the shown result. Otherwise it is the
+ * mode of the current dice selection. A STANDARD roll has no modifier, so neither modifier control
+ * applies to it.
  */
 export function useDiceMode(): DiceState {
   const diceCounts = useDiceControlsStore((state) => state.diceCounts);
-  const rollMode = useDiceControlsStore((state) => state.rollMode);
+  const selectionMode = useDiceControlsStore((state) => state.rollMode);
+  const activeRollMode = useDiceRollStore((state) => state.rollMode);
   const dieInfo = useDiceRollStore((state) => state.dieInfo);
   const rollValues = useDiceRollStore((state) => state.rollValues);
   
@@ -39,7 +44,7 @@ export function useDiceMode(): DiceState {
     // Check current selection
     const currentSelectionCount = Object.values(diceCounts).reduce((sum, count) => sum + count, 0);
     
-    // Always use rollMode from store - it's the single source of truth
+    const rollMode = hasActiveRoll ? activeRollMode : selectionMode;
     const isTraitTest = rollMode === "TRAIT";
     const mode: DiceMode = currentSelectionCount > 0 || hasActiveRoll 
       ? (isTraitTest ? "trait" : "damage")
@@ -48,10 +53,10 @@ export function useDiceMode(): DiceState {
     return {
       mode,
       isTraitTest,
-      isDamageRoll: mode === "damage",
+      isDamageRoll: mode === "damage" && rollMode === "DAMAGE",
       hasActiveRoll,
       originalNonWildDiceCount,
       currentSelectionCount,
     };
-  }, [diceCounts, rollMode, dieInfo, rollValues]);
+  }, [diceCounts, selectionMode, activeRollMode, dieInfo, rollValues]);
 }

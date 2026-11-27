@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Review working files
+.review/
+
+# Claude Code: only the shared launch config is tracked
+.claude/*
+!.claude/launch.json

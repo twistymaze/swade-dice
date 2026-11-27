@@ -22,7 +22,7 @@ export function gltfTexture(
       throw Error("Textures and encodings must have the same length");
     }
     for (let i = 0; i < textures.length; i++) {
-      const texture = textures[i];
+      const texture = textures[i]!;
       const encoding = encodings[i];
       texture.flipY = false;
       texture.colorSpace =
@@ -35,4 +35,13 @@ export function gltfTexture(
     textures.colorSpace =
       encodings === "SRGB" ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   }
+}
+
+/**
+ * `useTexture` onLoad callback for an [albedo, data, normal] texture triple.
+ * Module scope so that drei's `useLayoutEffect(..., [onLoad])` does not run it
+ * again on every render (an inline arrow is a new function each time).
+ */
+export function setupPbrTextures(textures: THREE.Texture[]) {
+  gltfTexture(textures, ["SRGB", "LINEAR", "LINEAR"]);
 }

@@ -5,9 +5,10 @@ import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
+import { createWildDie } from "../helpers/wildDie";
 
 export type DiceCounts = Record<string, number>;
-export type RollModeSelection = 'AUTO' | 'TRAIT' | 'DAMAGE' | 'STANDARD';
+type RollModeSelection = 'AUTO' | 'TRAIT' | 'DAMAGE' | 'STANDARD';
 
 interface DiceControlsState {
   diceSet: DiceSet;
@@ -23,7 +24,8 @@ interface DiceControlsState {
   traitModifier: number;   // Modifier for trait tests
   damageModifier: number;  // Modifier for damage rolls
   modeChoice: RollModeSelection;  // User's mode selection (AUTO, TRAIT, or DAMAGE)
-  rollMode: 'TRAIT' | 'DAMAGE' | 'STANDARD';  // The actual current mode
+  /** Derived from `modeChoice` and `diceCounts` (computeRollMode); set only by `setDerived`. */
+  rollMode: 'TRAIT' | 'DAMAGE' | 'STANDARD';
   // Results display state
   resultsDetailsHovered: boolean;
   // Actions
@@ -62,7 +64,7 @@ const loadDiceSet = () => {
   // Default: first valid set (not Nebula or "all")
   return diceSets.find(set => 
     set.id !== "NEBULA_STANDARD" && set.id !== "all"
-  ) || diceSets[0];
+  ) || diceSets[0]!;
 };
 
 const initialSet = loadDiceSet();
@@ -70,7 +72,7 @@ const initialDiceCounts = getDiceCountsFromSet(initialSet);
 const initialDiceById = getDiceByIdFromSet(initialSet);
 
 // Helper to compute actual roll mode
-function computeRollMode(modeChoice: RollModeSelection, counts: DiceCounts): 'TRAIT' | 'DAMAGE' | 'STANDARD' {
+export function computeRollMode(modeChoice: RollModeSelection, counts: DiceCounts): 'TRAIT' | 'DAMAGE' | 'STANDARD' {
   // If explicitly chosen, always use that mode regardless of dice count
   if (modeChoice === 'TRAIT') return 'TRAIT';
   if (modeChoice === 'DAMAGE') return 'DAMAGE';
@@ -81,17 +83,45 @@ function computeRollMode(modeChoice: RollModeSelection, counts: DiceCounts): 'TR
   return totalCount === 1 ? 'TRAIT' : 'DAMAGE';
 }
 
+/**
+ * At most this many dice in one roll (plus the Wild Die), so every roll fits the 16 kB broadcast and
+ * the receivers' limits (`src/plugin/rollWire.ts` LIMITS).
+ */
+export const MAX_DICE_PER_ROLL = 40;
+/** Modifiers are clamped to the range the receivers accept. */
+export const MAX_ABS_MODIFIER = 99;
+const clampModifier = (m: number) =>
+  Number.isFinite(m) ? Math.max(-MAX_ABS_MODIFIER, Math.min(MAX_ABS_MODIFIER, Math.trunc(m))) : 0;
+const totalDice = (counts: DiceCounts) => Object.values(counts).reduce((sum, n) => sum + n, 0);
+
+export const DEFAULT_TARGET_NUMBER = 4;
+export const MIN_TARGET_NUMBER = 1;
+export const MAX_TARGET_NUMBER = 99;
+
+/**
+ * A valid target number: an integer in 1..99. Not a finite number -> the default 4.
+ * Strings are parsed like `parseInt` ("7.9" -> 7, " 8" -> 8, "abc" -> 4).
+ */
+export function parseTargetNumber(value: unknown): number {
+  const n = typeof value === "string" ? Number.parseInt(value, 10) : typeof value === "number" ? Math.trunc(value) : NaN;
+  if (!Number.isFinite(n)) return DEFAULT_TARGET_NUMBER;
+  return Math.max(MIN_TARGET_NUMBER, Math.min(MAX_TARGET_NUMBER, n));
+}
+
+/** Only the string "true" turns the Wild Die on; no value means the default (on). */
+export function parseWildDieEnabled(value: string | null): boolean {
+  return value !== null ? value === 'true' : true;
+}
+
 // Load Savage Worlds settings from localStorage
 const loadSavageWorldsSettings = () => {
   try {
-    const wildDieEnabled = localStorage.getItem('swade-wildDieEnabled');
-    const targetNumber = localStorage.getItem('swade-targetNumber');
     return {
-      wildDieEnabled: wildDieEnabled !== null ? wildDieEnabled === 'true' : true,
-      targetNumber: targetNumber !== null ? parseInt(targetNumber, 10) : 4,
+      wildDieEnabled: parseWildDieEnabled(localStorage.getItem('swade-wildDieEnabled')),
+      targetNumber: parseTargetNumber(localStorage.getItem('swade-targetNumber') ?? DEFAULT_TARGET_NUMBER),
     };
   } catch {
-    return { wildDieEnabled: true, targetNumber: 4 };
+    return { wildDieEnabled: true, targetNumber: DEFAULT_TARGET_NUMBER };
   }
 };
 
@@ -99,7 +129,14 @@ const { wildDieEnabled: initialWildDie, targetNumber: initialTN } = loadSavageWo
 
 
 export const useDiceControlsStore = create<DiceControlsState>()(
-  immer((set, _get) => ({
+  immer((set, _get) => {
+    /** Every change of counts or mode choice goes through here, so `rollMode` stays derived. */
+    const setDerived = (fn: (state: DiceControlsState) => void) =>
+      set((state) => {
+        fn(state);
+        state.rollMode = computeRollMode(state.modeChoice, state.diceCounts);
+      });
+    return {
     diceSet: initialSet,
     diceById: initialDiceById,
     defaultDiceCounts: initialDiceCounts,
@@ -115,12 +152,12 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     rollMode: computeRollMode('AUTO', initialDiceCounts),  // Computed from modeChoice and counts
     resultsDetailsHovered: false,
     changeDiceSet(diceSet) {
-      set((state) => {
+      setDerived((state) => {
         const counts: DiceCounts = {};
         const prevCounts = state.diceCounts;
         const prevDice = state.diceSet.dice;
         for (let i = 0; i < diceSet.dice.length; i++) {
-          const die = diceSet.dice[i];
+          const die = diceSet.dice[i]!;
           const prevDie = prevDice[i];
           // Carry over count if the index and die type match
           if (prevDie && prevDie.type === die.type) {
@@ -133,8 +170,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
         state.diceSet = diceSet;
         state.defaultDiceCounts = getDiceCountsFromSet(diceSet);
         state.diceById = getDiceByIdFromSet(diceSet);
-        // Update rollMode based on new counts
-        state.rollMode = computeRollMode(state.modeChoice, counts);
       });
       
       // Save dice set selection to localStorage
@@ -144,53 +179,45 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       }
     },
     resetDiceCounts(preserveMode?: boolean) {
-      set((state) => {
+      setDerived((state) => {
         state.diceCounts = state.defaultDiceCounts;
         if (!preserveMode) {
           // Reset to AUTO when not preserving
           state.modeChoice = 'AUTO';
-          state.rollMode = computeRollMode('AUTO', state.defaultDiceCounts);
         }
-        // When preserving mode, don't touch modeChoice or rollMode at all
-        // They stay exactly as they were
       });
     },
     changeDieCount(id, count) {
-      set((state) => {
+      setDerived((state) => {
         if (id in state.diceCounts) {
-          state.diceCounts[id] = count;
-          // Update rollMode based on new counts
-          state.rollMode = computeRollMode(state.modeChoice, state.diceCounts);
+          const others = totalDice(state.diceCounts) - state.diceCounts[id]!;
+          state.diceCounts[id] = Math.max(0, Math.min(count, MAX_DICE_PER_ROLL - others));
         }
       });
     },
     incrementDieCount(id) {
-      set((state) => {
-        if (id in state.diceCounts) {
-          state.diceCounts[id] += 1;
-          // Update rollMode based on new counts
-          state.rollMode = computeRollMode(state.modeChoice, state.diceCounts);
+      setDerived((state) => {
+        if (id in state.diceCounts && totalDice(state.diceCounts) < MAX_DICE_PER_ROLL) {
+          state.diceCounts[id]! += 1;
         }
       });
     },
     decrementDieCount(id) {
-      set((state) => {
-        if (id in state.diceCounts && state.diceCounts[id] > 0) {
-          state.diceCounts[id] -= 1;
-          // Update rollMode based on new counts
-          state.rollMode = computeRollMode(state.modeChoice, state.diceCounts);
+      setDerived((state) => {
+        if (id in state.diceCounts && state.diceCounts[id]! > 0) {
+          state.diceCounts[id]! -= 1;
         }
       });
     },
     setTraitModifier(modifier) {
       set((state) => {
-        state.traitModifier = modifier;
+        state.traitModifier = clampModifier(modifier);
       });
       // Don't save to localStorage - modifiers are ephemeral in SWADE
     },
     setDamageModifier(modifier) {
       set((state) => {
-        state.damageModifier = modifier;
+        state.damageModifier = clampModifier(modifier);
       });
       // Don't save to localStorage - modifiers are ephemeral in SWADE
     },
@@ -220,8 +247,8 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     },
     setTargetNumber(tn) {
       set((state) => {
-        // Clamp target number between 1 and 99
-        state.targetNumber = Math.max(1, Math.min(99, tn));
+        // Integer in 1..99; NaN gives the default
+        state.targetNumber = parseTargetNumber(tn);
         // Persist to localStorage
         try {
           localStorage.setItem('swade-targetNumber', state.targetNumber.toString());
@@ -234,14 +261,13 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     setModeChoice(mode) {
-      set((state) => {
+      setDerived((state) => {
         state.modeChoice = mode;
-        // Update rollMode based on choice
-        state.rollMode = computeRollMode(mode, state.diceCounts);
         // Don't persist - mode selection is ephemeral within a session
       });
     },
-  }))
+  };
+  })
 );
 
 function getDiceCountsFromSet(diceSet: DiceSet) {
@@ -265,7 +291,7 @@ export function getDiceToRoll(
   counts: DiceCounts,
   diceById: Record<string, Die>,
   wildDieEnabled?: boolean,
-  diceStyle?: string,
+  _diceStyle?: string,
   isTraitMode?: boolean
 ) {
   const dice: (Die | Dice)[] = [];
@@ -285,12 +311,7 @@ export function getDiceToRoll(
   
   // Add wild die if in trait mode, wild die is enabled, AND there are regular dice
   if (isTraitMode && wildDieEnabled && dice.length > 0) {
-    // Wild die always uses Nebula style to distinguish it
-    dice.push({ 
-      id: generateDiceId(), 
-      style: "NEBULA", 
-      type: "D6"
-    });
+    dice.push(createWildDie());
   }
   
   return dice;

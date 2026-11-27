@@ -8,7 +8,7 @@ export interface DieChain {
   dieType: DiceType;
   rolls: number[];  // [initial, explosion1, explosion2, ...]
   total: number;    // Sum of all rolls
-  isWildDie?: boolean;
+  isWildDie: boolean;
 }
 
 /**
@@ -18,11 +18,15 @@ export interface RollOutcome {
   chains: DieChain[];     // The die chain(s) that contributed to this result
   modifier: number;       // Modifier applied to this result
   total: number;          // Final total including modifier
-  success?: boolean;      // vs target number
-  raises?: number;        // Number of raises
-  replacedByWild?: boolean;  // For trait tests - was worst die replaced by wild
-  criticalFailure?: boolean;  // True if this is a critical failure
-  possibleCriticalFailure?: boolean;  // True if this might be a critical failure (single trait die with 1, no wild die)
+  /** vs target number. TRAIT only: DAMAGE and STANDARD outcomes have no success. */
+  success?: boolean;
+  /** Number of raises, 0 on a failure. TRAIT only. */
+  raises?: number;
+  replacedByWild: boolean;  // For trait tests - was worst die replaced by wild
+  /** Present (true) only on a Critical Failure. Then success is false and raises 0. */
+  criticalFailure?: boolean;
+  /** Present (true) only when a trait roll without a Wild Die might be a Critical Failure. */
+  possibleCriticalFailure?: boolean;
   criticalFailureReason?: string;  // Explanation of why it's a critical failure
 }
 
@@ -46,10 +50,11 @@ export interface SavageRollResult {
   // For DAMAGE mode: single result (sum of all dice)
   outcomes: RollOutcome[];
   
-  // Roll configuration
-  targetNumber?: number;
-  modifier?: number;
-  wildDieEnabled?: boolean;
+  // Roll configuration (the settings the outcomes were calculated with)
+  targetNumber: number;
+  /** The modifier applied to every outcome: trait modifier, damage modifier, or 0 for STANDARD. */
+  modifier: number;
+  wildDieEnabled: boolean;
   
   // Completion status
   isComplete: boolean;
@@ -67,30 +72,16 @@ export interface ExplosionResult {
   rolls: number[];  // Array of individual rolls in explosion chain
   total: number;
   exploded: boolean;
-  isWildDie?: boolean;
+  isWildDie: boolean;
 }
 
-// Plugin-specific types for OBR integration
-export type PlayerRollResult = SavageRollResult;
-
-// Player display info interface compatible with OBR SDK to avoid circular dependency
-export interface PlayerDisplayInfo {
-  id: string;
-  name: string;
-  color: string;
-  connectionId: string;
-  role: "GM" | "PLAYER";
-  syncView: boolean;
-  metadata: Record<string, unknown>;
-}
-
-export interface RollHistoryEntry {
-  id: string;
-  playerId: string;
-  player: PlayerDisplayInfo;
-  result: PlayerRollResult;
-  timestamp: number;
-  addedAt: number;
-  isFading?: boolean;
-  isHidden?: boolean;
+/**
+ * A finished result as the dice store keeps it: the result plus its identity. `rollId` and `hidden`
+ * are local fields; they are not part of the broadcast `result` (see `src/plugin/rollWire.ts`).
+ */
+export interface StoredRollResult extends SavageRollResult {
+  /** Unique per finished roll, the same for every revision (post-roll edit). */
+  rollId: string;
+  /** The roll was hidden (private) when it finished: it is never sent or stored. */
+  hidden: boolean;
 }

@@ -1,0 +1,248 @@
+[
+  {
+    "counts": {
+      "GALAXY_STANDARD_D4": 0,
+      "GALAXY_STANDARD_D6": 1,
+      "GALAXY_STANDARD_D8": 0,
+      "GALAXY_STANDARD_D10": 0,
+      "GALAXY_STANDARD_D12": 0
+    },
+    "diceById": {
+      "GALAXY_STANDARD_D4": {
+        "id": "GALAXY_STANDARD_D4",
+        "type": "D4",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D6": {
+        "id": "GALAXY_STANDARD_D6",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D8": {
+        "id": "GALAXY_STANDARD_D8",
+        "type": "D8",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D10": {
+        "id": "GALAXY_STANDARD_D10",
+        "type": "D10",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D12": {
+        "id": "GALAXY_STANDARD_D12",
+        "type": "D12",
+        "style": "GALAXY"
+      }
+    },
+    "rollMode": "TRAIT",
+    "traitModifier": 0,
+    "damageModifier": 0,
+    "targetNumber": 4,
+    "wildDieEnabled": false
+  },
+  {
+    "counts": {
+      "GALAXY_STANDARD_D4": 0,
+      "GALAXY_STANDARD_D6": 0,
+      "GALAXY_STANDARD_D8": 2,
+      "GALAXY_STANDARD_D10": 0,
+      "GALAXY_STANDARD_D12": 0
+    },
+    "diceById": {
+      "GALAXY_STANDARD_D4": {
+        "id": "GALAXY_STANDARD_D4",
+        "type": "D4",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D6": {
+        "id": "GALAXY_STANDARD_D6",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D8": {
+        "id": "GALAXY_STANDARD_D8",
+        "type": "D8",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D10": {
+        "id": "GALAXY_STANDARD_D10",
+        "type": "D10",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D12": {
+        "id": "GALAXY_STANDARD_D12",
+        "type": "D12",
+        "style": "GALAXY"
+      }
+    },
+    "rollMode": "TRAIT",
+    "traitModifier": 0,
+    "damageModifier": 0,
+    "targetNumber": 4,
+    "wildDieEnabled": true
+  },
+  {
+    "counts": {
+      "GALAXY_STANDARD_D4": 0,
+      "GALAXY_STANDARD_D6": 1,
+      "GALAXY_STANDARD_D8": 1,
+      "GALAXY_STANDARD_D10": 0,
+      "GALAXY_STANDARD_D12": 0
+    },
+    "diceById": {
+      "GALAXY_STANDARD_D4": {
+        "id": "GALAXY_STANDARD_D4",
+        "type": "D4",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D6": {
+        "id": "GALAXY_STANDARD_D6",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D8": {
+        "id": "GALAXY_STANDARD_D8",
+        "type": "D8",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D10": {
+        "id": "GALAXY_STANDARD_D10",
+        "type": "D10",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D12": {
+        "id": "GALAXY_STANDARD_D12",
+        "type": "D12",
+        "style": "GALAXY"
+      }
+    },
+    "rollMode": "DAMAGE",
+    "traitModifier": 0,
+    "damageModifier": 2,
+    "targetNumber": 4,
+    "wildDieEnabled": true
+  },
+  {
+    "counts": {
+      "GALAXY_STANDARD_D4": 0,
+      "GALAXY_STANDARD_D6": 1,
+      "GALAXY_STANDARD_D8": 0,
+      "GALAXY_STANDARD_D10": 0,
+      "GALAXY_STANDARD_D12": 0
+    },
+    "diceById": {
+      "GALAXY_STANDARD_D4": {
+        "id": "GALAXY_STANDARD_D4",
+        "type": "D4",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D6": {
+        "id": "GALAXY_STANDARD_D6",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D8": {
+        "id": "GALAXY_STANDARD_D8",
+        "type": "D8",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D10": {
+        "id": "GALAXY_STANDARD_D10",
+        "type": "D10",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D12": {
+        "id": "GALAXY_STANDARD_D12",
+        "type": "D12",
+        "style": "GALAXY"
+      }
+    },
+    "rollMode": "TRAIT",
+    "traitModifier": 0,
+    "damageModifier": 0,
+    "targetNumber": 4,
+    "wildDieEnabled": true
+  },
+  {
+    "counts": {
+      "GALAXY_STANDARD_D4": 0,
+      "GALAXY_STANDARD_D6": 2,
+      "GALAXY_STANDARD_D8": 0,
+      "GALAXY_STANDARD_D10": 0,
+      "GALAXY_STANDARD_D12": 0
+    },
+    "diceById": {
+      "GALAXY_STANDARD_D4": {
+        "id": "GALAXY_STANDARD_D4",
+        "type": "D4",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D6": {
+        "id": "GALAXY_STANDARD_D6",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D8": {
+        "id": "GALAXY_STANDARD_D8",
+        "type": "D8",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D10": {
+        "id": "GALAXY_STANDARD_D10",
+        "type": "D10",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D12": {
+        "id": "GALAXY_STANDARD_D12",
+        "type": "D12",
+        "style": "GALAXY"
+      }
+    },
+    "rollMode": "DAMAGE",
+    "traitModifier": 0,
+    "damageModifier": 0,
+    "targetNumber": 4,
+    "wildDieEnabled": true
+  },
+  {
+    "counts": {
+      "GALAXY_STANDARD_D4": 1,
+      "GALAXY_STANDARD_D6": 0,
+      "GALAXY_STANDARD_D8": 0,
+      "GALAXY_STANDARD_D10": 0,
+      "GALAXY_STANDARD_D12": 1
+    },
+    "diceById": {
+      "GALAXY_STANDARD_D4": {
+        "id": "GALAXY_STANDARD_D4",
+        "type": "D4",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D6": {
+        "id": "GALAXY_STANDARD_D6",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D8": {
+        "id": "GALAXY_STANDARD_D8",
+        "type": "D8",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D10": {
+        "id": "GALAXY_STANDARD_D10",
+        "type": "D10",
+        "style": "GALAXY"
+      },
+      "GALAXY_STANDARD_D12": {
+        "id": "GALAXY_STANDARD_D12",
+        "type": "D12",
+        "style": "GALAXY"
+      }
+    },
+    "rollMode": "STANDARD",
+    "traitModifier": 0,
+    "damageModifier": 0,
+    "targetNumber": 4,
+    "wildDieEnabled": true
+  }
+]

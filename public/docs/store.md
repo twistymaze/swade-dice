@@ -27,8 +27,9 @@ The extension uses realistic 3D physics simulation to determine results, with be
 ## Savage Worlds Features
 
 **Trait Tests**
-- Roll a single trait die (d4-d12) for skill and attribute tests
-- Optional Wild Die (d6) that rolls alongside your trait die
+- Roll one or more trait dice (d4-d12) for skill and attribute tests
+- Optional Wild Die (d6) that rolls alongside your trait dice
+- Critical Failure when the Wild Die and more than half of all dice roll 1
 - Automatic success and raise calculation against target numbers
 - Modifier support for situational bonuses/penalties
 
@@ -45,7 +46,7 @@ The extension uses realistic 3D physics simulation to determine results, with be
 **Detailed Results Display**
 - Complete breakdown of each roll with individual die results
 - Clear indication of which dice exploded and their explosion chains
-- Success/failure status and raise count for trait tests
+- Success/failure status and raise count for trait tests (damage rolls show the total only)
 - Shows which die (trait or wild) was used for the final result
 
 ![roll details](https://swade-dice.ewal.app/docs/roll-details.png)
@@ -60,15 +61,11 @@ When you make a roll, the results are automatically shared with other players in
 
 Click the search icon in the sidebar to access your personal roll history. You can quickly reroll any of your previous dice combinations, and the extension will remember your settings (target numbers, modifiers, wild die preferences).
 
+![recent rolls](https://swade-dice.ewal.app/docs/recent.png)
+
 **Private Rolls**
 
 Make rolls privately so only you can see the results.
-
-**Roll History**
-
-Quick access to recent rolls for re-rolling or referencing past results.
-
-![recent rolls](https://swade-dice.ewal.app/docs/recent.png)
 
 **Fairness Testing**
 

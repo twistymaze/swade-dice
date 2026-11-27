@@ -1,0 +1,17 @@
+{
+  "id": "rodeo.owlbear.savage-worlds-dice/notification-popover",
+  "url": "/popover.html",
+  "width": 0,
+  "height": 0,
+  "anchorOrigin": {
+    "horizontal": "CENTER",
+    "vertical": "TOP"
+  },
+  "transformOrigin": {
+    "horizontal": "CENTER",
+    "vertical": "TOP"
+  },
+  "disableClickAway": true,
+  "hidePaper": true,
+  "marginThreshold": 20
+}

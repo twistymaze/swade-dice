@@ -13,6 +13,7 @@ import { DiceQuaternion } from "../types/DiceQuaternion";
 import { Die } from "../types/Die";
 import { useAudioListener } from "../audio/useAudioListener";
 import { getNextBuffer } from "../audio/getAudioBuffer";
+import { releaseSound } from "../audio/oneShotSound";
 import { random } from "../helpers/random";
 import { WeightClass } from "../types/WeightClass";
 
@@ -56,8 +57,18 @@ export function PreviewDiceRoll() {
   const groupRef = useRef<THREE.Group>(null);
   const listener = useAudioListener();
 
+  // Restart the preview animation loop when the page becomes visible again.
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (!document.hidden) invalidate();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [invalidate]);
+
   const diceWeight = useMemo<WeightClass>(() => {
-    if (dice.length > 0 && dice[0].style === "IRON") {
+    if (dice.length > 0 && dice[0]!.style === "IRON") {
       return "HEAVY";
     } else {
       return "MEDIUM";
@@ -93,6 +104,7 @@ export function PreviewDiceRoll() {
         if (sound) {
           sound.stop();
           group.remove(sound);
+          releaseSound(sound);
         }
       };
     }
@@ -166,7 +178,11 @@ function AnimatedDice({
         dice.scale.setScalar(Math.min(dice.scale.x + delta * 5, 1));
       }
 
-      invalidate();
+      // The wobble keeps the demand frame loop running; stop asking for
+      // frames while the page is hidden (PreviewDiceRoll resumes it).
+      if (!document.hidden) {
+        invalidate();
+      }
     }
   });
 

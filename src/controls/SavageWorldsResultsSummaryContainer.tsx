@@ -21,6 +21,7 @@ export function SavageWorldsResultsSummaryContainer() {
   const roll = useDiceRollStore((state) => state.roll);
   const clearRoll = useDiceRollStore((state) => state.clearRoll);
   const reroll = useDiceRollStore((state) => state.reroll);
+  const wildDieEnabled = useDiceControlsStore((state) => state.wildDieEnabled);
   
   const resultsHovered = useDiceControlsStore((state) => state.resultsDetailsHovered);
   
@@ -54,7 +55,8 @@ export function SavageWorldsResultsSummaryContainer() {
           <IconButton
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              reroll();
+              // A Wild Die only when it is on now
+              reroll({ wildDieEnabled });
             }}
             sx={{ color: "white" }}
             size="small"
