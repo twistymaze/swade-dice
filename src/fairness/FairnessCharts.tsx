@@ -11,89 +11,29 @@ import { LinePlot } from "@mui/x-charts/LineChart";
 import { ChartsContainer } from "@mui/x-charts/ChartsContainer";
 import { useMemo } from "react";
 import { Die } from "../types/Die";
+import { summarizeFairness } from "./fairnessMath";
 
 export default function FairnessCharts({
   die,
   rolledValues,
-  numberRolls,
 }: {
   die: Die;
   rolledValues: number[];
-  numberRolls: number;
 }) {
-  const dieCount = useMemo<number>(() => {
-    switch (die.type) {
-      case "D4":
-        return 4;
-      case "D6":
-        return 6;
-      case "D8":
-        return 8;
-      case "D10":
-        return 10;
-      case "D12":
-        return 12;
-      default:
-        throw Error("Unable to find die count for type" + die.type);
-    }
-  }, [die]);
-
-  const [xAxis, yAxis] = useMemo<[number[], number[]]>(() => {
-    const xAxis = Array.from(Array(dieCount).keys()).map((v) => v + 1);
-    const yAxis = new Array(dieCount).fill(0);
-
-    for (const value of rolledValues) {
-      yAxis[value - 1] += 1;
-    }
-
-    return [xAxis, yAxis];
-  }, [rolledValues, dieCount]);
-
-  const expectedValue = useMemo(() => {
-    return numberRolls / dieCount;
-  }, [dieCount, numberRolls]);
-
-  const expectedValueYAxis = useMemo(
-    () => new Array(dieCount).fill(expectedValue),
-    [expectedValue, dieCount]
-  );
-
-  // Critical value to pass the Chi-squared test at a 0.05 significance level
-  const criticalValue = useMemo<number>(() => {
-    switch (die.type) {
-      case "D4":
-        return 9.488;
-      case "D6":
-        return 12.592;
-      case "D8":
-        return 15.507;
-      case "D10":
-        return 18.307;
-      case "D12":
-        return 21.026;
-      default:
-        throw Error("Unable to find critical value for type" + die.type);
-    }
-  }, [die]);
-
-  const sumSquaredError = useMemo(() => {
-    const squaredErrors = yAxis.map(
-      (v) => Math.pow(v - expectedValue, 2) / expectedValue
-    );
-    return squaredErrors.reduce((a, b) => a + b);
-  }, [yAxis, expectedValue]);
-
-  const isFair = sumSquaredError < criticalValue;
+  const summary = useMemo(() => summarizeFairness(rolledValues, die.type), [rolledValues, die.type]);
+  const xAxis = useMemo(() => summary.counts.map((_, i) => i + 1), [summary]);
+  const expectedValueYAxis = useMemo(() => summary.counts.map(() => summary.expected), [summary]);
+  const isFair = summary.isFair;
 
   return (
     <Stack sx={{ width: "100%", gap: 1 }}>
-      <Tooltip title="Sum of Squares Error">
+      <Tooltip title={`Chi-squared statistic (fair below ${summary.criticalValue} at p = 0.05)`}>
         <Typography
           variant="caption"
           color={isFair ? "success.main" : "warning.main"}
           sx={{ textAlign: "center", my: 1 }}
         >
-          SSE: {sumSquaredError.toFixed(2)}{" "}
+          χ²: {summary.chiSquared.toFixed(2)}{" "}
           {isFair && (
             <VerifiedRounded
               sx={{ fontSize: "1.1rem", verticalAlign: "top" }}
@@ -109,19 +49,21 @@ export default function FairnessCharts({
             data: xAxis,
             scaleType: "band",
             position: "bottom",
+            // Room for the tick labels and the axis label (F-07)
+            height: 45,
           },
         ]}
         yAxis={[
           {
+            // No fixed max: the domain covers the bars and the expected line (F-07)
             id: "number-rolls",
-            max: expectedValue + expectedValue * 0.1,
             position: "left",
           },
         ]}
         series={[
           {
             type: "bar",
-            data: yAxis,
+            data: summary.counts,
             label: "Rolled",
           },
           {

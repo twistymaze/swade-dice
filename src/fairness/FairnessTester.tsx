@@ -15,12 +15,14 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { getDiceToRoll, useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 import { Die } from "../types/Die";
 import Backdrop from "@mui/material/Backdrop";
 import Slide from "@mui/material/Slide";
+import { SavageRollResult } from "../types/SavageWorldsTypes";
+import { FAIRNESS_UPDATE_EVERY, canStartFairnessTest, getSides, isFaceValue } from "./fairnessMath";
 
 const FairnessCharts = lazy(() => import("./FairnessCharts"));
 
@@ -65,7 +67,8 @@ export function FairnessTester() {
 
   const singleDiceSelected = useMemo(() => {
     const totalCount = Object.values(counts).reduce(
-      (prev, curr) => prev + curr
+      (prev, curr) => prev + curr,
+      0
     );
     return totalCount === 1;
   }, [counts]);
@@ -74,7 +77,14 @@ export function FairnessTester() {
 
   const [active, setActive] = useState(false);
 
+  // Values are collected in a ref and copied to state in batches (E-11)
+  const valuesRef = useRef<number[]>([]);
+  const lastResultRef = useRef<SavageRollResult | null>(null);
   const [rolledValues, setRolledValues] = useState<number[]>([]);
+  // Finished rolls, valid or not; each one triggers the next reroll
+  const [attempts, setAttempts] = useState(0);
+  const [rolledCount, setRolledCount] = useState(0);
+  const [invalidRolls, setInvalidRolls] = useState(0);
   const [rolledDie, setRolledDie] = useState<Die | null>(null);
 
   const [showResults, setShowResults] = useState(false);
@@ -82,17 +92,25 @@ export function FairnessTester() {
   const finished = Boolean(!active && rolledDie);
   const starting = Boolean(!active && !rolledDie);
 
-  function handleStart() {
+  function resetValues() {
+    valuesRef.current = [];
+    lastResultRef.current = null;
     setRolledValues([]);
+    setAttempts(0);
+    setRolledCount(0);
+    setInvalidRolls(0);
+  }
+
+  function handleStart() {
+    resetValues();
 
     const rolling = Object.entries(counts).find(([_, value]) => value > 0);
     if (rolling && diceById[rolling[0]]) {
       const rollingDie = diceById[rolling[0]];
       if (rollingDie) {
         setRolledDie(rollingDie);
-        // Don't include wild die for fairness testing - test individual dice only
+        // STANDARD: raw values, no explosions. No wild die: test one die only.
         const dice = getDiceToRoll(counts, diceById, false);
-        // STANDARD: raw values, no explosions (the roll records its own mode)
         startRoll({ dice, hidden: true }, { mode: "STANDARD" });
         setActive(true);
         handleCountsReset();
@@ -101,6 +119,7 @@ export function FairnessTester() {
   }
 
   function handleStop() {
+    setRolledValues([...valuesRef.current]);
     setShowResults(true);
     setActive(false);
   }
@@ -108,7 +127,7 @@ export function FairnessTester() {
   function handleRestart() {
     setActive(false);
     setRolledDie(null);
-    setRolledValues([]);
+    resetValues();
     setShowResults(false);
   }
 
@@ -116,36 +135,46 @@ export function FairnessTester() {
     resetDiceCounts();
   }
 
-  // Subscribe to roll finish events and add them to the rolledValues state
+  // Subscribe to roll finish events: each finished result is counted once
   useEffect(() => {
-    if (active) {
+    if (active && rolledDie) {
+      const sides = getSides(rolledDie.type);
       return useDiceRollStore.subscribe((state) => {
-        const roll = state.roll;
-        if (roll && state.currentRollResult && state.currentRollResult.isComplete) {
-          // For fairness testing, just use the sum of all individual die values
-          const values = Object.values(state.rollValues as Record<string, number>);
-          const value = values.reduce((sum, val) => sum + val, 0);
-          
-          if (value) {
-            setRolledValues((prev) => [...prev, value]);
-          }
+        const result = state.currentRollResult;
+        if (!state.roll || !result || !result.isComplete || result === lastResultRef.current) {
+          return;
         }
+        lastResultRef.current = result;
+        const value = result.dieChains[0]?.total ?? NaN;
+        if (isFaceValue(value, sides)) {
+          valuesRef.current.push(value);
+          const count = valuesRef.current.length;
+          setRolledCount(count);
+          if (count % FAIRNESS_UPDATE_EVERY === 0 || count >= numberRolls) {
+            setRolledValues([...valuesRef.current]);
+          }
+        } else {
+          setInvalidRolls((n) => n + 1);
+        }
+        setAttempts((n) => n + 1);
       });
     }
-  }, [active, numberRolls]);
+  }, [active, rolledDie, numberRolls]);
 
   // Reroll if we need or clear the roll if we've reached our rolls
   useEffect(() => {
-    if (active && rolledValues.length > 0) {
-      if (rolledValues.length >= numberRolls) {
+    if (active && attempts > 0) {
+      if (rolledCount >= numberRolls) {
         setActive(false);
         clearRoll();
+        setRolledValues([...valuesRef.current]);
         setShowResults(true);
       } else {
         reroll();
       }
     }
-  }, [active, rolledValues, clearRoll, numberRolls, reroll]);
+  }, [active, attempts, rolledCount, clearRoll, numberRolls, reroll]);
+
 
   const theme = useTheme();
 
@@ -212,7 +241,6 @@ export function FairnessTester() {
                     <Suspense fallback={<CircularProgress />}>
                       <FairnessCharts
                         die={rolledDie}
-                        numberRolls={numberRolls}
                         rolledValues={rolledValues}
                       />
                     </Suspense>
@@ -260,10 +288,11 @@ export function FairnessTester() {
                   sx={{ my: 1, borderRadius: 2 }}
                   id="testing-progress"
                   variant="determinate"
-                  value={(rolledValues.length / numberRolls) * 100}
+                  value={numberRolls > 0 ? (rolledCount / numberRolls) * 100 : 0}
                 />
                 <FormLabel htmlFor="testing-progress">
-                  {rolledValues.length} of {numberRolls} Rolls
+                  {rolledCount} of {numberRolls} Rolls
+                  {invalidRolls > 0 && ` (${invalidRolls} invalid)`}
                 </FormLabel>
               </Stack>
             )}
@@ -283,12 +312,13 @@ export function FairnessTester() {
                 sx={{ textAlign: "center" }}
               >
                 {rolledValues.length} of {numberRolls} rolls completed
+                {invalidRolls > 0 && `, ${invalidRolls} invalid`}
               </Typography>
             )}
             {starting && (
               <Button
                 variant="contained"
-                disabled={!singleDiceSelected && numberRolls > 0}
+                disabled={!canStartFairnessTest(counts, numberRolls)}
                 fullWidth
                 onClick={() => handleStart()}
               >
