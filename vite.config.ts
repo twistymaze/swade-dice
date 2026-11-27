@@ -4,15 +4,21 @@ import react from "@vitejs/plugin-react";
 
 const entry = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 
+/** Origins allowed to read the dev server cross-origin. */
+export const OWLBEAR_ORIGINS = ["https://www.owlbear.rodeo", "https://owlbear.rodeo"];
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   assetsInclude: ["**/*.glb", "**/*.hdr"],
   server: {
-    cors: true,
+    // OBR (https://www.owlbear.rodeo) fetches the dev manifest and assets cross-origin from
+    // localhost:5173. Allow only the Owlbear origins, not every site (C-10).
+    cors: { origin: OWLBEAR_ORIGINS },
   },
   build: {
-    sourcemap: true,
+    // Maps are written for debugging but not linked from the bundles (C-10).
+    sourcemap: "hidden",
     rollupOptions: {
       input: {
         main: entry("./index.html"),
