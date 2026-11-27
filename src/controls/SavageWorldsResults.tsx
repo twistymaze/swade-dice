@@ -17,6 +17,22 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
   
   const isTraitTest = mode === "TRAIT";
   const isMultiDieTrait = isTraitTest && outcomes.length > 1;
+  const isStandard = mode === "STANDARD";
+  // A Critical Failure is never a success, also in old payloads that say success (A-01)
+  const critStatusOf = (index: number) => getCriticalFailureStatus(result, index);
+  const isSuccess = (index: number) =>
+    outcomes[index]?.success === true && !critStatusOf(index).isCritical;
+  const renderCrit = (index: number, ml: number) => {
+    const critStatus = critStatusOf(index);
+    if (critStatus.isPossible && isSuccess(index)) return null;
+    const indicator = formatCriticalIndicator(critStatus, true);
+    if (!indicator) return null;
+    return (
+      <Typography variant="body2" sx={{ color: indicator.color, fontWeight: "bold", ml }}>
+        {critStatus.isCritical ? "!!" : "??"} {indicator.text}
+      </Typography>
+    );
+  };
   
   // Don't show anything if no results yet
   if (!dieChains || dieChains.length === 0) {
@@ -102,8 +118,8 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
       {/* Display dice */}
       {diceDisplay}
       
-      {/* Show modifier if non-zero */}
-      {modifier !== undefined && modifier !== 0 && (
+      {/* Show modifier if non-zero. STANDARD rolls have no modifier (A-03). */}
+      {!isStandard && modifier !== undefined && modifier !== 0 && (
         <Typography variant="body2" color="white">
           Modifier: {modifier > 0 ? '+' : ''}{modifier}
         </Typography>
@@ -123,7 +139,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
                 {outcome.replacedByWild && " (wild)"}
               </Typography>
               {outcome.success !== undefined && (
-                outcome.success ? (
+                isSuccess(index) ? (
                   <>
                     <CheckIcon sx={{ fontSize: "14px", color: "#4caf50" }} />
                     <Typography variant="body2" color="#4caf50">
@@ -136,20 +152,23 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
                     <Typography variant="body2" color="#f44336">
                       Failed vs TN {targetNumber}
                     </Typography>
-                    {(() => {
-                      const critStatus = getCriticalFailureStatus(result, index);
-                      const indicator = formatCriticalIndicator(critStatus, true);
-                      if (!indicator) return null;
-                      return (
-                        <Typography variant="body2" sx={{ color: indicator.color, fontWeight: "bold", ml: 0.5 }}>
-                          {critStatus.isCritical ? "!!" : "??"} {indicator.text}
-                        </Typography>
-                      );
-                    })()}
+                    {renderCrit(index, 0.5)}
                   </>
                 )
               )}
             </Stack>
+          ))}
+        </>
+      ) : isStandard && outcomes.length > 1 ? (
+        // STANDARD: one raw value per die (T-B1)
+        <>
+          <Typography variant="body2" color="white" sx={{ borderTop: '1px solid rgba(255,255,255,0.3)', pt: 0.5, mt: 0.5 }}>
+            Results:
+          </Typography>
+          {outcomes.map((outcome, index) => (
+            <Typography key={index} variant="body2" color="white" sx={{ ml: 2 }}>
+              {outcome.chains[0]?.dieType.toLowerCase()}: {outcome.total}
+            </Typography>
           ))}
         </>
       ) : outcomes.length > 0 ? (
@@ -159,7 +178,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
             {isTraitTest ? "Result" : "Total"}: {outcomes[0].total}
           </Typography>
           {isTraitTest && isComplete && outcomes[0].success !== undefined && (
-            outcomes[0].success ? (
+            isSuccess(0) ? (
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <CheckIcon sx={{ fontSize: "16px", color: "#4caf50" }} />
                 <Typography variant="body2" color="#4caf50">
@@ -173,16 +192,7 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
                 <Typography variant="body2" color="#f44336">
                   Failed vs TN {targetNumber}
                 </Typography>
-                {(() => {
-                  const critStatus = getCriticalFailureStatus(result, 0);
-                  const indicator = formatCriticalIndicator(critStatus, true);
-                  if (!indicator) return null;
-                  return (
-                    <Typography variant="body2" sx={{ color: indicator.color, fontWeight: "bold", ml: 1 }}>
-                      {critStatus.isCritical ? "!!" : "??"} {indicator.text}
-                    </Typography>
-                  );
-                })()}
+                {renderCrit(0, 1)}
               </Stack>
             )
           )}
