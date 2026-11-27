@@ -45,6 +45,12 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
     expect(live(after, roll("a", "1", 2, changed))).toBe(after);
   });
 
+  it("T-46 a late joiner that missed rev 0 gets a revision: the entry is added, not dropped", () => {
+    const s1 = live(EMPTY_HISTORY, roll("a", "1", 3, changed));
+    expect(keys(s1)).toEqual(["a:1"]);
+    expect(s1.entries[0]).toMatchObject({ rev: 3, result: changed });
+  });
+
   it("legacy payloads (rev 0 always) replace by arrival", () => {
     let s = live(EMPTY_HISTORY, roll("a", "t1"));
     s = live(s, roll("a", "t1", 0, changed));

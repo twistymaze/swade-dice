@@ -234,3 +234,43 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     expect(new Set(sends().map((s) => s.rollId)).size).toBe(10);
   });
 });
+
+describe("T-46 an edit with no finished roll sends nothing", () => {
+  async function mountSync() {
+    render(<DiceRollSync />);
+    await act(flushObr);
+  }
+
+  it("TN, modifier and Wild Die edits while dice still roll -> 0 sends; the finished roll then sends once with the live values", async () => {
+    await mountSync();
+    act(() => dice().startRoll({ dice: [{ id: "r-1", type: "D8", style: "GALAXY" }] }, { mode: "TRAIT", settings: { ...controls() } }));
+    act(() => {
+      controls().setTargetNumber(8);
+      controls().setTraitModifier(2);
+      controls().toggleWildDie();
+    });
+    await act(flushObr);
+    expect(sends()).toEqual([]);
+    finishAll();
+    await act(flushObr);
+    expect(sends()).toHaveLength(1);
+    const payload = obr().broadcast.sendMessage.mock.calls[0][1] as { result: { targetNumber: number; modifier: number } };
+    expect(payload.result).toMatchObject({ targetNumber: 8, modifier: 2 });
+  });
+
+  it("an edit after picking new dice (the picker cleared the roll) -> 0 new sends", async () => {
+    await mountSync();
+    act(() => controls().changeDieCount(ids()[2], 1));
+    render(<DiceRollControls />);
+    pressRoll(1);
+    finishAll();
+    await act(flushObr);
+    expect(sends()).toHaveLength(1);
+    render(<DicePicker />);
+    fireEvent.click(screen.getByAltText("GALAXY D6 preview"));
+    expect(dice().roll).toBeNull();
+    act(() => controls().setTargetNumber(10));
+    await act(flushObr);
+    expect(sends()).toHaveLength(1);
+  });
+});
