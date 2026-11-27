@@ -83,6 +83,17 @@ export function computeRollMode(modeChoice: RollModeSelection, counts: DiceCount
   return totalCount === 1 ? 'TRAIT' : 'DAMAGE';
 }
 
+/**
+ * At most this many dice in one roll (plus the Wild Die), so every roll fits the 16 kB broadcast and
+ * the receivers' limits (B-08, `src/plugin/rollWire.ts` LIMITS).
+ */
+export const MAX_DICE_PER_ROLL = 40;
+/** Modifiers are clamped to the range the receivers accept (B-08). */
+export const MAX_ABS_MODIFIER = 99;
+const clampModifier = (m: number) =>
+  Number.isFinite(m) ? Math.max(-MAX_ABS_MODIFIER, Math.min(MAX_ABS_MODIFIER, Math.trunc(m))) : 0;
+const totalDice = (counts: DiceCounts) => Object.values(counts).reduce((sum, n) => sum + n, 0);
+
 export const DEFAULT_TARGET_NUMBER = 4;
 export const MIN_TARGET_NUMBER = 1;
 export const MAX_TARGET_NUMBER = 99;
@@ -179,13 +190,14 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     changeDieCount(id, count) {
       setDerived((state) => {
         if (id in state.diceCounts) {
-          state.diceCounts[id] = count;
+          const others = totalDice(state.diceCounts) - state.diceCounts[id];
+          state.diceCounts[id] = Math.max(0, Math.min(count, MAX_DICE_PER_ROLL - others));
         }
       });
     },
     incrementDieCount(id) {
       setDerived((state) => {
-        if (id in state.diceCounts) {
+        if (id in state.diceCounts && totalDice(state.diceCounts) < MAX_DICE_PER_ROLL) {
           state.diceCounts[id] += 1;
         }
       });
@@ -199,13 +211,13 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     },
     setTraitModifier(modifier) {
       set((state) => {
-        state.traitModifier = modifier;
+        state.traitModifier = clampModifier(modifier);
       });
       // Don't save to localStorage - modifiers are ephemeral in SWADE
     },
     setDamageModifier(modifier) {
       set((state) => {
-        state.damageModifier = modifier;
+        state.damageModifier = clampModifier(modifier);
       });
       // Don't save to localStorage - modifiers are ephemeral in SWADE
     },

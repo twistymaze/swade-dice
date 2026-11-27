@@ -148,3 +148,27 @@ describe("T-22 building the dice for a roll (D-12)", () => {
     expect(getDiceToRoll({ zz: 2 }, byId, true, undefined, true)).toEqual([]);
   });
 });
+
+describe("T-57 / B-08 limits the receivers accept", () => {
+  it("the dice count per roll stops at MAX_DICE_PER_ROLL; changeDieCount clamps", async () => {
+    const store = await freshStore({});
+    const { MAX_DICE_PER_ROLL } = await import("./store");
+    const ids = Object.keys(store.getState().diceCounts);
+    for (const id of ids) store.getState().changeDieCount(id, 0);
+    for (let i = 0; i < MAX_DICE_PER_ROLL + 5; i++) store.getState().incrementDieCount(ids[0]);
+    expect(store.getState().diceCounts[ids[0]]).toBe(MAX_DICE_PER_ROLL);
+    store.getState().changeDieCount(ids[0], 10);
+    store.getState().changeDieCount(ids[1], 999);
+    expect(store.getState().diceCounts[ids[1]]).toBe(MAX_DICE_PER_ROLL - 10);
+  });
+
+  it("modifiers are clamped to -99..99 integers", async () => {
+    const store = await freshStore({});
+    store.getState().setTraitModifier(150);
+    store.getState().setDamageModifier(-150);
+    expect(store.getState().traitModifier).toBe(99);
+    expect(store.getState().damageModifier).toBe(-99);
+    store.getState().setTraitModifier(NaN);
+    expect(store.getState().traitModifier).toBe(0);
+  });
+});
