@@ -26,7 +26,6 @@ This is a React application built with Three.js and Rapier physics for 3D dice s
 - **State management**: Zustand stores with Immer middleware
   - `src/dice/store.ts` - Core dice rolling state and SWADE game mechanics
   - `src/controls/store.ts` - UI controls and settings
-  - `src/plugin/rollHistoryStore.ts` - Roll history for multiplayer sync
 
 - **Physics simulation**: Deterministic dice rolls using Rapier physics engine
   - Results are reproducible across clients via shared seeds

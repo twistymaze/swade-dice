@@ -23,7 +23,6 @@ export function FinishedRollResultsWrapper() {
   
   return (
     <>
-      {/* <GradientOverlay top height={showDetails ? 400 : undefined} /> */}
       <div
         onMouseEnter={() => setResultsHovered(true)}
         onMouseLeave={() => setResultsHovered(false)}
