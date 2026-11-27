@@ -52,6 +52,34 @@ describe("T-29 face reading from a die pose", () => {
     expect(getValueFromDiceGroup(physicsGroup, "D10")).toBe(10);
   });
 
+  it("T-29 tilted 30 degrees still reads the nearest face", () => {
+    for (const sharp of [false, true]) {
+      for (const type of TYPES) {
+        for (const { name, position } of LOCATORS[sharp ? "sharp" : "rounded"][type]) {
+          const { root, physicsGroup } = buildDieGroup(type, sharp);
+          root.quaternion.setFromUnitVectors(new THREE.Vector3(...position!).normalize(), UP);
+          const tilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), THREE.MathUtils.degToRad(30));
+          root.quaternion.premultiply(tilt);
+          expect(getValueFromDiceGroup(physicsGroup, type), `${sharp ? "sharp" : "rounded"} ${type} ${name}`).toBe(faceOf(name, type));
+        }
+      }
+    }
+  });
+
+  it("T-29 a locator name that does not parse reads NaN (the store rejects it, A-08)", () => {
+    const group = new THREE.Group();
+    const dice = new THREE.Group();
+    dice.name = "dice";
+    const mesh = new THREE.Object3D();
+    const locator = new THREE.Group();
+    locator.name = "bogus";
+    locator.position.set(0, 1, 0);
+    mesh.add(locator);
+    dice.add(mesh);
+    group.add(dice);
+    expect(getValueFromDiceGroup(group, "D6")).toBeNaN();
+  });
+
   it("T-29 a group without a \"dice\" child reads 0", () => {
     expect(getValueFromDiceGroup(new THREE.Group(), "D6")).toBe(0);
   });

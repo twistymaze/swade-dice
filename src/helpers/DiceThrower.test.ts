@@ -54,3 +54,69 @@ describe("D-10 no audio listener at import", () => {
     add.mockRestore();
   });
 });
+
+describe("T-43 throw generation", () => {
+  const len = (v: { x: number; y: number; z: number }) => Math.hypot(v.x, v.y, v.z);
+
+  it("position in range, unit quaternion, velocity toward the tray center, angular 2..6", () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const t = getRandomDiceThrow(undefined, rangeFrom(seeded(seed)));
+      expect(t.position.x).toBeGreaterThanOrEqual(-0.3);
+      expect(t.position.x).toBeLessThan(0.3);
+      expect(t.position.y).toBeGreaterThanOrEqual(1);
+      expect(t.position.y).toBeLessThan(1.2);
+      expect(t.position.z).toBeGreaterThanOrEqual(-0.8);
+      expect(t.position.z).toBeLessThan(0.8);
+      const q = t.rotation;
+      expect(Math.abs(Math.hypot(q.x, q.y, q.z, q.w) - 1)).toBeLessThan(1e-9);
+      expect(t.linearVelocity.y).toBeCloseTo(0, 12);
+      // points inward: opposite to the horizontal position
+      expect(t.linearVelocity.x * t.position.x + t.linearVelocity.z * t.position.z).toBeLessThan(0);
+      expect(len(t.linearVelocity)).toBeGreaterThanOrEqual(1);
+      expect(len(t.linearVelocity)).toBeLessThan(2);
+      for (const a of [t.angularVelocity.x, t.angularVelocity.y, t.angularVelocity.z]) {
+        expect(a).toBeGreaterThanOrEqual(2);
+        expect(a).toBeLessThan(6);
+      }
+    }
+  });
+
+  it("a position at (0, y, 0) gives zero linear velocity", () => {
+    // x and z draws hit the middle of their ranges; the other draws come from a seeded rng
+    const other = rangeFrom(seeded(5));
+    let call = 0;
+    const rng: RandomRange = (min, max) => {
+      call++;
+      return call === 1 || call === 3 ? (min + max) / 2 : other(min, max);
+    };
+    const t = getRandomDiceThrow(3, rng);
+    expect(t.position.x).toBe(0);
+    expect(t.position.z).toBe(0);
+    expect(t.linearVelocity).toEqual({ x: 0, y: 0, z: 0 });
+  });
+
+  it("speedMultiplier scales the speed only (missing or 0 -> x1)", () => {
+    const base = getRandomDiceThrow(undefined, rangeFrom(seeded(9)));
+    const fast = getRandomDiceThrow(3, rangeFrom(seeded(9)));
+    const zero = getRandomDiceThrow(0, rangeFrom(seeded(9)));
+    expect(len(fast.linearVelocity)).toBeCloseTo(3 * len(base.linearVelocity), 12);
+    expect(zero).toEqual(base);
+    expect(fast.position).toEqual(base.position);
+    expect(fast.angularVelocity).toEqual(base.angularVelocity);
+  });
+
+  it("DiceThrower keeps at least 0.25 between dice when possible, caches by index, clearHistory resets", () => {
+    const thrower = new DiceThrower(rangeFrom(seeded(11)));
+    const throws = Array.from({ length: 6 }, (_, i) => thrower.getDiceThrow(i));
+    for (let i = 0; i < throws.length; i++) {
+      for (let j = i + 1; j < throws.length; j++) {
+        const a = throws[i].position;
+        const b = throws[j].position;
+        expect(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)).toBeGreaterThanOrEqual(0.25);
+      }
+    }
+    expect(thrower.getDiceThrow(2)).toBe(throws[2]);
+    thrower.clearHistory();
+    expect(thrower.getDiceThrow(0)).not.toBe(throws[0]);
+  });
+});
