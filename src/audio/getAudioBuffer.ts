@@ -71,7 +71,16 @@ function loadBuffer(
   });
 }
 
-function loadBuffers() {
+let buffersRequested = false;
+
+/**
+ * Start loading the collision and shake sounds (once). Called on the first click in the tray, when
+ * the audio listener is created (browsers allow audio only after a user gesture). Before D-10 this
+ * module added a window click listener at import time.
+ */
+export function loadAudioBuffers() {
+  if (buffersRequested) return;
+  buffersRequested = true;
   const audioLoader = new THREE.AudioLoader();
 
   loadBuffer(heavyDice.a1, "HEAVY", "DICE", audioLoader);
@@ -115,10 +124,7 @@ function loadBuffers() {
   loadBuffer(mediumWood.a4, "MEDIUM", "WOOD", audioLoader);
   loadBuffer(mediumShake.a1, "MEDIUM", "SHAKE", audioLoader);
 
-  window.removeEventListener("click", loadBuffers);
 }
-
-window.addEventListener("click", loadBuffers);
 
 function getAudioBuffers(
   weightClass: WeightClass,
