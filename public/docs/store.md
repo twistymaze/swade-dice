@@ -60,15 +60,11 @@ When you make a roll, the results are automatically shared with other players in
 
 Click the search icon in the sidebar to access your personal roll history. You can quickly reroll any of your previous dice combinations, and the extension will remember your settings (target numbers, modifiers, wild die preferences).
 
+![recent rolls](https://swade-dice.ewal.app/docs/recent.png)
+
 **Private Rolls**
 
 Make rolls privately so only you can see the results.
-
-**Roll History**
-
-Quick access to recent rolls for re-rolling or referencing past results.
-
-![recent rolls](https://swade-dice.ewal.app/docs/recent.png)
 
 **Fairness Testing**
 
