@@ -49,8 +49,11 @@ export default function FairnessCharts({
             data: xAxis,
             scaleType: "band",
             position: "bottom",
-            // Room for the tick labels and the axis label (F-07)
-            height: 45,
+            // Room for the tick labels and the axis label (F-07). x-charts blanks a
+            // tick label whose measured height exceeds the space left by even a
+            // fraction of a pixel; at 125 % zoom 45 left exactly the label height
+            // (15.2 px), so keep a few pixels of slack.
+            height: 50,
           },
         ]}
         yAxis={[
