@@ -1,0 +1,197 @@
+{
+  "roll": {
+    "dice": [
+      {
+        "id": "10",
+        "style": "GALAXY",
+        "type": "D6"
+      },
+      {
+        "id": "11",
+        "style": "NEBULA",
+        "type": "D6"
+      }
+    ],
+    "hidden": false,
+    "savageWorldsConfig": {
+      "rollType": "trait",
+      "modifier": 0,
+      "targetNumber": 4,
+      "wildDieId": "11"
+    }
+  },
+  "dieIndices": {
+    "10": 0,
+    "11": 1
+  },
+  "rollValues": {
+    "10": 6,
+    "11": 2,
+    "10_explosion_1": null
+  },
+  "rollTransforms": {
+    "10": {
+      "position": {
+        "x": -0.3,
+        "y": 0.0412,
+        "z": -0.04
+      },
+      "rotation": {
+        "x": 0.0123,
+        "y": 0.2,
+        "z": -0.0081,
+        "w": 0.9799
+      }
+    },
+    "11": {
+      "position": {
+        "x": -0.13,
+        "y": 0.0412,
+        "z": 0.19
+      },
+      "rotation": {
+        "x": 0.0123,
+        "y": 0.4,
+        "z": -0.0081,
+        "w": 0.9799
+      }
+    },
+    "10_explosion_1": null
+  },
+  "rollThrows": {
+    "10": {
+      "position": {
+        "x": -0.064213608764112,
+        "y": 1.0305470916442574,
+        "z": -0.6106638666242361
+      },
+      "rotation": {
+        "x": -0.18206666922196746,
+        "y": -0.4440689878538251,
+        "z": -0.8409153922736136,
+        "w": -0.25003152805638845
+      },
+      "linearVelocity": {
+        "x": 0.13346824505725746,
+        "y": 0,
+        "z": 1.269267312130375
+      },
+      "angularVelocity": {
+        "x": 5.066184521652758,
+        "y": 2.2467082533985376,
+        "z": 5.576104631647468
+      }
+    },
+    "11": {
+      "position": {
+        "x": -0.22514540660195054,
+        "y": 1.1769971688278018,
+        "z": 0.31319058649241915
+      },
+      "rotation": {
+        "x": 0.9243821469135582,
+        "y": 0.09975705249235034,
+        "z": -0.2655252584413626,
+        "w": -0.25507354640410435
+      },
+      "linearVelocity": {
+        "x": 0.920141255037829,
+        "y": 0,
+        "z": -1.2799709470895846
+      },
+      "angularVelocity": {
+        "x": 2.4805424781516194,
+        "y": 5.822063509374857,
+        "z": 5.752340128645301
+      }
+    },
+    "10_explosion_1": {
+      "position": {
+        "x": -0.034023339673876773,
+        "y": 1.171224395930767,
+        "z": -0.18389766141772268
+      },
+      "rotation": {
+        "x": 0.24714029440656304,
+        "y": 0.49487861851230264,
+        "z": 0.7610579389275027,
+        "w": 0.33883276319655653
+      },
+      "linearVelocity": {
+        "x": 0.4984764099778814,
+        "y": 0,
+        "z": 2.694287125999504
+      },
+      "angularVelocity": {
+        "x": 5.670149671845138,
+        "y": 3.6558346366509795,
+        "z": 5.383586565032601
+      }
+    }
+  },
+  "dieInfo": {
+    "10": {
+      "die": {
+        "id": "10",
+        "style": "GALAXY",
+        "type": "D6"
+      },
+      "isWildDie": false
+    },
+    "11": {
+      "die": {
+        "id": "11",
+        "style": "NEBULA",
+        "type": "D6"
+      },
+      "isWildDie": true
+    },
+    "10_explosion_1": {
+      "die": {
+        "id": "10_explosion_1",
+        "type": "D6",
+        "style": "GALAXY"
+      },
+      "isWildDie": false,
+      "parentDieId": "10"
+    }
+  },
+  "explosionDice": [
+    {
+      "id": "10_explosion_1",
+      "type": "D6",
+      "style": "GALAXY"
+    }
+  ],
+  "finishedDice": [
+    "10",
+    "11"
+  ],
+  "pendingDice": [
+    "10_explosion_1"
+  ],
+  "rollMode": "TRAIT",
+  "explosionResults": {
+    "10": {
+      "dieId": "10",
+      "dieType": "D6",
+      "rolls": [
+        6
+      ],
+      "total": 6,
+      "exploded": true,
+      "isWildDie": false
+    },
+    "11": {
+      "dieId": "11",
+      "dieType": "D6",
+      "rolls": [
+        2
+      ],
+      "total": 2,
+      "exploded": false,
+      "isWildDie": true
+    }
+  },
+  "currentRollResult": null
+}

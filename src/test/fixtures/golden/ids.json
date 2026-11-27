@@ -1,0 +1,17 @@
+{
+  "broadcastChannels": {
+    "rollResult": "rodeo.owlbear.savage-worlds-dice/roll-result"
+  },
+  "popovers": {
+    "notification": "rodeo.owlbear.savage-worlds-dice/notification-popover"
+  },
+  "playerMetadataKeys": [],
+  "roomMetadataKeys": [],
+  "sceneMetadataKeys": [],
+  "localStorageKeys": [
+    "swade-diceSetId",
+    "swade-wildDieEnabled",
+    "swade-targetNumber"
+  ],
+  "sessionStorageKeys": []
+}

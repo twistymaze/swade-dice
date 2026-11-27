@@ -1,0 +1,51 @@
+{
+  "playerId": "2b1c8f0e-6a2d-4c55-9a51-3f0f6c9d7e41",
+  "player": {
+    "connectionId": "2b1c8f0e-6a2d-4c55-9a51-3f0f6c9d7e41",
+    "id": "2b1c8f0e-6a2d-4c55-9a51-3f0f6c9d7e41",
+    "name": "Wren",
+    "color": "#4e9a06",
+    "metadata": {},
+    "role": "PLAYER",
+    "syncView": false
+  },
+  "result": {
+    "mode": "TRAIT",
+    "dieChains": [
+      {
+        "dieId": "3",
+        "dieType": "D10",
+        "rolls": [
+          9
+        ],
+        "total": 9,
+        "isWildDie": false
+      }
+    ],
+    "outcomes": [
+      {
+        "chains": [
+          {
+            "dieId": "3",
+            "dieType": "D10",
+            "rolls": [
+              9
+            ],
+            "total": 9,
+            "isWildDie": false
+          }
+        ],
+        "modifier": 0,
+        "total": 9,
+        "replacedByWild": false,
+        "success": true,
+        "raises": 1
+      }
+    ],
+    "targetNumber": 4,
+    "modifier": 0,
+    "isComplete": true,
+    "timestamp": 1764250004600,
+    "wildDieEnabled": false
+  }
+}
