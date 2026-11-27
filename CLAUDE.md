@@ -19,17 +19,17 @@ This is a React application built with Three.js and Rapier physics for 3D dice s
 ### Core Application Structure
 
 - **Multi-entry build system**: Three HTML entry points via Vite
-  - `index.html` → `src/main.tsx` → `src/App.tsx` (mainTapplication)
-  - `popover.html` → `src/popover.tsx` (player tray popover for Owlbear Rodeo)  
-  - `background.html` → `src/background.ts` (Owlbear Rodeo extension registration)
+  - `index.html` → `src/main.tsx` → `src/App.tsx` (main application: tray, controls, roll sync, party history)
+  - `popover.html` → `src/popover.tsx` (roll notification toast for Owlbear Rodeo)
+  - `background.html` → `src/background.ts` (opens the notification popover)
 
 - **State management**: Zustand stores with Immer middleware
   - `src/dice/store.ts` - Core dice rolling state and SWADE game mechanics
   - `src/controls/store.ts` - UI controls and settings
 
-- **Physics simulation**: Deterministic dice rolls using Rapier physics engine
-  - Results are reproducible across clients via shared seeds
-  - Physics transforms determine final dice values
+- **Physics simulation**: Rapier physics, run only on the roller's client
+  - Throws are random (`Math.random`, injectable in `DiceThrower`); results are not replayed on other clients
+  - The resting pose of each die gives its value
   - Explosion mechanics for SWADE rules (dice "explode" on max values)
 
 ### Key Directory Structure
@@ -37,11 +37,11 @@ This is a React application built with Three.js and Rapier physics for 3D dice s
 - `src/dice/` - Physics-based dice rolling, SWADE mechanics, explosion handling
 - `src/tray/` - 3D tray rendering and interaction
 - `src/controls/` - UI controls (sidebar, top bar, settings)
-- `src/plugin/` - Owlbear Rodeo integration (metadata sync, popovers, themes)
+- `src/plugin/` - Owlbear Rodeo integration (roll broadcast + player-metadata history, validation, popovers, themes)
 - `src/types/` - TypeScript type definitions for dice, rolls, SWADE mechanics
 - `src/sets/` - Dice set configurations and definitions
 - `src/materials/`, `src/meshes/`, `src/colliders/` - 3D assets and rendering
-- `src/tests/` - Fairness testing tools (distribution charts, chi-squared tests)
+- `src/fairness/` - Fairness testing tools (distribution charts, chi-squared tests)
 - `src/audio/` - Sound effects for dice interactions
 
 ### SWADE Game Mechanics Implementation
@@ -54,9 +54,10 @@ The application implements Savage Worlds Adventure Edition rules:
 
 ### Owlbear Rodeo Integration
 
-- Synchronizes dice state via player metadata
-- Deterministic physics ensure consistent results across all players
-- Player popovers show other players' dice trays
+- Sends each finished, not hidden roll on one broadcast channel (validated, versioned payload)
+- Each player keeps its last 10 rolls in its player metadata; the party history is rebuilt from it
+- Other clients get only the result; sender identity comes from OBR, not the payload
+- See docs/app-owlbear-integration.md (synced data reference) and docs/owlbear-platform.md
 - Theme integration with Owlbear Rodeo's light/dark modes
 
 ## Technology Stack

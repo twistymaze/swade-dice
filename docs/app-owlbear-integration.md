@@ -1,167 +1,223 @@
 # How this app integrates with Owlbear Rodeo
 
 This document describes the code of this repository as it is now. For the OBR platform itself, see
-[owlbear-platform.md](owlbear-platform.md). Line references are `file:line` in this repository.
-Example payloads are in [`src/test/fixtures/golden/`](../src/test/fixtures/golden/README.md).
+[owlbear-platform.md](owlbear-platform.md). Old example payloads (the format before payload version 1)
+are in [`src/test/fixtures/golden/`](../src/test/fixtures/golden/README.md).
 
 ## 1. Summary
 
-- The app has three entry points: the dice tray (OBR action popover), a hidden background page, and an
-  invisible notification popover.
+- Three entry points: the dice tray (OBR action popover), a hidden background page, and an invisible
+  notification popover.
 - Each client rolls its dice **locally** with Rapier physics. The physics is **not** replayed on other
   clients. Other clients get only the finished result.
 - The finished result goes to everyone through **one broadcast channel**,
-  `rodeo.owlbear.savage-worlds-dice/roll-result`. The app writes **no** player, room or scene metadata.
-- The roll history is in-memory React state in each client. It is not stored anywhere.
+  `rodeo.owlbear.savage-worlds-dice/roll-result` (payload version 1, section 5).
+- Each player keeps its **last 10 rolls** in its own **player metadata** under
+  `rodeo.owlbear.savage-worlds-dice/history` (section 7). The party history is rebuilt from it, so late
+  joiners and reloads see recent rolls.
+- Every received payload goes through one validating parser (`src/plugin/rollWire.ts`). Sender name,
+  color and role come from OBR, never from the payload.
 - Settings (dice set, Wild Die on/off, target number) are in `localStorage`.
 
 ## 2. Entry points
 
-Vite builds three HTML pages (`vite.config.ts:18-22`). The manifest is `public/manifest.json`.
+Vite builds three HTML pages (`vite.config.ts`). The manifest is `public/manifest.json`.
 
 | Page | Code | OBR surface | What it does |
 |---|---|---|---|
-| `index.html` | `src/main.tsx` -> `src/App.tsx` | Action popover (`manifest.json:9-15`, `"popover": "/"`, 375 x 700 max) | The dice tray, the controls, the roll history tray, and the broadcast sender. Also works without OBR (open `localhost:5173` directly): the OBR parts are inside `PluginGate` (`App.tsx:25-28`, `src/plugin/PluginGate.tsx:12-14`) and do not render. |
-| `background.html` | `src/background.ts` | Background page (`manifest.json:16`) | On `OBR.onReady`, opens the notification popover (`background.ts:4-17`). Nothing else. |
-| `popover.html` | `src/popover.tsx` -> `src/plugin/PopoverApp.tsx` | Popover with id `rodeo.owlbear.savage-worlds-dice/notification-popover` | Shows a toast for a roll when the action popover is closed (section 6). |
+| `index.html` | `src/main.tsx` -> `src/App.tsx` | Action popover | The dice tray, the controls, the party roll history (`RollHistoryTray`) and the sender (`DiceRollSync`). Also works without OBR (open `localhost:5173` directly): the OBR parts are inside `PluginGate` and do not render. |
+| `background.html` | `src/background.ts` | Background page | On `OBR.onReady`, opens the notification popover. Nothing else. |
+| `popover.html` | `src/popover.tsx` -> `src/plugin/PopoverApp.tsx` | Popover `rodeo.owlbear.savage-worlds-dice/notification-popover` | Shows a toast for another player's roll while the action popover is closed (section 6). |
 
-`src/main.tsx:11-17` renders `App` inside `PluginThemeProvider`, which reads the OBR theme only when
-`OBR.isAvailable` and ready (`src/plugin/PluginThemeProvider.tsx:74-93`).
-`src/plugin/ResizeObserver.tsx:13-15` sets the action width to `innerHeight / 2 + 40` on resize.
+## 3. Plugin modules
 
-## 3. Stores
-
-| Store | File | Holds | Shared? | Persisted? |
-|---|---|---|---|---|
-| `useDiceRollStore` (zustand + immer) | `src/dice/store.ts:98-357` | The current roll: `roll`, `rollThrows`, `rollValues`, `rollTransforms`, `dieInfo`, `explosionDice`, `pendingDice`, `finishedDice`, `explosionResults`, `rollMode`, `currentRollResult`. | No (the result is derived and broadcast) | No |
-| `useDiceControlsStore` (zustand + immer) | `src/controls/store.ts:101-245` | Dice set, dice counts, hidden flag, Wild Die, TN, trait and damage modifiers, mode choice (`AUTO`/`TRAIT`/`DAMAGE`/`STANDARD`) and computed `rollMode`. | No | 3 keys in `localStorage` (section 8.3) |
-| `useDiceHistoryStore` | `src/controls/history.ts:26-44` | "Recent rolls" menu: up to 6 dice selections with their settings (`history.ts:32-35`). It also sets `pinnedRolls: []`, which is not in its type (`history.ts:29`). | No | No |
-| `useDebugStore` | `src/debug/store.ts:8-11` | `allowOrbit`, `allowPhysicsDebug` (Ctrl+Alt+Shift+C / D). | No | No |
-| `useRollHistoryStore` | `src/plugin/rollHistoryStore.ts:20-48` | A roll history (max 50). **Not used**: nothing imports it. The history in use is React state in `RollHistoryTray` (section 7). | - | - |
-
-`src/hooks/useRemotePlayerResults.ts` is also not used (no imports). Its comment still says
-"reconstruct ... from remote player metadata" (`useRemotePlayerResults.ts:5`).
-
-In development builds `src/dice/store.ts:361-364` puts the dice store on `window.__diceStore`
-(marked "TEMP DEBUG ... Remove before merge").
+| File | Role |
+|---|---|
+| `src/plugin/rollWire.ts` | Channel and metadata key, payload types, `buildRollBroadcast`, the validating parsers `parseRollBroadcast` / `parseRollResult` / `parseHistoryMetadata`, the compact history encoding, `safeColor` / `safeName`, limits. |
+| `src/plugin/rollSender.ts` | The one sender: dedupe, debounce, serial queue, retry, size guard, history writes, error notices. |
+| `src/plugin/DiceRollSync.tsx` | Feeds the finished (and post-roll edited) result of the dice store to the sender. |
+| `src/plugin/partyDirectory.ts` | Connection id -> name, color (validated), role, from `OBR.party` and `OBR.player`. |
+| `src/plugin/useRollFeed.ts` | One subscription per iframe to the roll channel, the party and the player; parses everything; resolves the sender. |
+| `src/plugin/rollHistory.ts` | Pure history reducer: keys, order, revisions, caps, flood limit. |
+| `src/plugin/RollHistoryTray.tsx`, `RollHistoryPanel.tsx`, `PlayerRollPill.tsx` | History UI (action popover). |
+| `src/plugin/NotificationPopover.tsx`, `RollNotification.tsx` | Toast UI (notification popover). |
 
 ## 4. A roll, step by step (local client)
 
-1. **Build the roll.** `handleRoll` in `src/controls/DiceRollControls.tsx:103-156` calls
-   `getDiceToRoll` (`src/controls/store.ts:264-297`). Each die gets a new id from a per-page counter
-   (`src/helpers/generateDiceId.ts:4-7`: `"1"`, `"2"`, ...). In TRAIT mode with the Wild Die on, a
-   `NEBULA` `D6` is added (`store.ts:287-294`). `startRoll` gets
-   `{ dice, hidden, savageWorldsConfig: { rollType, modifier, targetNumber, wildDieId } }`
-   (`DiceRollControls.tsx:125-134`). The "recent rolls" replay calls `startRoll({ dice, hidden })`
-   without `savageWorldsConfig` (`src/controls/DiceHistory.tsx:67`). Nothing reads
-   `savageWorldsConfig` after it is stored.
-2. **Throw.** `startRoll` (`src/dice/store.ts:115-148`) sets every value to `null`, puts every die in
-   `pendingDice`, makes a random `DiceThrow` per die (`getRandomDiceThrow`,
-   `src/helpers/DiceThrower.ts:102-114`), and marks a die as the Wild Die when it is a `NEBULA` `D6`
-   (`store.ts:145`). Fixture: `diceStore.inProgress.traitWildDie.json`.
-3. **Simulate.** `src/dice/DiceRoll.tsx:98-134` runs Rapier with `timeStep={1 / 120}` and
-   `updateLoop="independent"`. Each die is a `PhysicsDice`. When its speed is low and it is in the
-   tray, it reads the up face (`src/helpers/getValueFromDiceGroup.ts:10-39`) and calls
-   `onRollFinished(id, value, transform)` (`src/dice/PhysicsDice.tsx:93-123`).
-4. **Explode.** `checkAndProcessExplosion` (`src/dice/store.ts:219-241`) stores the value, adds it to the
-   chain of the root die (`updateExplosionResults`, `src/dice/storeHelpers.ts:10-30`), and, when the value
-   is the die maximum and the mode is not `STANDARD`, adds an explosion die with id
-   `<rootId>_explosion_<n>` and a new random throw (`store.ts:271-295`, `storeHelpers.ts:33-49`).
-   The limit is 50 explosions per die (`src/helpers/explosionHelpers.ts:33`). Fixture:
-   `diceStore.explosionPending.json`.
-5. **Finish.** When `pendingDice` is empty, `completeRoll` reads the modifier and TN from the controls
-   store (`store.ts:297-303`) and `finalizeRoll` sets `currentRollResult` with
-   `isComplete: true` and `timestamp: Date.now()` (`store.ts:305-320`). Outcomes come from
-   `calculateOutcomes` (`store.ts:333-355`) and the helpers in `src/dice/storeHelpers.ts:69-164`.
-6. **Live recalculation.** `useSavageWorldsResults` (`src/hooks/useSavageWorldsResults.ts:9-131`)
-   recalculates outcomes from `currentRollResult` with the **current** TN, modifier and Wild Die
-   setting, and adds `wildDieEnabled` (`:124-130`). This value is what is broadcast.
+1. `handleRoll` (`src/controls/DiceRollControls.tsx`) builds the dice with `getDiceToRoll`
+   (`src/controls/store.ts`; at most 40 dice per roll, plus the Wild Die) and calls
+   `startRoll(roll, { mode, speedMultiplier, settings })` (`src/dice/store.ts`). The roll records its own
+   mode; `roll.hidden` comes from the hide toggle.
+2. Each die gets a random throw (`getRandomDiceThrow`, `src/helpers/DiceThrower.ts`). Rapier simulates
+   it; the resting pose gives the face value (`checkAndProcessExplosion`). A maximum face adds an
+   explosion die (not in STANDARD mode).
+3. When no die is pending, the store sets `currentRollResult`: the result from the rules engine
+   (`src/rules/outcomes.ts`), plus `rollId` (new UUID) and `hidden` (copied from the roll).
+4. `useSavageWorldsResults` recalculates the result with the **live** TN, modifiers and Wild Die
+   setting. That value is shown, sent and stored (post-roll edits, section 5.3).
 
-## 5. How results reach other clients
+## 5. Roll broadcast
 
-### 5.1 What is sent
-
-`DiceRollSync` (`src/plugin/DiceRollSync.tsx`), mounted inside `PluginGate` in the action popover
-(`App.tsx:25-28`), sends:
+### 5.1 What is sent (payload version 1)
 
 ```ts
-OBR.broadcast.sendMessage("rodeo.owlbear.savage-worlds-dice/roll-result", broadcast, { destination: "ALL" });
-// broadcast: RollBroadcast = { playerId, player, result }   (DiceRollSync.tsx:9-13)
+OBR.broadcast.sendMessage("rodeo.owlbear.savage-worlds-dice/roll-result", payload, { destination: "ALL" });
+
+interface RollBroadcastV1 {
+  v: 1;                    // payload version (new)
+  rollId: string;          // [A-Za-z0-9_-]{1,64}, the same for every revision of the roll (new)
+  rev: number;             // 0 for the finished roll, +1 per post-roll edit (new)
+  playerId: string;        // the sender's connection id   } kept only for clients on an older version;
+  player: {                //                              } receivers on this version ignore it
+    id, connectionId, name, color, role, syncView: false, metadata: {}   // real values from OBR
+  };
+  result: {                // exactly the golden result keys
+    mode: "TRAIT" | "DAMAGE" | "STANDARD";
+    dieChains: DieChain[]; // every die: regular + Wild Die; explosions folded into the root chain
+    outcomes: RollOutcome[];
+    targetNumber: number; modifier: number; wildDieEnabled: boolean;
+    isComplete: true;
+    timestamp: number;     // Date.now() at finish; display only, never used for order
+  };
+}
+interface DieChain { dieId: string; dieType: "D4"|"D6"|"D8"|"D10"|"D12"; rolls: number[]; total: number; isWildDie: boolean }
+interface RollOutcome {
+  chains: DieChain[]; modifier: number; total: number; replacedByWild: boolean;
+  success?: boolean; raises?: number;                  // TRAIT only (DAMAGE/STANDARD: absent, OD-5)
+  criticalFailure?: true; possibleCriticalFailure?: true; criticalFailureReason?: string;  // TRAIT only
+}
 ```
 
-- `player` is built locally (`DiceRollSync.tsx:28-42`): `name`, `color` and `id` from
-  `OBR.player.getName/getColor/getId`. Both `id` and `connectionId` are set to `OBR.player.getId()`,
-  the **user id**, not the connection id. `role` is always `"PLAYER"`, `syncView` is `false`,
-  `metadata` is `{}`.
-- `playerId` is `player.connectionId`, which is the user id (`:102`, `:127`). The interface comment
-  says "Player's connection ID" (`:10`).
-- `result` is the `useSavageWorldsResults()` value (`:22`).
-- `destination: "ALL"` means the sender also receives its own message (`:109`, `:134`).
-
-Fixtures: `broadcast.rollResult.*.json`, `broadcast.event.traitWildDie.json`.
+- STANDARD results have `modifier: 0` in the result and in every outcome.
+- `hidden` and other local fields are never in the payload.
 
 ### 5.2 When it is sent
 
-There are two send paths:
+The rules are in `src/plugin/rollSender.ts`:
 
-1. **Effect on the result** (`DiceRollSync.tsx:117-139`). It runs each time `currentResult` changes.
-   It sends when `currentResult.isComplete` is true, the roll is not hidden, and the local player info
-   has loaded. Because `useSavageWorldsResults` recalculates when the TN, a modifier or the Wild Die
-   toggle changes, a change to these after a roll sends the **same roll again with the same
-   `timestamp`** and new outcomes. Receivers replace their entry
-   (fixture `broadcast.rollResult.traitWildDie.modifierChanged.json`). This continues until the roll is
-   cleared (picking dice clears it: `src/controls/DicePicker.tsx:22-25`).
-2. **Store subscription** (`DiceRollSync.tsx:58-114`). On each dice-store change it checks that all
-   values are set and `pendingDice` is empty (`:75-77`), and that the die ids or the result
-   `timestamp` changed (`:81-95`). It sends `currentResult` from the closure of the last render
-   (`:99-105`), not a value read from `state`.
+- A finished roll that is **not hidden** is sent **at once** with `rev: 0`.
+- A **hidden** roll is never sent and never stored, also after edits. The flag is read from the finished
+  roll (`currentRollResult.hidden`), not from the live toggle.
+- Nothing is sent while dice still roll, on clear, or for an edit after the roll was cleared.
+- Every OBR write runs in one serial queue and is awaited. An error (for example `RateLimitHit`, or a
+  timeout) is retried after 0.6, 1.2, 2.4, 4.8 and 6 s. Only the newest revision of a roll is sent; an
+  older one waiting in the queue is skipped. When the last retry fails, the roller sees an OBR ERROR
+  notification ("Your roll could not be shared with the table…").
+- Size guard: before a roll is queued, the payload is built with 64-character placeholder ids and name,
+  measured, and parsed with the receivers' parser. If it is over 16 000 bytes or would be rejected, it is
+  neither sent nor stored, and the roller sees "This roll is too large to share with the table".
+  With 40 dice the largest possible roll fits (test `T-57`).
+- Sender info (`getId`, `getConnectionId`, `getName`, `getColor`, `getRole`) is read when a send runs,
+  so a roll that finishes before player info is ready is still sent.
 
-Not sent:
+### 5.3 Post-roll edits (owner decision OD-1)
 
-- A roll in progress. No message is sent until every die has a value (`:75-79`, `:122`).
-- A cleared roll. There is no "clear" message (`:63-67`).
-- A hidden roll (`roll.hidden`, set from the "hide" control `diceHidden`): `:99`, `:119-122`.
-- A roll made before `OBR.player.getName/getColor/getId` resolved (`currentPlayer` is `null`).
+Changing the TN, a modifier or the Wild Die after a roll is a feature: the result is recalculated
+(every field, by the rules engine) and sent again as a new revision of the same roll.
 
-### 5.3 Who reads it
+- Same `rollId` and `timestamp`, `rev + 1`.
+- Trailing debounce of 300 ms: quick clicks send one revision with the final value.
+- A change that does not alter the result (for example the damage modifier during a TRAIT result), or
+  a change back to the last sent value within the window, sends nothing.
+- Every client replaces its entry for that roll, in place. The entry shows the new modifier, and the
+  TN when it is not 4 ("vs TN 6", OD-6).
+- A revised roll toasts once on other clients, 1.5 s after the last revision, marked "(revised)" (OD-7).
+- The revision is also written to the roller's history metadata, so late joiners see the edited values.
 
-| Reader | File | Iframe | What it does |
-|---|---|---|---|
-| `RollHistoryTray` | `src/plugin/RollHistoryTray.tsx:15-60` | Action popover | Adds or updates a history entry (section 7). |
-| `NotificationPopover` | `src/plugin/NotificationPopover.tsx:44-69` | Notification popover | Shows a toast when the action popover is closed. |
+### 5.4 Receiving and validation
 
-Both cast `event.data` to `RollBroadcast` with no validation (section 9). Neither uses
-`event.connectionId`.
+Both receiver iframes use `useRollFeed`: one subscription each to the roll channel, `OBR.party.onChange`
+and `OBR.player.onChange`, made once.
+
+- `parseRollBroadcast(event.data)` returns a new, typed object or `null`. It reads only known own keys
+  and builds new objects (no prototype keys). Rules: `mode` and `dieType` from fixed lists; integers
+  everywhere (`Number.isInteger`); faces 1..max of the die; chain `total` must equal the sum of its rolls;
+  1..50 chains and outcomes, 1..51 rolls per chain, at most 300 rolls in all; modifier -99..99; TN 1..99;
+  outcome total within ±100 000; raises 0..10 000; `criticalFailureReason` at most 200 characters;
+  `timestamp` 1..8.64e15; ids `[A-Za-z0-9_-]{1,64}`; `rev` 0..1 000 000.
+- **Version:** no `v` = a client on an older version: accepted, `rollId = "t" + result.timestamp`,
+  `rev = 0` (old clients keep the timestamp for every revision, so their revisions replace by arrival).
+  `v >= 1` is read with the v1 rules; a later version must stay a superset of v1. Anything else is dropped.
+- Defaults for fields old senders may omit: `targetNumber` 4, `modifier` 0, `wildDieEnabled` false (crit
+  then shows as "possible" only), `isWildDie` / `replacedByWild` false.
+- Invalid payloads are dropped with one `console.warn` per sender connection and source.
+- **Identity (C-02):** the sender is `event.connectionId` (set by the OBR host), resolved through
+  `OBR.party.getPlayers()` / `onChange` and `OBR.player` (self). Name (max 64 characters) and color
+  (`#rrggbb` only, else `#888888`) come from OBR. If the connection is unknown, the party is fetched once
+  more; if it is still unknown, the message is dropped with a warning.
+- **Error boundaries** (`src/components/ErrorBoundary.tsx`) wrap the history tray ("History unavailable"),
+  each history pill (a bad entry hides only itself), the notification popover and each toast. A toast that
+  fails to render sets the popover to 0 x 0, so no empty iframe blocks clicks in OBR.
 
 ## 6. Background page and notification popover
 
-- `src/background.ts:4-17` opens the popover once on `OBR.onReady`: id
+- `src/background.ts` opens the popover once on `OBR.onReady`: id
   `rodeo.owlbear.savage-worlds-dice/notification-popover`, url `/popover.html`, size 0 x 0, anchored at
   top center, `disableClickAway`, `hidePaper`. Fixture: `popover.notification.open.json`.
-- `NotificationPopover` tracks the action open state (`OBR.action.isOpen` and `onOpenChange`,
-  `NotificationPopover.tsx:24-41`). When a complete roll arrives while the action is closed, it shows
-  `RollNotification` for 10 s (`:51-63`) and resizes its popover to 600 x 160; otherwise to 0 x 0
-  (`:72-80`).
-- The broadcast listener is removed and added again each time `isPanelOpen` changes (`:44-69`).
-- With `destination: "ALL"`, a player whose own action popover is closed also gets a toast for their
-  own roll. (In practice a roll needs the action open, but the result can be re-sent after it closes,
-  see 5.2.)
+- `NotificationPopover` reads `OBR.action.isOpen()` once and follows `onOpenChange` in a ref (no
+  resubscribe on open/close). While the open state is still unknown, a toast asks `isOpen()` first.
+- A toast shows only while the action popover is closed, for 10 s, at 600 x 160; otherwise the popover
+  is 0 x 0. Resize errors are caught and logged.
+- No toast for this client's own roll. A new roll toasts at once. A revision toasts once after the edits
+  settle (section 5.3). An older or identical revision toasts nothing.
+- The name is cut with an ellipsis (16em, and at most 64 characters).
 
 ## 7. Roll history
 
-- **In use:** `RollHistoryTray` keeps `RollHistoryEntry[]` in React state (`RollHistoryTray.tsx:12`).
-  For each complete broadcast (`:20`) it makes `id = "<playerId>-<result.timestamp>"` (`:26`). If the
-  id exists, it replaces `result` and `player` (`:30-37`). Otherwise it appends
-  `{ id, playerId, player, result, timestamp, addedAt: Date.now() }` (`:39-48`). It sorts by
-  `timestamp` and keeps the last 20 (`:51-53`). Fixtures: `rollHistory.entries.json`,
-  `rollHistory.empty.json`.
-- The type is `RollHistoryEntry` in `src/types/SavageWorldsTypes.ts:87-96` (`player` is
-  `PlayerDisplayInfo`, `:77-85`). A second, unused `RollHistoryEntry` is in
-  `src/plugin/rollHistoryStore.ts:5-12`.
-- The history lives only in the action iframe's memory. A reload, a late join, or a missed message
-  means those rolls are not shown. Each client can have a different history.
-- `PlayerRollPill` (`src/plugin/PlayerRollPill.tsx`) renders each entry with `player.name` and
-  `player.color` from the payload.
+### 7.1 Player metadata (owner decision OD-2)
+
+| Key | Written by | Value |
+|---|---|---|
+| `rodeo.owlbear.savage-worlds-dice/history` | each client, for itself only (`OBR.player.setMetadata`) | `HistoryMetadataV1` |
+
+```ts
+interface HistoryMetadataV1 {
+  v: 1;
+  rolls: {                  // oldest first, at most 10
+    id: string;             // rollId
+    rev: number;
+    t: number;              // result timestamp (display only)
+    m: "TRAIT" | "DAMAGE" | "STANDARD";
+    tn: number;             // target number
+    mod: number;            // modifier of the mode (0 for STANDARD)
+    w: 0 | 1;               // Wild Die on
+    c: (string | number)[][];  // chains: [dieType, isWildDie 0|1, ...rolls]
+  }[];
+}
+```
+
+- Only completed, not hidden rolls. A revision updates its record in place.
+- Compact: outcomes are not stored. A reader recomputes them with the rules engine
+  (`computeRollResult`), so stored data cannot carry wrong totals. A typical trait roll costs under
+  200 bytes; 10 rolls of the largest possible size are under 32 kB, half of the 64 kB per-update limit
+  (test `T-57`).
+- Written after each send through the same queue (awaited, retried, ERROR notice on final failure).
+- On start, the sender reads its own key first, so a remount of the action popover on the same
+  connection keeps the earlier rolls.
+- Player metadata is per connection: a page reload (new connection) starts empty
+  (owlbear-platform.md 5.1). The roller's own rolls from before a page reload are then gone, but every
+  other player's rolls are still read from their metadata.
+- Each record is validated on read (same limits as section 5.4); invalid records are dropped one by
+  one with one warning per player.
+
+### 7.2 Party history (`RollHistoryTray`, reducer `src/plugin/rollHistory.ts`)
+
+- **Sources:** on load, the history metadata of every player in `OBR.party` and of this client; on each
+  party or player change, only players whose history value changed; and live broadcasts.
+- **Key:** `<sender connectionId>:<rollId>`. A roll that arrives by broadcast and by metadata is one
+  entry. Only the original connection can revise its entry; another client that reuses a `rollId` makes
+  its own entry under its own name.
+- **Order:** by arrival in this client, never by the sender's clock. A revision keeps the position. The
+  first load from metadata has no arrival order, so it is sorted by the sender timestamp **clamped to the
+  local clock** (a forged future timestamp cannot pin an entry at the end).
+- **Revisions:** an entry is replaced when the new `rev` is not lower than the stored one; an older
+  revision is ignored.
+- **Cap:** the newest 20 arrivals are kept and rendered. Keys that dropped out are remembered, so a later
+  metadata read does not bring them back.
+- **Flood limit:** at most 5 new entries per connection per 10 s from broadcasts.
+- **Players who leave:** their entries stay until newer arrivals push them out; they keep the last known
+  name and color.
+- **Clearing** a roll (`clearRoll`) sends nothing; other clients keep the entry.
 
 ## 8. Synced data reference
 
@@ -169,123 +225,77 @@ Both cast `event.data` to `RollBroadcast` with no validation (section 9). Neithe
 
 | Kind | Keys |
 |---|---|
-| Player metadata | **None.** The app does not call `OBR.player.setMetadata` or read `Player.metadata`. |
+| Player metadata | `rodeo.owlbear.savage-worlds-dice/history` (section 7.1). |
 | Room metadata | None. |
 | Scene / item metadata | None. |
 
 Legacy: before commit `2a374c3` ("migrate to broadcasts"), the app wrote player metadata keys
 `rodeo.owlbear.savage-worlds-dice/roll`, `/rollThrows`, `/rollValues`, `/rollTransforms` and
-`/currentRollResult`. The current code ignores them. Player metadata is per connection and resets on
-reload (owlbear-platform.md 5.1), so these keys exist only while a client on an old version is
-connected.
+`/currentRollResult`. The current code ignores them.
 
 ### 8.2 Broadcast channels
 
-| Channel | Destination | Payload type | Writer | Readers | Fixtures |
-|---|---|---|---|---|---|
-| `rodeo.owlbear.savage-worlds-dice/roll-result` | `ALL` | `RollBroadcast` | `DiceRollSync.tsx:108-110`, `:133-135` | `RollHistoryTray.tsx:16`, `NotificationPopover.tsx:45` | `broadcast.rollResult.*.json`, `broadcast.event.traitWildDie.json` |
-
-```ts
-// src/plugin/DiceRollSync.tsx:9-13
-interface RollBroadcast {
-  playerId: string;          // OBR.player.getId() (user id)
-  player: Player;            // { connectionId (= user id), id, name, color, metadata: {}, role: "PLAYER", syncView: false }
-  result: PlayerRollResult;  // = SavageRollResult
-}
-
-// src/types/SavageWorldsTypes.ts:37-59 (+ wildDieEnabled from useSavageWorldsResults.ts:129)
-interface SavageRollResult {
-  mode: "TRAIT" | "DAMAGE" | "STANDARD";
-  dieChains: DieChain[];      // every die: regular + Wild Die
-  outcomes: RollOutcome[];    // TRAIT: one per regular die; DAMAGE: one; STANDARD: one per die
-  targetNumber?: number;
-  modifier?: number;
-  wildDieEnabled?: boolean;
-  isComplete: boolean;        // always true when sent
-  timestamp: number;          // Date.now() at finalize; part of the history entry id
-}
-interface DieChain { dieId: string; dieType: "D4"|"D6"|"D8"|"D10"|"D12"|"D20"|"D100"; rolls: number[]; total: number; isWildDie?: boolean }
-interface RollOutcome {
-  chains: DieChain[]; modifier: number; total: number;
-  success?: boolean; raises?: number; replacedByWild?: boolean;
-  criticalFailure?: boolean; possibleCriticalFailure?: boolean; criticalFailureReason?: string; // declared, never set
-}
-```
-
-Format notes, from the fixtures:
-
-- Each chain in `outcomes[].chains` is a full copy of a chain in `dieChains`.
-- `DAMAGE` outcomes also have `success` and `raises` against the TN, because `processDamageRoll`
-  passes `targetNumber` (`storeHelpers.ts:157-164`). The live recalculation does not update them when
-  the TN or modifier changes (`useSavageWorldsResults.ts:99-121` only updates them for TRAIT).
-- `raises` is absent on a failed outcome from `createRollOutcome` (`storeHelpers.ts:83-88`), but the
-  hook sets it to `0` (`useSavageWorldsResults.ts:46-53`, `:111-117`). Sent payloads have it.
-- `STANDARD` outcomes have no `success`/`raises` and `modifier: 0` (`store.ts:344-351`).
-- Critical failure is computed by the reader at render time (`src/helpers/criticalFailure.ts:17-107`),
-  from `dieChains` and `wildDieEnabled`.
-- There is **no version field**.
-
-### 8.3 Browser storage
-
-| Key | Value | Written | Read | Default |
+| Channel | Destination | Payload | Writer | Readers |
 |---|---|---|---|---|
-| `swade-diceSetId` | Dice set id, e.g. `"IRON_STANDARD"` | `src/controls/store.ts:142` | `store.ts:51-58` (ignored when `NEBULA_STANDARD`, `all` or unknown) | first set that is not NEBULA or `all` (`store.ts:63-65`) |
-| `swade-wildDieEnabled` | `"true"` / `"false"` | `store.ts:217` | `store.ts:87`, `:91` | `true` |
-| `swade-targetNumber` | integer string, clamped 1..99 on write | `store.ts:227` | `store.ts:88`, `:92` (`parseInt`, no `NaN` check) | `4` |
+| `rodeo.owlbear.savage-worlds-dice/roll-result` | `ALL` | `RollBroadcastV1` (section 5.1); legacy payloads without `v` are read too | `rollSender.ts` | `useRollFeed.ts` (history tray, notification popover) |
 
-All access is in `try/catch`. There is no zustand `persist` middleware and no `sessionStorage`.
-Modifiers and mode choice are not stored (`store.ts:189`, `:195`, `:241`).
-Fixtures: `localStorage.empty.json`, `localStorage.controls.json`.
+### 8.3 Mixed versions in one room
 
-### 8.4 Popover and other OBR ids
+- **Old client -> new client:** old payloads (no `v`, `player` block from the payload) are validated and
+  shown; the name and color come from OBR. Their revisions (same timestamp) replace the entry by arrival.
+- **New client -> old client:** the payload keeps every golden key and type (`playerId`, `player`,
+  `result` with exactly the golden result keys), so old clients show new rolls. Old clients key entries on
+  `playerId + timestamp`; both stay constant across revisions.
+- Old clients do not read or write the history key. Their rolls appear in new clients' history only while
+  the new client is open (as before). Tests: `T-60` in `src/plugin/rollWire.test.ts` and
+  `src/test/sync.multiClient.test.tsx`, and `src/test/golden.compat.test.tsx`.
+
+### 8.4 Browser storage
+
+| Key | Value | Default |
+|---|---|---|
+| `swade-diceSetId` | Dice set id, e.g. `"IRON_STANDARD"` (ignored when `NEBULA_STANDARD`, `all` or unknown) | first set that is not NEBULA or `all` |
+| `swade-wildDieEnabled` | `"true"` / `"false"` | `true` |
+| `swade-targetNumber` | integer string, 1..99 (validated on read and write) | `4` |
+
+All access is in `try/catch`. Modifiers and mode choice are not stored.
+
+### 8.5 Popover and other OBR ids
 
 | Id | Use |
 |---|---|
-| `rodeo.owlbear.savage-worlds-dice/notification-popover` | `OBR.popover.open` (`background.ts:7`), `setWidth`/`setHeight` (`NotificationPopover.tsx:74-78`) |
+| `rodeo.owlbear.savage-worlds-dice/notification-popover` | `OBR.popover.open` (`background.ts`), `setWidth`/`setHeight` (`NotificationPopover.tsx`, `PopoverApp.tsx`) |
 
-There are no modals, context menus, tools or scene items. All ids come from `getPluginId`
-(`src/plugin/getPluginId.ts:2-4`). Fixture: `ids.json`.
+All ids come from `getPluginId` (`src/plugin/getPluginId.ts`).
 
-## 9. Determinism: what is shared and what is computed locally
+## 9. What is shared and what is local
 
-- **Shared:** only the finished `SavageRollResult` (values per die and computed outcomes).
-- **Local only:** `rollThrows`, `rollTransforms`, `rollValues`, `dieInfo` and the 3D scene. Other
-  clients do not render the roller's dice.
-- **Not seeded:** `random()` uses `Math.random()` (`src/helpers/random.ts:5-7`). `DiceRoll.masterSeed`
-  is declared (`src/types/DiceRoll.ts:9-13`) but nothing sets or reads it. The comments at
-  `src/dice/store.ts:32-38` ("Master seed ... deterministic seed derivation") and
-  `src/dice/DiceRoll.tsx:95` ("networking relies on the deterministic nature of Rapier") describe the
-  older design, in which throws were shared through player metadata. The project `CLAUDE.md`
-  ("Results are reproducible across clients via shared seeds") is also out of date.
-- The result is trusted as the roller's client computed it. Receivers do not re-simulate or check it.
+- **Shared:** the finished result (values per die and computed outcomes), and the last 10 results per
+  player in player metadata.
+- **Local only:** `rollThrows`, `rollTransforms`, `rollValues`, `dieInfo` and the 3D scene. Throws are
+  random (`Math.random`; the RNG is injectable in `DiceThrower` for tests). Other clients do not render
+  the roller's dice.
+- The result is trusted as the roller's client computed it: a player can fake their own results. This is
+  inherent to the design (no shared physics).
 
 ## 10. Trust assumptions
 
-Facts about the current code; see owlbear-platform.md 7 and 16.3 for the platform rules.
-
-- **No validation of received data.** `event.data as RollBroadcast` at `RollHistoryTray.tsx:17` and
-  `NotificationPopover.tsx:48`. The only checks are `result`, `result.timestamp` and
-  `result.isComplete` being truthy (`RollHistoryTray.tsx:20`, `NotificationPopover.tsx:51`). Fields
-  such as `outcomes`, `dieChains`, `player.name` and `player.color` are used as they arrive. No React
-  error boundary was found in `src/`, so a malformed payload that throws during render can break the
-  tray.
-- **Sender identity comes from the payload.** `playerId`, `player.name` and `player.color` are read
-  from `data` (`RollHistoryTray.tsx:26`, `:42-43`). `event.connectionId`, which the OBR host sets, is
-  not used. Any client can send a message that looks like another player's roll, or that replaces an
-  existing entry by reusing its `playerId` and `timestamp`.
-- **Payload values reach styles.** `player.color` goes to `backgroundColor` and to a hex parser
-  (`PlayerRollPill.tsx:38-52`, `:74-75`). `player.name` is rendered as React text (escaped).
-- **Results are not checked.** Die values, totals, raises and success are shown as sent.
-- **Hidden rolls are private** because they are not sent at all (`DiceRollSync.tsx:99`, `:122`).
+- All received data (broadcasts and other players' metadata) is untrusted and validated (section 5.4).
+- Identity comes from the OBR host (`event.connectionId`, `OBR.party`), never from a payload.
+- Only validated `#rrggbb` colors reach styles; names are rendered as React text (escaped) and capped.
+- Hidden rolls are private because they are never sent or stored. Everything in player metadata can be
+  read by every client in the room.
 
 ## 11. Size and rate
 
-- A typical payload is 1.0 to 1.7 kB as pretty JSON (fixtures). Each die adds about 70 bytes to
-  `dieChains` and again to `outcomes`, plus explosion values. The broadcast limit is 16 kB per message
-  (owlbear-platform.md 8). The dice count has no upper limit in `DicePicker`, and each die can explode
-  up to 50 times. No size check exists before `sendMessage`.
-- `sendMessage` is not awaited and has no `.catch` (`DiceRollSync.tsx:108`, `:133`). A failure
-  (rate limit, size, timeout) is an unhandled rejection only.
-- Every change of TN, modifier or Wild Die while a result is shown sends one message (5.2).
-- `src/tests/FairnessTester.tsx:145-148` rolls again and again with `clearRoll`/`reroll`. Each finished,
-  not hidden roll goes through the same broadcast path.
+- A typical payload is 1.0 to 1.7 kB. The broadcast limit is 16 kB per message; the sender's guard is
+  16 000 bytes. The UI allows at most 40 dice per roll and modifiers within -99..99.
+- OBR's rate limit counts messages (owlbear-platform.md 4.3). The sender sends one message per finished
+  roll and one per settled edit, and one metadata write after each; failures are retried with backoff.
+- `src/fairness/FairnessTester.tsx` rolls hidden, so its rolls are never sent or stored.
+
+## 12. Not done here
+
+- **Content Security Policy (C-09):** not added. A wrong policy blanks the extension for every user, and
+  the app needs `wasm-unsafe-eval` (Rapier), inline styles (Emotion) and Google Fonts. It must be checked
+  in a live OBR room (dev and production) before release.

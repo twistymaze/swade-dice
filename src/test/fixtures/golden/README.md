@@ -1,6 +1,11 @@
 # Golden fixtures: current cross-client and persisted data
 
 These files record the data format of the app **as it is now**, before any change.
+
+> Since payload version 1 (`src/plugin/rollWire.ts`), these files are the **legacy** format: the app
+> still reads them, and new payloads keep all their keys (plus `v`, `rollId`, `rev`). The app now also
+> writes one player metadata key, `rodeo.owlbear.savage-worlds-dice/history`. See
+> `docs/app-owlbear-integration.md` sections 5, 7 and 8.
 Use them in tests to detect format changes and to test readers against old data.
 
 ## Summary
