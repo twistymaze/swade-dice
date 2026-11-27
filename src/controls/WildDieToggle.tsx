@@ -6,6 +6,7 @@ import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { useDiceControlsStore } from "./store";
 import { useDiceRollStore } from "../dice/store";
 import { useDiceMode } from "../hooks/useDiceMode";
+import { WILD_DIE_HELP } from "../constants/savageWorlds";
 
 export function WildDieToggle() {
   const wildDieEnabled = useDiceControlsStore((state) => state.wildDieEnabled);
@@ -47,7 +48,7 @@ export function WildDieToggle() {
       return "Cannot add wild die to completed roll";
     }
     if (isEnabled) {
-      return `Wild Die (D6) - ${wildDieEnabled ? 'Enabled' : 'Disabled'}`;
+      return `Wild Die (D6) - ${wildDieEnabled ? 'Enabled' : 'Disabled'}. ${WILD_DIE_HELP}`;
     }
     return "Wild Die (disabled for damage rolls)";
   };
