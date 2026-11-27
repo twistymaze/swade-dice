@@ -1,5 +1,5 @@
 import { useTexture } from "@react-three/drei";
-import { gltfTexture } from "../helpers/gltfTexture";
+import { setupPbrTextures } from "../helpers/gltfTexture";
 import { MATERIAL_CONFIGS, MATERIAL_TEXTURES } from "./MaterialConfig";
 
 interface BaseMaterialProps {
@@ -17,7 +17,7 @@ export function BaseMaterial({ materialKey, props = {} }: BaseMaterialProps) {
 
   const [albedoMap, ormMap, normalMap] = useTexture(
     [textures.albedo, textures.orm, textures.normal],
-    (loadedTextures) => gltfTexture(loadedTextures, ["SRGB", "LINEAR", "LINEAR"])
+    setupPbrTextures
   );
 
   const baseProps = {
