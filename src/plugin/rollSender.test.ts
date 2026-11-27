@@ -224,3 +224,65 @@ describe("T-57 payload size guard (B-08)", () => {
     expect(obr().state.notifications.map((n) => n.message)).toEqual([TOO_LARGE_MESSAGE]);
   });
 });
+
+type SentPayload = { playerId: string; player: { id: string; name: string; color: string; role: string; connectionId: string } };
+const sentPlayers = () => obr().broadcast.sendMessage.mock.calls.map((c) => (c[1] as SentPayload).player);
+
+describe("B-10 / T-27 the payload carries the real OBR role", () => {
+  it("a GM client sends role GM; a player client sends role PLAYER (a hard-coded role fails one of them)", async () => {
+    resetObrMock({ id: "g1", connectionId: "cg", name: "Gina", color: "#00aa00", role: "GM" });
+    const gm = createRollSender();
+    gm.update({ rollId: "r1", hidden: false }, result());
+    await flushObr();
+    expect(sentPlayers()).toEqual([expect.objectContaining({ id: "g1", connectionId: "cg", name: "Gina", role: "GM" })]);
+    expect(parseRollBroadcast(obr().broadcast.sendMessage.mock.calls[0][1])).not.toBeNull();
+    gm.dispose();
+
+    resetObrMock({ id: "p1", connectionId: "cp", name: "Pip", color: "#0000aa", role: "PLAYER" });
+    const player = createRollSender();
+    player.update({ rollId: "r2", hidden: false }, result());
+    await flushObr();
+    expect(sentPlayers()).toEqual([expect.objectContaining({ id: "p1", connectionId: "cp", name: "Pip", role: "PLAYER" })]);
+  });
+
+  it("the role is read at send time: a GM handover between rolls changes the next payload", async () => {
+    resetObrMock({ id: "u1", connectionId: "c1", name: "Ava", color: "#aa0000", role: "PLAYER" });
+    const sender = createRollSender();
+    sender.update({ rollId: "r1", hidden: false }, result());
+    await flushObr();
+    obr().setRole("GM");
+    sender.update({ rollId: "r2", hidden: false }, result());
+    await flushObr();
+    expect(sentPlayers().map((p) => p.role)).toEqual(["PLAYER", "GM"]);
+  });
+});
+
+describe("T-58 player info that rejects: no placeholder identity is sent (B-09)", () => {
+  const placeholder = "x".repeat(64);
+
+  it.each(["getName", "getColor", "getRole", "getId", "getConnectionId"] as const)(
+    "%s rejects once: the send is retried and carries the real identity",
+    async (getter) => {
+      obr().player[getter].mockImplementationOnce(async () => Promise.reject(new Error("not ready")));
+      const sender = createRollSender();
+      sender.update({ rollId: "r1", hidden: false }, result());
+      await flushObr();
+      expect(obr().broadcast.sendMessage).not.toHaveBeenCalled();
+      await settle(DEFAULT_RETRY_DELAYS_MS[0] + 100);
+      expect(sentPlayers()).toEqual([
+        expect.objectContaining({ id: "u1", connectionId: "c1", name: "Ava", color: "#aa0000", role: "GM" }),
+      ]);
+      expect(JSON.stringify(obr().broadcast.sendMessage.mock.calls)).not.toContain(placeholder);
+      expect(obr().state.notifications).toEqual([]);
+    }
+  );
+
+  it("getName always rejects: nothing is sent and the roller gets the ERROR notice", async () => {
+    obr().player.getName.mockImplementation(async () => Promise.reject(new Error("not ready")));
+    const sender = createRollSender();
+    sender.update({ rollId: "r1", hidden: false }, result());
+    await settle(60000);
+    expect(obr().broadcast.sendMessage).not.toHaveBeenCalled();
+    expect(obr().state.notifications.map((n) => [n.message, n.variant])).toEqual([[SEND_FAILED_MESSAGE, "ERROR"]]);
+  });
+});
