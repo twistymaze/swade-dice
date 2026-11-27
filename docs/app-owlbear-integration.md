@@ -294,8 +294,17 @@ All ids come from `getPluginId` (`src/plugin/getPluginId.ts`).
   roll and one per settled edit, and one metadata write after each; failures are retried with backoff.
 - `src/fairness/FairnessTester.tsx` rolls hidden, so its rolls are never sent or stored.
 
-## 12. Not done here
+## 12. Content Security Policy
 
-- **Content Security Policy (C-09):** not added. A wrong policy blanks the extension for every user, and
-  the app needs `wasm-unsafe-eval` (Rapier), inline styles (Emotion) and Google Fonts. It must be checked
-  in a live OBR room (dev and production) before release.
+Production builds get a CSP `<meta>` tag at the start of `<head>` in all three pages (`cspPlugin` in
+`vite.config.ts`, build only; the dev server has no policy). The app needs `'wasm-unsafe-eval'` (Rapier),
+inline styles (Emotion) and Google Fonts:
+
+```
+default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:;
+connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'
+```
+
+A production build was checked in a live OBR room (tray, trait and damage rolls, party list, fonts). When a
+change adds a new external source (fonts, CDN, fetch), update the policy and check it in a live room again.
