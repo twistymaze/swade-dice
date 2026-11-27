@@ -7,21 +7,30 @@ import { useTheme } from "@mui/material/styles";
 import Paper from "@mui/material/Paper";
 
 import { PlayerRollPill } from "./PlayerRollPill";
-import { RollHistoryEntry } from "../types/SavageWorldsTypes";
+import { HISTORY_LIMIT, HistoryEntry } from "./rollHistory";
+import { SenderIdentity } from "./partyDirectory";
+import { FALLBACK_COLOR } from "./rollWire";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+
+const UNKNOWN_PLAYER = { name: "Unknown", color: FALLBACK_COLOR };
 
 export function RollHistoryPanel({
-  rollHistory
+  entries,
+  identities,
 }: {
-  rollHistory: RollHistoryEntry[];
+  entries: HistoryEntry[];
+  identities: Record<string, SenderIdentity>;
 }) {
+  // The list is capped by the reducer; cap the render too (OD-2)
+  const rollHistory = entries.slice(-HISTORY_LIMIT);
   const containerRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const prevHistoryIds = useRef<Set<string>>(new Set());
   
   // Auto-scroll to bottom when new entries are added
   useEffect(() => {
-    const currentIds = new Set(rollHistory.map(entry => entry.id));
-    const hasNewEntry = rollHistory.some(entry => !prevHistoryIds.current.has(entry.id));
+    const currentIds = new Set(rollHistory.map(entry => entry.key));
+    const hasNewEntry = rollHistory.some(entry => !prevHistoryIds.current.has(entry.key));
     
     if (hasNewEntry && containerRef.current) {
       containerRef.current.scrollTo({
@@ -80,13 +89,14 @@ export function RollHistoryPanel({
           ) : (
             <Stack spacing={0.5}>
               {rollHistory.map(entry => (
-                <PlayerRollPill
-                  key={entry.id}
-                  player={entry.player}
-                  result={entry.result}
-                  showTimestamp={false}
-                  showDicePrefix={true}
-                />
+                // One bad entry hides only itself (D-02, C-01)
+                <ErrorBoundary key={entry.key} name="PlayerRollPill" fallback={() => null}>
+                  <PlayerRollPill
+                    player={identities[entry.connectionId] ?? UNKNOWN_PLAYER}
+                    result={entry.result}
+                    showDicePrefix={true}
+                  />
+                </ErrorBoundary>
               ))}
             </Stack>
           )}

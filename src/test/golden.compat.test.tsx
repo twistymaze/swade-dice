@@ -6,11 +6,12 @@
  *
  * Contract:
  * - One broadcast channel, `rodeo.owlbear.savage-worlds-dice/roll-result`, sent with destination ALL.
- * - Payload `RollBroadcast` = { playerId, player, result } with the key structure of the fixtures.
+ * - Payload = the golden `{ playerId, player, result }` with the key structure of the fixtures, plus the
+ *   new top-level keys `v`, `rollId`, `rev` (old readers ignore unknown keys).
  * - Only finished, not hidden rolls are broadcast.
  * - Receivers (roll history tray, notification popover) accept every fixture payload.
  * - Settings persist in three localStorage keys with string values.
- * - No player/room/scene metadata is written.
+ * - No room/scene metadata is written.
  *
  * Deliberate contract changes (verified findings), each with a test below:
  * - OD-5 / A-04: DAMAGE outcomes no longer carry `success`/`raises`. Old payloads with them are still read.
@@ -19,6 +20,9 @@
  *   `raises: 0`) or `possibleCriticalFailure: true`, plus `criticalFailureReason`. The keys are absent
  *   otherwise, so non-crit payloads keep the golden key structure. Old payloads without them are read
  *   and the crit status is computed locally.
+ * - OD-2: each player writes its last 10 rolls to ONE player metadata key, `.../history`.
+ * - C-02: receivers take the sender name/color from OBR (the remote client here is named "Wren", like the
+ *   fixtures), not from the payload `player` block, which is still sent for old readers.
  */
 import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +34,7 @@ import { RollHistoryTray } from "../plugin/RollHistoryTray";
 import { NotificationPopover } from "../plugin/NotificationPopover";
 import { DiceRollSync } from "../plugin/DiceRollSync";
 import { getPluginId } from "../plugin/getPluginId";
+import { HISTORY_METADATA_KEY } from "../plugin/rollWire";
 import { useDiceRollStore } from "../dice/store";
 import { useDiceControlsStore } from "../controls/store";
 
@@ -80,12 +85,20 @@ function shape(value: Json): Json {
 
 /** Another client in the room sends `data` on the roll channel, the way DiceRollSync does. */
 async function sendFromRemote(data: Json) {
-  const remote = hub().clients.find((c) => c !== obr()) ?? hub().createClient({ name: "Remote" });
+  const remote =
+    hub().clients.find((c) => c !== obr()) ?? hub().createClient({ name: "Wren", color: "#4e9a06" });
   await act(async () => {
     await remote.broadcast.sendMessage(CHANNEL, data, { destination: "ALL" });
     await flushObr();
   });
   return remote;
+}
+
+/** Render the history tray and let it read the party. */
+async function mountTray() {
+  const view = render(<RollHistoryTray />);
+  await act(flushObr);
+  return view;
 }
 
 /** The pill of each history entry, in display order. */
@@ -110,8 +123,9 @@ describe("ids", () => {
     expect(ids.popovers.notification).toBe(NOTIFICATION_POPOVER);
   });
 
-  it("the app writes no OBR metadata", () => {
+  it("the golden app wrote no OBR metadata; OD-2 adds one player metadata key", () => {
     expect(ids.playerMetadataKeys).toEqual([]);
+    expect(HISTORY_METADATA_KEY).toBe("rodeo.owlbear.savage-worlds-dice/history");
     expect(ids.roomMetadataKeys).toEqual([]);
     expect(ids.sceneMetadataKeys).toEqual([]);
   });
@@ -150,7 +164,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
   it.each(Object.keys(broadcastFixtures).map((k) => k.replace(/^.*broadcast\.rollResult\.|\.json$/g, "")))(
     "%s: shows one entry with the player name and every outcome total",
     async (name) => {
-      render(<RollHistoryTray />);
+      await mountTray();
       expect(screen.getByText("Party dice rolls appear here")).toBeInTheDocument();
       const f = fixture(name);
       await sendFromRemote(f);
@@ -163,7 +177,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
   );
 
   it("a re-broadcast with the same playerId and timestamp replaces the entry (rollHistory.entries)", async () => {
-    render(<RollHistoryTray />);
+    await mountTray();
     for (const name of ["traitWildDie", "traitNoWild", "damage", "explodingChain", "traitWildDie.modifierChanged"]) {
       await sendFromRemote(fixture(name));
     }
@@ -177,7 +191,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
   });
 
   it("ignores incomplete results", async () => {
-    render(<RollHistoryTray />);
+    await mountTray();
     const f = fixture("traitWildDie");
     f.result.isComplete = false;
     await sendFromRemote(f);
@@ -185,7 +199,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
   });
 
   it("unsubscribes on unmount", async () => {
-    const { unmount } = render(<RollHistoryTray />);
+    const { unmount } = await mountTray();
     unmount();
     expect(obr().emitters.broadcast.get(CHANNEL)?.size ?? 0).toBe(0);
   });
@@ -193,7 +207,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
 
 describe("old payloads are still read after the contract changes", () => {
   it("OD-5: the old damage payload (with success/raises) shows its total and no success mark", async () => {
-    render(<RollHistoryTray />);
+    await mountTray();
     const f = fixture("damage");
     expect(f.result.outcomes[0]).toHaveProperty("success", true);
     await sendFromRemote(f);
@@ -203,7 +217,7 @@ describe("old payloads are still read after the contract changes", () => {
   });
 
   it("A-01: the old traitNoWild.rolledOne payload (no crit fields) shows the possible crit, computed locally", async () => {
-    render(<RollHistoryTray />);
+    await mountTray();
     const f = fixture("traitNoWild.rolledOne");
     await sendFromRemote(f);
     const [pill] = historyPills(f.player.name);
@@ -244,7 +258,23 @@ describe("NotificationPopover receives golden broadcasts", () => {
 
 describe("DiceRollSync sends the golden payload", () => {
   type StoreFixture = Record<string, Json>;
-  const setStore = (s: StoreFixture) => act(() => useDiceRollStore.setState(structuredClone(s) as never));
+  /** The finished result carries its own identity (rollId, and hidden copied from the roll, B-12). */
+  const withIdentity = (s: StoreFixture) => {
+    const state = structuredClone(s) as Record<string, unknown> & {
+      roll?: { hidden?: boolean } | null;
+      currentRollResult?: Record<string, unknown> | null;
+    };
+    if (state.currentRollResult) {
+      state.currentRollResult = { ...state.currentRollResult, rollId: "golden-roll", hidden: state.roll?.hidden === true };
+    }
+    return state;
+  };
+  const setStore = (s: StoreFixture) => act(() => useDiceRollStore.setState(withIdentity(s) as never));
+  /** The payload without the keys this change adds (v, rollId, rev): must keep the golden shape. */
+  const legacyPart = (p: object) => {
+    const { v: _v, rollId: _r, rev: _rev, ...rest } = p as Record<string, unknown>;
+    return rest;
+  };
 
   beforeEach(() => {
     act(() => {
@@ -265,37 +295,45 @@ describe("DiceRollSync sends the golden payload", () => {
     return calls[calls.length - 1] as unknown as [string, RollFixture, { destination: string }];
   };
 
-  it("a finished roll is sent on the roll channel with destination ALL and the golden key structure", async () => {
+  it("T-02 a finished roll is sent on the roll channel with destination ALL and the golden key structure", async () => {
     const client = await mountSync();
     const received = vi.fn();
     hub().createClient({ name: "Other" }).broadcast.onMessage(CHANNEL, received);
     await setStore(storeFinishedTraitWild);
     await act(flushObr);
 
-    expect(client.broadcast.sendMessage).toHaveBeenCalled();
+    expect(client.broadcast.sendMessage).toHaveBeenCalledTimes(1);
     const [channel, payload, options] = lastSend(client);
     const golden = fixture("traitWildDie");
     expect(channel).toBe(CHANNEL);
     expect(options).toEqual({ destination: "ALL" });
-    expect(shape(payload)).toEqual(shape(golden));
+    expect(shape(legacyPart(payload))).toEqual(shape(golden));
+    expect(payload).toMatchObject({ v: 1, rollId: "golden-roll", rev: 0 });
     // The result is fully determined by the store + controls, so it matches the golden values.
     expect(payload.result).toEqual(golden.result);
-    expect(payload.player).toMatchObject({ name: "Self" });
-    expect(typeof payload.playerId).toBe("string");
+    // B-10: real role and connection id from OBR (the block is kept for old readers)
+    expect(payload.player).toMatchObject({ name: "Self", role: "PLAYER", connectionId: "self-conn" });
+    expect(payload.playerId).toBe("self-conn");
     // Other clients get it as { data, connectionId } with the sender's connection id.
     expect(received).toHaveBeenCalledWith({ data: payload, connectionId: client.state.player.connectionId });
   });
 
-  it("changing the modifier after the roll re-sends the same timestamp (modifierChanged fixture)", async () => {
-    const client = await mountSync();
-    await setStore(storeFinishedTraitWild);
-    await act(flushObr);
-    act(() => useDiceControlsStore.setState({ traitModifier: -2 }));
-    await act(flushObr);
-    const [, payload] = lastSend(client);
-    const golden = fixture("traitWildDie.modifierChanged");
-    expect(shape(payload)).toEqual(shape(golden));
-    expect(payload.result).toEqual(golden.result);
+  it("T-02 changing the modifier after the roll re-sends the same timestamp, rev + 1 (modifierChanged fixture)", async () => {
+    vi.useFakeTimers();
+    try {
+      const client = await mountSync();
+      await setStore(storeFinishedTraitWild);
+      await act(flushObr);
+      act(() => useDiceControlsStore.setState({ traitModifier: -2 }));
+      await act(() => vi.advanceTimersByTimeAsync(500));
+      const [, payload] = lastSend(client);
+      const golden = fixture("traitWildDie.modifierChanged");
+      expect(shape(legacyPart(payload))).toEqual(shape(golden));
+      expect(payload.result).toEqual(golden.result);
+      expect(payload).toMatchObject({ rollId: "golden-roll", rev: 1 });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   /** A finished store state with the given result (the result fields not set by settings are kept). */
@@ -360,7 +398,7 @@ describe("DiceRollSync sends the golden payload", () => {
     await setStore(storeFinishedExploding);
     await act(flushObr);
     const [, payload] = lastSend(client);
-    expect(shape(payload)).toEqual(shape(fixture("explodingChain")));
+    expect(shape(legacyPart(payload))).toEqual(shape(fixture("explodingChain")));
   });
 
   it.each([
@@ -374,20 +412,24 @@ describe("DiceRollSync sends the golden payload", () => {
     expect(client.broadcast.sendMessage).not.toHaveBeenCalled();
   });
 
-  it("does not send a hidden roll", async () => {
+  it("T-03 does not send or store a hidden roll (the roll's own flag)", async () => {
     const client = await mountSync();
     const hidden = structuredClone(storeFinishedTraitWild) as StoreFixture & { roll: { hidden: boolean } };
     hidden.roll.hidden = true;
     await setStore(hidden);
     await act(flushObr);
     expect(client.broadcast.sendMessage).not.toHaveBeenCalled();
+    expect(client.player.setMetadata).not.toHaveBeenCalled();
   });
 
-  it("writes no player metadata", async () => {
+  it("OD-2 contract addition: writes only the history key to player metadata", async () => {
     const client = await mountSync();
     await setStore(storeFinishedTraitWild);
     await act(flushObr);
-    expect(client.player.setMetadata).not.toHaveBeenCalled();
+    expect(client.player.setMetadata).toHaveBeenCalled();
+    for (const [patch] of client.player.setMetadata.mock.calls) {
+      expect(Object.keys(patch as object)).toEqual([HISTORY_METADATA_KEY]);
+    }
   });
 });
 

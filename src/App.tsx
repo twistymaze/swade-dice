@@ -8,6 +8,8 @@ import { TopControls } from "./controls/TopControls";
 import { PluginGate } from "./plugin/PluginGate";
 import { DiceRollSync } from "./plugin/DiceRollSync";
 import { RollHistoryTray } from "./plugin/RollHistoryTray";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import Typography from "@mui/material/Typography";
 
 export function App() {
   return (
@@ -23,8 +25,18 @@ export function App() {
         </Box>
         
         <PluginGate>
-          <RollHistoryTray />
-                  <DiceRollSync />
+          {/* A bad history entry must not unmount the tray, the controls or the sender (C-01) */}
+          <ErrorBoundary
+            name="RollHistoryTray"
+            fallback={() => (
+              <Typography variant="caption" sx={{ opacity: 0.6, px: 1 }}>
+                History unavailable
+              </Typography>
+            )}
+          >
+            <RollHistoryTray />
+          </ErrorBoundary>
+          <DiceRollSync />
         </PluginGate>
       </Stack>
     </Container>

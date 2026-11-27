@@ -1,69 +1,28 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { useEffect, useState } from "react";
+import { useReducer } from "react";
 
 import Box from "@mui/material/Box";
 
 import { RollHistoryPanel } from "./RollHistoryPanel";
-import { getPluginId } from "./getPluginId";
-import { RollHistoryEntry } from "../types/SavageWorldsTypes";
-import { RollBroadcast } from "./DiceRollSync";
+import { EMPTY_HISTORY, historyReducer } from "./rollHistory";
+import { useRollFeed } from "./useRollFeed";
 
+/**
+ * The party roll history (action popover). Built from the players' history metadata on load and
+ * on party changes (OD-2), plus live roll broadcasts, in arrival order (see `rollHistory.ts`).
+ */
 export function RollHistoryTray() {
-  const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
+  const [history, dispatch] = useReducer(historyReducer, EMPTY_HISTORY);
 
-  // Listen for roll broadcasts from all players
-  useEffect(() => {
-    const unsubscribe = OBR.broadcast.onMessage(getPluginId("roll-result"), (event) => {
-      const broadcast = event.data as RollBroadcast;
-      
-      // Only process completed rolls
-      if (!broadcast.result || !broadcast.result.timestamp || !broadcast.result.isComplete) {
-        return;
-      }
-
-      setRollHistory(prevHistory => {
-        const updatedHistory = [...prevHistory];
-        const entryId = `${broadcast.playerId}-${broadcast.result.timestamp}`;
-        
-        const existingIndex = updatedHistory.findIndex(entry => entry.id === entryId);
-        
-        if (existingIndex >= 0) {
-          // Update existing entry
-          const newEntry: RollHistoryEntry = {
-            ...updatedHistory[existingIndex],
-            result: broadcast.result,
-            player: broadcast.player,
-          };
-          updatedHistory[existingIndex] = newEntry;
-        } else {
-          // Add new entry
-          const newEntry: RollHistoryEntry = {
-            id: entryId,
-            playerId: broadcast.playerId,
-            player: broadcast.player,
-            result: broadcast.result,
-            timestamp: broadcast.result.timestamp,
-            addedAt: Date.now(),
-          };
-          updatedHistory.push(newEntry);
-        }
-        
-        // Sort by timestamp and keep last 20
-        updatedHistory.sort((a, b) => a.timestamp - b.timestamp);
-        const finalHistory = updatedHistory.slice(-20);
-        
-        return finalHistory;
-      });
-    });
-
-    return unsubscribe;
-  }, []);
+  const identities = useRollFeed({
+    onBroadcast: ({ connectionId, roll }) =>
+      dispatch({ type: "broadcast", item: { connectionId, roll }, now: Date.now() }),
+    onMetadata: (items, initial) =>
+      dispatch(initial ? { type: "initial", items, now: Date.now() } : { type: "metadata", items }),
+  });
 
   return (
     <Box component="div" sx={{ width: "auto" }}>
-      <RollHistoryPanel
-        rollHistory={rollHistory}
-      />
+      <RollHistoryPanel entries={history.entries} identities={identities} />
     </Box>
   );
 }

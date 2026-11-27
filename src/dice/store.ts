@@ -8,8 +8,9 @@ import { DiceTransform } from "../types/DiceTransform";
 import { getRandomDiceThrow } from "../helpers/DiceThrower";
 import { generateDiceId } from "../helpers/generateDiceId";
 import { createWildDie } from "../helpers/wildDie";
+import { generateRollId } from "../helpers/generateRollId";
 import { DiceThrow } from "../types/DiceThrow";
-import { ExplosionResult, SavageRollMode, SavageRollResult } from "../types/SavageWorldsTypes";
+import { ExplosionResult, SavageRollMode, StoredRollResult } from "../types/SavageWorldsTypes";
 import { shouldDieExplode, isValidFaceValue, MAX_EXPLOSIONS } from "../helpers/explosionHelpers";
 import { computeRollResult, DEFAULT_ROLL_SETTINGS, RollSettings } from "../rules/outcomes";
 import { updateExplosionResults, createExplosionDie, getParentDieId, createDieChains } from "./storeHelpers";
@@ -75,7 +76,11 @@ export interface DiceRollState {
   /** The speed multiplier of the current roll, reused by `reroll`. */
   rollSpeedMultiplier: number;
   explosionResults: Record<string, ExplosionResult>;
-  currentRollResult: SavageRollResult | null;
+  /**
+   * The finished result with its own identity: `rollId` (same for every revision) and `hidden`, copied
+   * from the roll when it finished. The sender reads `hidden` from here, never from live state (B-12).
+   */
+  currentRollResult: StoredRollResult | null;
 
   // Actions
   startRoll: (roll: DiceRoll, options: StartRollOptions) => void;
@@ -200,15 +205,19 @@ export const useDiceRollStore = create<DiceRollState>()(
         }
 
         if (!selectIsRolling(draft)) {
-          draft.currentRollResult = computeRollResult(
-            {
-              mode: draft.rollMode,
-              dieChains: createDieChains(draft.explosionResults),
-              isComplete: true,
-              timestamp: Date.now(),
-            },
-            draft.rollSettings
-          );
+          draft.currentRollResult = {
+            ...computeRollResult(
+              {
+                mode: draft.rollMode,
+                dieChains: createDieChains(draft.explosionResults),
+                isComplete: true,
+                timestamp: Date.now(),
+              },
+              draft.rollSettings
+            ),
+            rollId: generateRollId(),
+            hidden: draft.roll?.hidden === true,
+          };
         }
       });
       return true;

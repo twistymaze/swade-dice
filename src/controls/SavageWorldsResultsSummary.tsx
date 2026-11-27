@@ -18,6 +18,8 @@ interface SavageWorldsResultsSummaryProps {
   showModeIcon?: boolean;
   textColor?: string;
   isDarkBackground?: boolean;
+  /** Chips and toasts: add "vs TN n" to a trait roll when the TN is not 4 (OD-6). */
+  showTargetNumber?: boolean;
 }
 
 export function SavageWorldsResultsSummary({ 
@@ -30,7 +32,8 @@ export function SavageWorldsResultsSummary({
   showDicePrefix = false,
   showModeIcon = false,
   textColor = "white",
-  isDarkBackground = true
+  isDarkBackground = true,
+  showTargetNumber = false,
 }: SavageWorldsResultsSummaryProps) {
   
   if (!result) {
@@ -179,6 +182,9 @@ export function SavageWorldsResultsSummary({
               </span>
             </span>
           ))}
+          {showTargetNumber && isTraitTest && result.targetNumber !== 4 && (
+            <span style={{ opacity: 0.7, whiteSpace: "nowrap" }}> vs TN {result.targetNumber}</span>
+          )}
         </Typography>
       {/* // </Stack> */}
       </>

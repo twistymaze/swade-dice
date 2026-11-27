@@ -28,7 +28,7 @@ function rollTrait(traitFace: number, wildFace: number) {
 }
 
 function setStoredResult(result: SavageRollResult) {
-  act(() => useDiceRollStore.setState({ currentRollResult: structuredClone(result) }));
+  act(() => useDiceRollStore.setState({ currentRollResult: { ...structuredClone(result), rollId: "r1", hidden: false } }));
 }
 
 beforeEach(() => {

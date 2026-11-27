@@ -75,27 +75,13 @@ export interface ExplosionResult {
   isWildDie: boolean;
 }
 
-// Plugin-specific types for OBR integration
-export type PlayerRollResult = SavageRollResult;
-
-// Player display info interface compatible with OBR SDK to avoid circular dependency
-interface PlayerDisplayInfo {
-  id: string;
-  name: string;
-  color: string;
-  connectionId: string;
-  role: "GM" | "PLAYER";
-  syncView: boolean;
-  metadata: Record<string, unknown>;
-}
-
-export interface RollHistoryEntry {
-  id: string;
-  playerId: string;
-  player: PlayerDisplayInfo;
-  result: PlayerRollResult;
-  timestamp: number;
-  addedAt: number;
-  isFading?: boolean;
-  isHidden?: boolean;
+/**
+ * A finished result as the dice store keeps it: the result plus its identity. `rollId` and `hidden`
+ * are local fields; they are not part of the broadcast `result` (see `src/plugin/rollWire.ts`).
+ */
+export interface StoredRollResult extends SavageRollResult {
+  /** Unique per finished roll, the same for every revision (post-roll edit). */
+  rollId: string;
+  /** The roll was hidden (private) when it finished: it is never sent or stored (OD-3). */
+  hidden: boolean;
 }
