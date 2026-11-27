@@ -60,3 +60,46 @@ describe("T-62 controls that edit a finished roll follow the roll's mode (D-08)"
     act(() => controls().resetDiceCounts());
   });
 });
+
+describe("T-33 dice mode hook", () => {
+  it("no selection and no roll -> \"none\"", () => {
+    act(() => controls().resetDiceCounts());
+    const { result } = renderHook(() => useDiceMode());
+    expect(result.current).toMatchObject({ mode: "none", hasActiveRoll: false, currentSelectionCount: 0 });
+  });
+
+  it("1 die selected -> \"trait\"; 2 dice -> \"damage\"", () => {
+    const [a, b] = Object.keys(controls().diceCounts);
+    act(() => controls().changeDieCount(a, 1));
+    const { result } = renderHook(() => useDiceMode());
+    expect(result.current.mode).toBe("trait");
+    act(() => controls().changeDieCount(b, 1));
+    expect(result.current.mode).toBe("damage");
+    act(() => controls().resetDiceCounts());
+  });
+
+  it("forced DAMAGE with 1 die selected -> \"damage\" and the damage modifier applies", () => {
+    const [a] = Object.keys(controls().diceCounts);
+    act(() => {
+      controls().changeDieCount(a, 1);
+      controls().setModeChoice("DAMAGE");
+    });
+    const { result } = renderHook(() => useDiceMode());
+    expect(result.current).toMatchObject({ mode: "damage", isTraitTest: false, isDamageRoll: true });
+    act(() => controls().resetDiceCounts());
+  });
+
+  it("an active roll with explosions counts only the original non-wild dice", () => {
+    const d1 = { id: generateDiceId(), type: "D4" as const, style: "GALAXY" as const };
+    const d2 = { id: generateDiceId(), type: "D6" as const, style: "GALAXY" as const };
+    const wild = createWildDie();
+    act(() => {
+      dice().startRoll({ dice: [d1, d2, wild] }, { mode: "TRAIT" });
+      dice().checkAndProcessExplosion(d1.id, 4, T); // explodes
+      dice().checkAndProcessExplosion(wild.id, 6, T); // explodes
+    });
+    expect(Object.keys(dice().dieInfo)).toHaveLength(5);
+    const { result } = renderHook(() => useDiceMode());
+    expect(result.current).toMatchObject({ hasActiveRoll: true, originalNonWildDiceCount: 2, mode: "trait" });
+  });
+});

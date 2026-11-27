@@ -172,3 +172,75 @@ describe("T-57 / B-08 limits the receivers accept", () => {
     expect(store.getState().traitModifier).toBe(0);
   });
 });
+
+describe("T-21 controls store actions", () => {
+  it("changeDiceSet GALAXY -> IRON keeps counts by index and type (2 d8 stay 2 d8) and saves the set id", async () => {
+    const store = await freshStore({ "swade-diceSetId": "GALAXY_STANDARD" });
+    const { diceSets } = await import("../sets/diceSets");
+    store.getState().changeDieCount("GALAXY_STANDARD_D8", 2);
+    store.getState().changeDieCount("GALAXY_STANDARD_D12", 1);
+    store.getState().changeDiceSet(diceSets.find((s) => s.id === "IRON_STANDARD")!);
+    const s = store.getState();
+    expect(s.diceSet.id).toBe("IRON_STANDARD");
+    expect(s.diceCounts).toEqual({
+      IRON_STANDARD_D4: 0,
+      IRON_STANDARD_D6: 0,
+      IRON_STANDARD_D8: 2,
+      IRON_STANDARD_D10: 0,
+      IRON_STANDARD_D12: 1,
+    });
+    expect(Object.keys(s.diceById)).toEqual(Object.keys(s.diceCounts));
+    expect(s.defaultDiceCounts).toEqual(Object.fromEntries(Object.keys(s.diceCounts).map((id) => [id, 0])));
+    expect(s.rollMode).toBe("DAMAGE");
+    expect(localStorage.getItem("swade-diceSetId")).toBe("IRON_STANDARD");
+  });
+
+  it("changeDiceSet to a set with another layout resets the counts whose type does not match", async () => {
+    const store = await freshStore({ "swade-diceSetId": "GALAXY_STANDARD" });
+    store.getState().changeDieCount("GALAXY_STANDARD_D4", 1);
+    store.getState().changeDieCount("GALAXY_STANDARD_D6", 3);
+    store.getState().changeDiceSet({
+      id: "CUSTOM",
+      name: "custom",
+      previewImage: "",
+      dice: [
+        { id: "c4", type: "D4", style: "GLASS" },
+        { id: "c8", type: "D8", style: "GLASS" },
+      ],
+    });
+    expect(store.getState().diceCounts).toEqual({ c4: 1, c8: 0 });
+    expect(store.getState().rollMode).toBe("TRAIT");
+  });
+
+  it("setTraitModifier(-4) and setDamageModifier(+99) are stored as is, not in localStorage", async () => {
+    const store = await freshStore({});
+    store.getState().setTraitModifier(-4);
+    store.getState().setDamageModifier(99);
+    expect(store.getState().traitModifier).toBe(-4);
+    expect(store.getState().damageModifier).toBe(99);
+    expect(Object.keys(localStorage).filter((k) => /modifier/i.test(k))).toEqual([]);
+  });
+
+  it("toggleDiceHidden, toggleFairnessTester, setResultsDetailsHovered, setDiceRollPressTime change only their field", async () => {
+    const store = await freshStore({});
+    const actions = [
+      ["diceHidden", () => store.getState().toggleDiceHidden(), true],
+      ["fairnessTesterOpen", () => store.getState().toggleFairnessTester(), true],
+      ["resultsDetailsHovered", () => store.getState().setResultsDetailsHovered(true), true],
+      ["diceRollPressTime", () => store.getState().setDiceRollPressTime(1234), 1234],
+    ] as const;
+    for (const [field, act, value] of actions) {
+      const before = store.getState();
+      act();
+      const after = store.getState();
+      for (const key of Object.keys(before) as (keyof typeof before)[]) {
+        if (key === field) expect(after[key]).toBe(value);
+        else expect(after[key]).toBe(before[key]);
+      }
+    }
+    store.getState().toggleDiceHidden();
+    store.getState().toggleFairnessTester();
+    expect(store.getState().diceHidden).toBe(false);
+    expect(store.getState().fairnessTesterOpen).toBe(false);
+  });
+});
