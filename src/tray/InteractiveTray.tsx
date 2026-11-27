@@ -15,7 +15,7 @@ import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "./Tray";
 import { useDebugStore } from "../debug/store";
 import { PreviewDiceRoll } from "../dice/PreviewDiceRoll";
-import { FairnessTester } from "../tests/FairnessTester";
+import { FairnessTester } from "../fairness/FairnessTester";
 
 function TrayEnvironment() {
   return <Environment files={environment} />;

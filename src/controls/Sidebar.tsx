@@ -7,7 +7,7 @@ import { DicePicker } from "./DicePicker";
 import { DiceHidden } from "./DiceHidden";
 import { DiceHistory } from "./DiceHistory";
 
-import { FairnessTesterButton } from "../tests/FairnessTesterButton";
+import { FairnessTesterButton } from "../fairness/FairnessTesterButton";
 
 import { PluginGate } from "../plugin/PluginGate";
 import { ResizeObserver as PluginResizeObserver } from "../plugin/ResizeObserver";

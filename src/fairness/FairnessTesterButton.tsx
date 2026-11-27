@@ -11,7 +11,7 @@ export function FairnessTesterButton() {
 
   return (
     <Tooltip title="Fairness" placement="top" disableInteractive>
-      <IconButton id="history-button" onClick={() => toggleFairnessTester()}>
+      <IconButton id="fairness-button" onClick={() => toggleFairnessTester()}>
         <FairnessIcon />
       </IconButton>
     </Tooltip>
