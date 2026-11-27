@@ -9,6 +9,7 @@ import { useGLTF } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 
 import glb from "./d6.glb";
+import { LOCATORS } from "../locators";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -25,32 +26,9 @@ export const D6 = React.forwardRef<THREE.Group, ThreeElements["group"]>(function
         <group name="dice">
           <mesh name="d6" castShadow receiveShadow geometry={nodes.d6.geometry}>
             {children}
-            <group
-              name="006_locator_1"
-              position={[0, -0.77, 0]}
-              rotation={[Math.PI, -1.57, 0]}
-            />
-            <group
-              name="006_locator_2"
-              position={[-0.77, 0, 0]}
-              rotation={[-Math.PI, 0, Math.PI / 2]}
-            />
-            <group
-              name="006_locator_3"
-              position={[0, 0, 0.77]}
-              rotation={[Math.PI / 2, -1.57, 0]}
-            />
-            <group
-              name="006_locator_4"
-              position={[0, 0, -0.77]}
-              rotation={[-Math.PI / 2, Math.PI / 2, 0]}
-            />
-            <group
-              name="006_locator_5"
-              position={[0.77, 0, 0]}
-              rotation={[0, 0, -Math.PI / 2]}
-            />
-            <group name="006_locator_6" position={[0, 0.77, 0]} />
+            {LOCATORS.sharp.D6.map(({ name, ...transform }) => (
+              <group key={name} name={name} {...transform} />
+            ))}
           </mesh>
         </group>
       </group>
