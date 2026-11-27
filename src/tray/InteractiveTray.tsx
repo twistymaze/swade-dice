@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   ContactShadows,
@@ -9,6 +9,7 @@ import {
 import Box from "@mui/material/Box";
 
 import { DiceRollControls } from "../controls/DiceRollControls";
+import { useDiceControlsStore } from "../controls/store";
 import environment from "../environment.hdr";
 import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "./Tray";
@@ -17,8 +18,19 @@ import { PreviewDiceRoll } from "../dice/PreviewDiceRoll";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { TrayUnavailable } from "./TrayUnavailable";
 import { useWebGLContextLoss } from "./contextLoss";
-import { InteractiveDiceRoll } from "../dice/InteractiveDiceRoll";
-import { FairnessTester } from "../fairness/FairnessTester";
+
+// The physics subtree (Rapier, about 2 MB of inlined WASM) and the fairness tester
+// load in their own chunks, so the tray and the preview dice can paint first.
+const InteractiveDiceRoll = lazy(() =>
+  import("../dice/InteractiveDiceRoll").then((m) => ({
+    default: m.InteractiveDiceRoll,
+  }))
+);
+const FairnessTester = lazy(() =>
+  import("../fairness/FairnessTester").then((m) => ({
+    default: m.FairnessTester,
+  }))
+);
 
 function TrayEnvironment() {
   return <Environment files={environment} />;
@@ -28,6 +40,13 @@ function TrayEnvironment() {
 export function InteractiveTray() {
   const allowOrbit = useDebugStore((state) => state.allowOrbit);
   const { lost, canvasKey, onCreated, reload } = useWebGLContextLoss();
+
+  // Load the fairness tester the first time it is opened, then keep it mounted.
+  const fairnessOpen = useDiceControlsStore((state) => state.fairnessTesterOpen);
+  const [fairnessLoaded, setFairnessLoaded] = useState(false);
+  useEffect(() => {
+    if (fairnessOpen) setFairnessLoaded(true);
+  }, [fairnessOpen]);
 
   return (
     <Box
@@ -104,7 +123,11 @@ export function InteractiveTray() {
         )}
       </ErrorBoundary>
       <DiceRollControls />
-      <FairnessTester />
+      {fairnessLoaded || fairnessOpen ? (
+        <Suspense fallback={null}>
+          <FairnessTester />
+        </Suspense>
+      ) : null}
     </Box>
   );
 }

@@ -116,3 +116,17 @@ describe("T-51 InteractiveTray error boundary (D-02)", () => {
     consoleError.mockRestore();
   });
 });
+
+describe("D-11 fairness tester loads on first open", () => {
+  it("D-11 is not rendered until opened", async () => {
+    const { rerender } = render(<InteractiveTray />);
+    expect(screen.queryByText("fairness tester")).toBeNull();
+    controls.fairnessTesterOpen = true;
+    rerender(<InteractiveTray />);
+    expect(await screen.findByText("fairness tester")).toBeInTheDocument();
+    // Stays mounted after closing (keeps the exit animation and its state).
+    controls.fairnessTesterOpen = false;
+    rerender(<InteractiveTray />);
+    expect(screen.getByText("fairness tester")).toBeInTheDocument();
+  });
+});

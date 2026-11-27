@@ -19,6 +19,17 @@ export default defineConfig({
         background: entry("./background.html"),
         popover: entry("./popover.html"),
       },
+      output: {
+        // Long-lived vendor chunks: app changes do not invalidate the cached
+        // libraries. Rapier stays in the lazy physics chunk.
+        codeSplitting: {
+          groups: [
+            { name: "vendor-react", test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            { name: "vendor-three", test: /node_modules[\\/](three|three-stdlib|@react-three[\\/](fiber|drei))[\\/]/ },
+            { name: "vendor-mui", test: /node_modules[\\/](@mui[\\/](?!x-)|@emotion[\\/])/ },
+          ],
+        },
+      },
     },
   },
 });
