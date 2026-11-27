@@ -8,6 +8,7 @@ import { DiceTransform } from "../types/DiceTransform";
 import { Die } from "../types/Die";
 import { Dice as DefaultDice, DiceProps } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
+import { PHYSICS_TIME_STEP } from "./rollFinished";
 import { useDebugStore } from "../debug/store";
 
 export function DiceRoll({
@@ -51,10 +52,10 @@ export function DiceRoll({
   const emptyCallback = useCallback(() => {}, []);
 
   /**
-   * Because we recreate the physics world every new roll
-   * there is a frame where all the rigid bodies need to be created
-   * to ensure smooth playback we pause the physics sim until
-   * the frame after everything is created
+   * The physics world is created when a roll starts (it is unmounted on
+   * `clearRoll`). There is a frame where all the rigid bodies need to be created,
+   * so to ensure smooth playback we pause the physics sim until the frame after
+   * everything is created.
    */
   const [paused, setPaused] = useState(true);
   useEffect(() => {
@@ -66,6 +67,14 @@ export function DiceRoll({
       });
     }
   }, [finishedTransforms]);
+
+  // Stop stepping the world once every die is locked: nothing moves any more.
+  // A new explosion die or a reroll makes this false again.
+  const allFinished = useMemo(
+    () =>
+      allDice.length > 0 && allDice.every((die) => finishedDice.includes(die.id)),
+    [allDice, finishedDice]
+  );
 
   if (finishedTransforms) {
     // Move to a static dice representation when all dice values have been found
@@ -89,19 +98,16 @@ export function DiceRoll({
       </group>
     );
   } else {
-    // If we have physics states for the dice then create a Rapier physics
-    // instance for this roll.
-    // We need to re-create the physics world on every new roll as the dice
-    // networking relies on the deterministic nature of Rapier when given the
-    // same inputs and using the same number of update timesteps.
+    // Simulate the roll in a Rapier world. Other clients do not re-simulate:
+    // they receive the finished result as a broadcast.
     return (
       <Physics
         colliders={false}
         interpolate={false}
-        timeStep={1 / 120}
+        timeStep={PHYSICS_TIME_STEP}
         debug={allowPhysicsDebug}
         updateLoop="independent"
-        paused={paused}
+        paused={paused || allFinished}
       >
         <TrayColliders />
         {allDice?.map((die) => {

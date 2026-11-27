@@ -4,11 +4,12 @@ import {
   CollisionEnterPayload,
   RigidBody,
   RapierRigidBody,
+  useAfterPhysicsStep,
 } from "@react-three/rapier";
 
 import { Die } from "../types/Die";
 import { getValueFromDiceGroup } from "../helpers/getValueFromDiceGroup";
-import { ThreeElements, useFrame } from "@react-three/fiber";
+import { ThreeElements } from "@react-three/fiber";
 import { useAudioListener } from "../audio/useAudioListener";
 import { getNextBuffer } from "../audio/getAudioBuffer";
 import { playOneShotSound } from "../audio/oneShotSound";
@@ -18,13 +19,36 @@ import { getDieDensity } from "../helpers/getDieDensity";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceTransform } from "../types/DiceTransform";
 import { DiceCollider } from "../colliders/DiceCollider";
+import { getRestDecision } from "./rollFinished";
 
-/** Minium linear and angular speed before the dice roll is considered finished */
-const MIN_ROLL_FINISHED_SPEED = 0.005;
 /** Cool down in MS before dice audio can get played again */
 const AUDIO_COOLDOWN = 200;
-/** Force stop the physics roll after 5 seconds */
-const MAX_ROLL_TIME = 5000;
+
+const _matrix = new THREE.Matrix4();
+const _inverseParent = new THREE.Matrix4();
+const _position = new THREE.Vector3();
+const _quaternion = new THREE.Quaternion();
+const _scale = new THREE.Vector3();
+
+/**
+ * Move the rigid body's object to the body's current pose, as the
+ * `@react-three/rapier` sync does (without interpolation) after the steps of a frame.
+ * The after-step callback runs before that sync, so the face is read from this pose.
+ */
+function placeObjectAtBody(object: THREE.Object3D, rigidBody: RapierRigidBody) {
+  const t = rigidBody.translation();
+  const r = rigidBody.rotation();
+  _matrix.compose(
+    _position.set(t.x, t.y, t.z),
+    _quaternion.set(r.x, r.y, r.z, r.w),
+    object.scale
+  );
+  if (object.parent) {
+    object.parent.updateWorldMatrix(true, false);
+    _matrix.premultiply(_inverseParent.copy(object.parent.matrixWorld).invert());
+  }
+  _matrix.decompose(object.position, object.quaternion, _scale);
+}
 
 function magnitude({ x, y, z }: { x: number; y: number; z: number }) {
   return Math.sqrt(x * x + y * y + z * z);
@@ -91,45 +115,43 @@ export function PhysicsDice({
     }
   }, []);
 
-  const checkRollFinished = useCallback(
-    (ignorePhysics?: boolean) => {
-      const rigidBody = rigidBodyRef.current;
-      const group = ref.current;
-      if (rigidBody && !lockedRef.current && group) {
-        // Get the total speed for the dice
-        const linVel = rigidBody.linvel();
-        const angVel = rigidBody.angvel();
-        const speed = magnitude(linVel) + magnitude(angVel);
-        // Ensure that the dice is in the tray
-        const validPosition = rigidBody.translation().y < 1.5;
-        if (
-          ignorePhysics ||
-          (speed < MIN_ROLL_FINISHED_SPEED && validPosition)
-        ) {
-          const value = getValueFromDiceGroup(group, die.type);
-          const position = rigidBody.translation();
-          const rotation = rigidBody.rotation();
-          const transform = {
-            position: { x: position.x, y: position.y, z: position.z },
-            rotation: {
-              x: rotation.x,
-              y: rotation.y,
-              z: rotation.z,
-              w: rotation.w,
-            },
-          };
-          onRollFinished?.(die.id, value, transform);
-          lockDice();
-        }
-      }
-    },
-    [die.id, die.type, lockDice, onRollFinished]
-  );
-
-  const handleFrame = useCallback(() => {
-    checkRollFinished();
-  }, [checkRollFinished]);
-  useFrame(handleFrame);
+  // Check once per fixed physics step (simulated time), not per render frame, so the
+  // result and the resting pose do not depend on the frame rate or on a hidden pane.
+  const stepsRef = useRef(0);
+  useAfterPhysicsStep(() => {
+    const rigidBody = rigidBodyRef.current;
+    const group = ref.current;
+    if (!rigidBody || !group || lockedRef.current) {
+      return;
+    }
+    stepsRef.current += 1;
+    const decision = getRestDecision(
+      {
+        linvel: rigidBody.linvel(),
+        angvel: rigidBody.angvel(),
+        translation: rigidBody.translation(),
+      },
+      stepsRef.current
+    );
+    if (decision === "rolling") {
+      return;
+    }
+    lockDice();
+    placeObjectAtBody(group.parent ?? group, rigidBody);
+    const value = getValueFromDiceGroup(group, die.type);
+    const position = rigidBody.translation();
+    const rotation = rigidBody.rotation();
+    const transform = {
+      position: { x: position.x, y: position.y, z: position.z },
+      rotation: {
+        x: rotation.x,
+        y: rotation.y,
+        z: rotation.z,
+        w: rotation.w,
+      },
+    };
+    onRollFinished?.(die.id, value, transform);
+  });
 
   // Lock the dice when we have a manual transform or when it's marked as finished
   useEffect(() => {
@@ -137,19 +159,6 @@ export function PhysicsDice({
       lockDice();
     }
   }, [fixedTransform, isFinished, lockDice]);
-
-  // Stop the roll if over the max roll time
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!lockedRef.current) {
-        checkRollFinished(true);
-      }
-    }, MAX_ROLL_TIME);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [checkRollFinished]);
 
   const listener = useAudioListener();
   const lastAudioTimeRef = useRef(0);
