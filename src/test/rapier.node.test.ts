@@ -60,7 +60,7 @@ describe("Rapier in Node", () => {
 
   it("the die actually moved and came to rest on the floor", () => {
     const [x, y, z] = simulate(600);
-    expect(Math.hypot(x - 0.1, z + 0.2)).toBeGreaterThan(0.01);
+    expect(Math.hypot(x! - 0.1, z! + 0.2)).toBeGreaterThan(0.01);
     expect(y).toBeGreaterThan(0);
     expect(y).toBeLessThan(0.05);
   });

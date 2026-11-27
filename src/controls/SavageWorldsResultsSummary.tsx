@@ -68,10 +68,10 @@ export function SavageWorldsResultsSummary({
           dieType = nonWildChains[index].dieType;
         } else {
           // Fallback to the chain in the outcome
-          dieType = outcome.chains[0].dieType;
+          dieType = outcome.chains[0]!.dieType;
         }
       } else {
-        dieType = outcome.chains[0].dieType;
+        dieType = outcome.chains[0]!.dieType;
       }
       
       const modifier = outcome.modifier || 0;

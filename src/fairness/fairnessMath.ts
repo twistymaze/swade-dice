@@ -28,7 +28,7 @@ export function isFaceValue(value: number, sides: number): boolean {
 export function countFaces(values: readonly number[], sides: number): number[] {
   const counts = new Array<number>(sides).fill(0);
   for (const value of values) {
-    if (isFaceValue(value, sides)) counts[value - 1] += 1;
+    if (isFaceValue(value, sides)) counts[value - 1]! += 1;
   }
   return counts;
 }

@@ -68,7 +68,7 @@ describe("T-28 physics determinism and face reading (Rapier in Node)", () => {
 
   it("T-28 explosion throw (speed x1.5) and heavy dice also come to rest with a valid face", () => {
     const fast: DiceThrow = {
-      ...THROWS[0],
+      ...THROWS[0]!,
       linearVelocity: { x: -0.37 * 1.5, y: 0, z: 1.4 * 1.5 },
     };
     const a = rollDie(die("D6", "IRON"), fast);

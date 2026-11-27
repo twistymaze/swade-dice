@@ -71,7 +71,7 @@ describe("T-22 the Roll button builds the roll (component part)", () => {
     [10, 10],
     [60, 10],
   ])("press for %f s -> speedMultiplier %f (clamped 1..10)", (seconds, multiplier) => {
-    act(() => controls().changeDieCount(ids()[2], 1));
+    act(() => controls().changeDieCount(ids()[2]!, 1));
     render(<DiceRollControls />);
     pressRoll(seconds);
     expect(dice().rollSpeedMultiplier).toBe(multiplier);
@@ -79,7 +79,7 @@ describe("T-22 the Roll button builds the roll (component part)", () => {
 
   it("the roll gets the mode and settings, pushRecentRoll gets the same settings, counts reset with the mode kept", () => {
     act(() => {
-      controls().changeDieCount(ids()[2], 1);
+      controls().changeDieCount(ids()[2]!, 1);
       controls().setModeChoice("TRAIT");
       controls().setTargetNumber(6);
       controls().setTraitModifier(2);
@@ -102,23 +102,23 @@ describe("T-22 the Roll button builds the roll (component part)", () => {
       damageModifier: -1,
       wildDieEnabled: true,
     });
-    expect(recent[0].counts[ids()[2]]).toBe(1);
+    expect(recent[0]!.counts[ids()[2]!]).toBe(1);
     expect(Object.values(controls().diceCounts).every((n) => n === 0)).toBe(true);
     expect(controls().modeChoice).toBe("TRAIT");
   });
 
   it("pointer up without a press time -> no roll, nothing pushed", () => {
-    act(() => controls().changeDieCount(ids()[2], 1));
+    act(() => controls().changeDieCount(ids()[2]!, 1));
     render(<DiceRollControls />);
     fireEvent.pointerUp(screen.getByRole("button", { name: /^Roll/ }));
     expect(dice().roll).toBeNull();
     expect(useDiceHistoryStore.getState().recentRolls).toEqual([]);
-    expect(controls().diceCounts[ids()[2]]).toBe(1);
+    expect(controls().diceCounts[ids()[2]!]).toBe(1);
   });
 
   it("hidden on -> the roll is hidden", () => {
     act(() => {
-      controls().changeDieCount(ids()[1], 1);
+      controls().changeDieCount(ids()[1]!, 1);
       useDiceControlsStore.setState({ diceHidden: true });
     });
     render(<DiceRollControls />);
@@ -144,7 +144,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     fireEvent.click(screen.getByAltText("GALAXY D6 preview"));
     expect(dice().roll).toBeNull();
     expect(controls().modeChoice).toBe("AUTO");
-    expect(controls().diceCounts[ids()[1]]).toBe(1);
+    expect(controls().diceCounts[ids()[1]!]).toBe(1);
     act(() => {
       dice().checkAndProcessExplosion("old-1", 3, T);
     });
@@ -157,7 +157,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     await mountSync();
     act(() => {
       useDiceHistoryStore.getState().pushRecentRoll({
-        counts: { [ids()[2]]: 2 },
+        counts: { [ids()[2]!]: 2 },
         diceById: controls().diceById,
         rollMode: "DAMAGE",
         damageModifier: 1,
@@ -166,7 +166,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     });
     render(<DiceHistory />);
     fireEvent.click(screen.getByRole("button", { name: "History" }));
-    fireEvent.click(screen.getAllByAltText("GALAXY D8 preview")[0]);
+    fireEvent.click(screen.getAllByAltText("GALAXY D8 preview")[0]!);
     expect(dice().rollMode).toBe("DAMAGE");
     expect(rolledDice()).toHaveLength(2);
     act(() => {
@@ -176,14 +176,14 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     finishAll();
     await act(flushObr);
     expect(sends()).toHaveLength(1);
-    expect(sends()[0].rollId).toBe(dice().currentRollResult!.rollId);
+    expect(sends()[0]!.rollId).toBe(dice().currentRollResult!.rollId);
   });
 
   it("fairness tester start while a normal roll runs -> the old roll is cleared and not sent", async () => {
     await mountSync();
     act(() => {
       dice().startRoll({ dice: [{ id: "old-1", type: "D8", style: "GALAXY" }] }, { mode: "TRAIT" });
-      controls().changeDieCount(ids()[1], 1);
+      controls().changeDieCount(ids()[1]!, 1);
       useDiceControlsStore.setState({ fairnessTesterOpen: true });
     });
     render(<FairnessTester />);
@@ -202,7 +202,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
 
   it("B-12 a new hidden roll after a shared result: the hidden roll is never sent", async () => {
     await mountSync();
-    act(() => controls().changeDieCount(ids()[2], 1));
+    act(() => controls().changeDieCount(ids()[2]!, 1));
     render(<DiceRollControls />);
     pressRoll(1);
     finishAll();
@@ -210,7 +210,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     expect(sends()).toHaveLength(1);
     act(() => {
       useDiceControlsStore.setState({ diceHidden: true });
-      controls().changeDieCount(ids()[2], 1);
+      controls().changeDieCount(ids()[2]!, 1);
     });
     pressRoll(1);
     expect(dice().roll?.hidden).toBe(true);
@@ -225,7 +225,7 @@ describe("T-55 roll lifecycle in the UI: no partial or stale roll is ever sent",
     await mountSync();
     render(<DiceRollControls />);
     for (let i = 0; i < 10; i++) {
-      act(() => controls().changeDieCount(ids()[3], 1));
+      act(() => controls().changeDieCount(ids()[3]!, 1));
       pressRoll(1);
       finishAll();
       await act(flushObr);
@@ -254,13 +254,13 @@ describe("T-46 an edit with no finished roll sends nothing", () => {
     finishAll();
     await act(flushObr);
     expect(sends()).toHaveLength(1);
-    const payload = obr().broadcast.sendMessage.mock.calls[0][1] as { result: { targetNumber: number; modifier: number } };
+    const payload = obr().broadcast.sendMessage.mock.calls[0]![1] as { result: { targetNumber: number; modifier: number } };
     expect(payload.result).toMatchObject({ targetNumber: 8, modifier: 2 });
   });
 
   it("an edit after picking new dice (the picker cleared the roll) -> 0 new sends", async () => {
     await mountSync();
-    act(() => controls().changeDieCount(ids()[2], 1));
+    act(() => controls().changeDieCount(ids()[2]!, 1));
     render(<DiceRollControls />);
     pressRoll(1);
     finishAll();

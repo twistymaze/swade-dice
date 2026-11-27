@@ -71,7 +71,7 @@ describe("T-37 result summary text", () => {
       unmount();
       return n;
     };
-    expect(make("TRAIT", [chain("1", "D12", [12])], { traitModifier: 12, wildDieEnabled: false }).outcomes[0].raises).toBe(5);
+    expect(make("TRAIT", [chain("1", "D12", [12])], { traitModifier: 12, wildDieEnabled: false }).outcomes[0]!.raises).toBe(5);
     expect(arrows(make("TRAIT", [chain("1", "D12", [12])], { traitModifier: 12, wildDieEnabled: false }))).toBe(3);
     expect(arrows(r(18))).toBe(3);
     expect(arrows(r(11))).toBe(1);

@@ -22,7 +22,7 @@ export function gltfTexture(
       throw Error("Textures and encodings must have the same length");
     }
     for (let i = 0; i < textures.length; i++) {
-      const texture = textures[i];
+      const texture = textures[i]!;
       const encoding = encodings[i];
       texture.flipY = false;
       texture.colorSpace =

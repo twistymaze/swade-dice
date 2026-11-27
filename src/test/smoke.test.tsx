@@ -180,7 +180,7 @@ describe("T-38 component smoke tests", () => {
   it("DiceRollControls: nothing without dice; Roll and Trait/Damage with dice; the result when finished", () => {
     const { container, rerender } = render(<DiceRollControls />);
     expect(container).toBeEmptyDOMElement();
-    act(() => controls().changeDieCount(Object.keys(controls().diceCounts)[0], 1));
+    act(() => controls().changeDieCount(Object.keys(controls().diceCounts)[0]!, 1));
     rerender(<DiceRollControls />);
     expect(screen.getByRole("button", { name: /^Roll/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Trait" })).toBeInTheDocument();

@@ -124,7 +124,7 @@ function DicePickedControls() {
       const rolledDiceById: Record<string, Die> = {};
       for (const id of Object.keys(counts)) {
         if (!(id in rolledDiceById)) {
-          rolledDiceById[id] = diceById[id];
+          rolledDiceById[id] = diceById[id]!;
         }
       }
       

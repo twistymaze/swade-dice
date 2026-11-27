@@ -40,8 +40,8 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
     s = live(s, roll("b", "2"));
     const after = live(s, roll("a", "1", 2, changed));
     expect(keys(after)).toEqual(["a:1", "b:2"]);
-    expect(after.entries[0].result).toEqual(changed);
-    expect(live(after, roll("a", "1", 1, base)).entries[0].result).toEqual(changed);
+    expect(after.entries[0]!.result).toEqual(changed);
+    expect(live(after, roll("a", "1", 1, base)).entries[0]!.result).toEqual(changed);
     expect(live(after, roll("a", "1", 2, changed))).toBe(after);
   });
 
@@ -55,14 +55,14 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
     let s = live(EMPTY_HISTORY, roll("a", "t1"));
     s = live(s, roll("a", "t1", 0, changed));
     expect(s.entries).toHaveLength(1);
-    expect(s.entries[0].result).toEqual(changed);
+    expect(s.entries[0]!.result).toEqual(changed);
   });
 
   it("T-49 the same rollId from another connection is another entry (no overwrite)", () => {
     let s = live(EMPTY_HISTORY, roll("a", "same"));
     s = live(s, roll("b", "same", 5, changed));
     expect(keys(s)).toEqual(["a:same", "b:same"]);
-    expect(s.entries[0].result).toEqual(base);
+    expect(s.entries[0]!.result).toEqual(base);
   });
 
   it("an entry that dropped out does not come back from a later metadata read", () => {
@@ -82,7 +82,7 @@ describe("T-53 history order by arrival, not sender clock (B-04, C-04)", () => {
     expect(keys(s)).toContain("other:o");
     // a revision of a known entry is not limited
     s = live(s, roll("flood", "f0", 1, changed), t + 10);
-    expect(s.entries[0].result).toEqual(changed);
+    expect(s.entries[0]!.result).toEqual(changed);
     // after the window, new entries are accepted again
     s = live(s, roll("flood", "later"), t + FLOOD_WINDOW_MS + 1);
     expect(keys(s)).toContain("flood:later");
@@ -109,6 +109,6 @@ describe("T-14 / OD-2 initial load from player metadata", () => {
     let s = live(EMPTY_HISTORY, roll("a", "r", 1, changed));
     s = historyReducer(s, { type: "metadata", items: [roll("a", "r", 0, base), roll("a", "r", 1, changed)] });
     expect(s.entries).toHaveLength(1);
-    expect(s.entries[0].result).toEqual(changed);
+    expect(s.entries[0]!.result).toEqual(changed);
   });
 });

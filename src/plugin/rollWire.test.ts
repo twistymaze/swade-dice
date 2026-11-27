@@ -116,7 +116,7 @@ describe("T-50 parseRollBroadcast: accepts", () => {
       p.rev = 0;
       p.future = { x: 1 };
       p.result.future = {};
-      p.result.outcomes[0].extra = 1;
+      p.result.outcomes[0]!.extra = 1;
     });
     const parsed = parseRollBroadcast(p);
     expect(parsed?.version).toBe(2);
@@ -152,35 +152,35 @@ describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (n
     ["outcomes object", mutated((p) => (p.result.outcomes = {} as never))],
     ["outcomes string", mutated((p) => (p.result.outcomes = "abc" as never))],
     ["outcomes [null]", mutated((p) => (p.result.outcomes = [null] as never))],
-    ["outcome chains empty", mutated((p) => (p.result.outcomes[0].chains = []))],
-    ["outcome total string", mutated((p) => (p.result.outcomes[0].total = "6"))],
-    ["outcome total Infinity", mutated((p) => (p.result.outcomes[0].total = Infinity))],
-    ["outcome success string", mutated((p) => (p.result.outcomes[0].success = "yes"))],
-    ["raises negative", mutated((p) => (p.result.outcomes[0].raises = -1))],
-    ["raises 1e9", mutated((p) => (p.result.outcomes[0].raises = 1e9))],
-    ["reason 201 chars", mutated((p) => (p.result.outcomes[0].criticalFailureReason = "x".repeat(201)))],
-    ["dieType D3", mutated((p) => (p.result.dieChains[0].dieType = "D3"))],
-    ["dieType D20 (removed, OD-8)", mutated((p) => (p.result.dieChains[0].dieType = "D20"))],
-    ["dieType __proto__", mutated((p) => (p.result.dieChains[0].dieType = "__proto__"))],
-    ["dieType constructor", mutated((p) => (p.result.dieChains[0].dieType = "constructor"))],
-    ["dieType toString", mutated((p) => (p.result.dieChains[0].dieType = "toString"))],
-    ["dieType number", mutated((p) => (p.result.dieChains[0].dieType = 6))],
-    ["rolls not an array", mutated((p) => (p.result.dieChains[0].rolls = 3))],
-    ["rolls empty", mutated((p) => (p.result.dieChains[0].rolls = []))],
-    ["roll 0", mutated((p) => Object.assign(p.result.dieChains[0], { rolls: [0], total: 0 }))],
-    ["roll over max face", mutated((p) => Object.assign(p.result.dieChains[0], { rolls: [9], total: 9 }))],
-    ["roll 2.5", mutated((p) => Object.assign(p.result.dieChains[0], { rolls: [2.5], total: 2.5 }))],
-    ["roll string", mutated((p) => Object.assign(p.result.dieChains[0], { rolls: ["6"], total: 6 }))],
-    ["52 rolls in a chain", mutated((p) => Object.assign(p.result.dieChains[0], { rolls: [...Array(51).fill(8), 1], total: 409 }))],
-    ["chain total != sum", mutated((p) => (p.result.dieChains[0].total = 99))],
-    ["dieId empty", mutated((p) => (p.result.dieChains[0].dieId = ""))],
-    ["dieId number", mutated((p) => (p.result.dieChains[0].dieId = 1))],
-    ["dieId with markup", mutated((p) => (p.result.dieChains[0].dieId = "<b>x</b>"))],
-    ["dieId 65 chars", mutated((p) => (p.result.dieChains[0].dieId = "a".repeat(65)))],
-    ["isWildDie string", mutated((p) => (p.result.dieChains[0].isWildDie = "true"))],
+    ["outcome chains empty", mutated((p) => (p.result.outcomes[0]!.chains = []))],
+    ["outcome total string", mutated((p) => (p.result.outcomes[0]!.total = "6"))],
+    ["outcome total Infinity", mutated((p) => (p.result.outcomes[0]!.total = Infinity))],
+    ["outcome success string", mutated((p) => (p.result.outcomes[0]!.success = "yes"))],
+    ["raises negative", mutated((p) => (p.result.outcomes[0]!.raises = -1))],
+    ["raises 1e9", mutated((p) => (p.result.outcomes[0]!.raises = 1e9))],
+    ["reason 201 chars", mutated((p) => (p.result.outcomes[0]!.criticalFailureReason = "x".repeat(201)))],
+    ["dieType D3", mutated((p) => (p.result.dieChains[0]!.dieType = "D3"))],
+    ["dieType D20 (removed, OD-8)", mutated((p) => (p.result.dieChains[0]!.dieType = "D20"))],
+    ["dieType __proto__", mutated((p) => (p.result.dieChains[0]!.dieType = "__proto__"))],
+    ["dieType constructor", mutated((p) => (p.result.dieChains[0]!.dieType = "constructor"))],
+    ["dieType toString", mutated((p) => (p.result.dieChains[0]!.dieType = "toString"))],
+    ["dieType number", mutated((p) => (p.result.dieChains[0]!.dieType = 6))],
+    ["rolls not an array", mutated((p) => (p.result.dieChains[0]!.rolls = 3))],
+    ["rolls empty", mutated((p) => (p.result.dieChains[0]!.rolls = []))],
+    ["roll 0", mutated((p) => Object.assign(p.result.dieChains[0]!, { rolls: [0], total: 0 }))],
+    ["roll over max face", mutated((p) => Object.assign(p.result.dieChains[0]!, { rolls: [9], total: 9 }))],
+    ["roll 2.5", mutated((p) => Object.assign(p.result.dieChains[0]!, { rolls: [2.5], total: 2.5 }))],
+    ["roll string", mutated((p) => Object.assign(p.result.dieChains[0]!, { rolls: ["6"], total: 6 }))],
+    ["52 rolls in a chain", mutated((p) => Object.assign(p.result.dieChains[0]!, { rolls: [...Array(51).fill(8), 1], total: 409 }))],
+    ["chain total != sum", mutated((p) => (p.result.dieChains[0]!.total = 99))],
+    ["dieId empty", mutated((p) => (p.result.dieChains[0]!.dieId = ""))],
+    ["dieId number", mutated((p) => (p.result.dieChains[0]!.dieId = 1))],
+    ["dieId with markup", mutated((p) => (p.result.dieChains[0]!.dieId = "<b>x</b>"))],
+    ["dieId 65 chars", mutated((p) => (p.result.dieChains[0]!.dieId = "a".repeat(65)))],
+    ["isWildDie string", mutated((p) => (p.result.dieChains[0]!.isWildDie = "true"))],
     ["51 dieChains", mutated((p) => (p.result.dieChains = Array.from({ length: 51 }, (_, i) => chain(i, "D6", [3])) as never))],
     ["modifier 100", mutated((p) => (p.result.modifier = 100))],
-    ["outcome modifier -100", mutated((p) => (p.result.outcomes[0].modifier = -100))],
+    ["outcome modifier -100", mutated((p) => (p.result.outcomes[0]!.modifier = -100))],
     ["targetNumber 0", mutated((p) => (p.result.targetNumber = 0))],
     ["targetNumber 100", mutated((p) => (p.result.targetNumber = 100))],
     ["wildDieEnabled string", mutated((p) => (p.result.wildDieEnabled = "yes"))],
@@ -202,7 +202,7 @@ describe("T-05/T-50 parseRollBroadcast: hostile and bad payloads are rejected (n
 
   it("C-06 a 7000-roll chain is rejected quickly", () => {
     const p = mutated((p) =>
-      Object.assign(p.result.dieChains[0], { rolls: Array(7000).fill(8), total: 56000 })
+      Object.assign(p.result.dieChains[0]!, { rolls: Array(7000).fill(8), total: 56000 })
     );
     const start = performance.now();
     expect(parseRollBroadcast(p)).toBeNull();
@@ -309,9 +309,9 @@ describe("OD-2 parseHistoryMetadata", () => {
     const parsed = parseHistoryMetadata(JSON.parse(JSON.stringify(encodeHistory(items)))).rolls;
     expect(parsed.map((p) => [p.rollId, p.rev])).toEqual(items.map((i) => [i.rollId, i.rev]));
     parsed.forEach((p, i) => {
-      expect(p.result.outcomes.map((o) => o.total)).toEqual(items[i].result.outcomes.map((o) => o.total));
-      expect(p.result.targetNumber).toBe(items[i].result.targetNumber);
-      expect(p.result.modifier).toBe(items[i].result.modifier);
+      expect(p.result.outcomes.map((o) => o.total)).toEqual(items[i]!.result.outcomes.map((o) => o.total));
+      expect(p.result.targetNumber).toBe(items[i]!.result.targetNumber);
+      expect(p.result.modifier).toBe(items[i]!.result.modifier);
     });
   });
 

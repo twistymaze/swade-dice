@@ -27,11 +27,11 @@ describe("D-10 injectable RNG in DiceThrower", () => {
     const next = seeded(42);
     const values = Array.from({ length: 200 }, next);
     let i = 0;
-    vi.spyOn(Math, "random").mockImplementation(() => values[i++]);
+    vi.spyOn(Math, "random").mockImplementation(() => values[i++]!);
     const viaDefault = getRandomDiceThrow(2);
     const used = i;
     let j = 0;
-    const viaInjected = getRandomDiceThrow(2, rangeFrom(() => values[j++]));
+    const viaInjected = getRandomDiceThrow(2, rangeFrom(() => values[j++]!));
     expect(viaInjected).toEqual(viaDefault);
     expect(j).toBe(used);
   });
@@ -110,8 +110,8 @@ describe("T-43 throw generation", () => {
     const throws = Array.from({ length: 6 }, (_, i) => thrower.getDiceThrow(i));
     for (let i = 0; i < throws.length; i++) {
       for (let j = i + 1; j < throws.length; j++) {
-        const a = throws[i].position;
-        const b = throws[j].position;
+        const a = throws[i]!.position;
+        const b = throws[j]!.position;
         expect(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)).toBeGreaterThanOrEqual(0.25);
       }
     }

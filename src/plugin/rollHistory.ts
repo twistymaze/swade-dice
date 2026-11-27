@@ -53,7 +53,7 @@ export const entryKey = (connectionId: string, rollId: string) => `${connectionI
 const sameResult = (a: SavageRollResult, b: SavageRollResult) => JSON.stringify(a) === JSON.stringify(b);
 
 function seenRev(state: HistoryState, key: string): number | undefined {
-  for (let i = state.seen.length - 1; i >= 0; i--) if (state.seen[i][0] === key) return state.seen[i][1];
+  for (let i = state.seen.length - 1; i >= 0; i--) if (state.seen[i]![0] === key) return state.seen[i]![1];
   return undefined;
 }
 
@@ -72,7 +72,7 @@ function apply(state: HistoryState, { connectionId, roll }: IncomingRoll): Apply
     if (roll.rev < previous) return { state, added: false };
     const index = state.entries.findIndex((e) => e.key === key);
     if (index < 0) return { state, added: false }; // dropped out by the limit
-    const current = state.entries[index];
+    const current = state.entries[index]!;
     if (roll.rev === current.rev && sameResult(current.result, roll.result)) return { state, added: false };
     const entries = [...state.entries];
     entries[index] = { ...current, rev: roll.rev, result: roll.result };

@@ -54,7 +54,7 @@ describe("T-62 controls that edit a finished roll follow the roll's mode (D-08)"
 
   it("without a roll the mode follows the selection", () => {
     const id = Object.keys(controls().diceCounts)[0];
-    act(() => controls().changeDieCount(id, 1));
+    act(() => controls().changeDieCount(id!, 1));
     const { result } = renderHook(() => useDiceMode());
     expect(result.current).toMatchObject({ hasActiveRoll: false, isTraitTest: true, currentSelectionCount: 1 });
     act(() => controls().resetDiceCounts());
@@ -70,10 +70,10 @@ describe("T-33 dice mode hook", () => {
 
   it("1 die selected -> \"trait\"; 2 dice -> \"damage\"", () => {
     const [a, b] = Object.keys(controls().diceCounts);
-    act(() => controls().changeDieCount(a, 1));
+    act(() => controls().changeDieCount(a!, 1));
     const { result } = renderHook(() => useDiceMode());
     expect(result.current.mode).toBe("trait");
-    act(() => controls().changeDieCount(b, 1));
+    act(() => controls().changeDieCount(b!, 1));
     expect(result.current.mode).toBe("damage");
     act(() => controls().resetDiceCounts());
   });
@@ -81,7 +81,7 @@ describe("T-33 dice mode hook", () => {
   it("forced DAMAGE with 1 die selected -> \"damage\" and the damage modifier applies", () => {
     const [a] = Object.keys(controls().diceCounts);
     act(() => {
-      controls().changeDieCount(a, 1);
+      controls().changeDieCount(a!, 1);
       controls().setModeChoice("DAMAGE");
     });
     const { result } = renderHook(() => useDiceMode());

@@ -121,7 +121,7 @@ export function createRollSender(options: RollSenderOptions = {}) {
           console.error("[savage-worlds-dice] OBR write failed", e);
           return false;
         }
-        await wait(retryDelays[attempt]);
+        await wait(retryDelays[attempt]!);
       }
     }
   }

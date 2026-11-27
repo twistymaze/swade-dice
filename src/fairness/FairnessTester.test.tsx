@@ -36,7 +36,7 @@ afterEach(() => {
 
 const start = () => screen.getByRole("button", { name: "Start" });
 const slider = () => screen.getByRole("slider");
-const dieId = () => getDieFromDice(dice().roll!)[0].id;
+const dieId = () => getDieFromDice(dice().roll!)[0]!.id;
 function finishCurrent(face: number) {
   act(() => {
     dice().checkAndProcessExplosion(dieId(), face, T);

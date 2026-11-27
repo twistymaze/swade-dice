@@ -123,7 +123,7 @@ describe("T-04 a roll on one client reaches all clients with the same result", (
     const texts = Object.values(trays).map((view) => {
       const list = pills(view.container, "Ava");
       expect(list).toHaveLength(1); // A gets its own roll once (ALL + metadata echo deduped)
-      return list[0].textContent;
+      return list[0]!.textContent;
     });
     expect(new Set(texts).size).toBe(1);
     expect(texts[0]).toContain("5");
@@ -171,9 +171,9 @@ describe("T-46 / OD-1 a post-roll edit reaches every client", () => {
     for (const view of [gmTray, bTray]) {
       const [pill] = pills(view.container, "Ava");
       expect(pills(view.container, "Ava")).toHaveLength(1);
-      expect(pill.textContent).toContain("vs TN 8");
-      expect(pill.textContent).toContain("[d6+1]");
-      expect(pill.textContent).toContain("8"); // 6 + 1 explosion + 1 modifier
+      expect(pill!.textContent).toContain("vs TN 8");
+      expect(pill!.textContent).toContain("[d6+1]");
+      expect(pill!.textContent).toContain("8"); // 6 + 1 explosion + 1 modifier
     }
     // The stored history has the revision too (late joiners see the edited values)
     const stored = a.state.player.metadata[HISTORY_METADATA_KEY] as { rolls: { rev: number; tn: number; mod: number }[] };
@@ -261,7 +261,7 @@ describe("T-15 / OD-2 history rebuilt from player metadata; players joining and 
       await flushObr();
     });
     expect(pills(gmTray.container, "Bram")).toHaveLength(1);
-    expect(pills(gmTray.container, "Bram")[0].textContent).toContain("6");
+    expect(pills(gmTray.container, "Bram")[0]!.textContent).toContain("6");
   });
 
   it("invalid history metadata is dropped with one warning; the tray keeps working", async () => {
@@ -327,11 +327,11 @@ describe("T-49 sender identity from event.connectionId (C-02, B-05, B-10)", () =
     const gmTray = await mountAs(gm, <RollHistoryTray />);
     await mountAs(a, <DiceRollSync />);
     await rollOnA(3, 5);
-    const aPayload = a.broadcast.sendMessage.mock.calls[0][1] as { rollId: string };
+    const aPayload = a.broadcast.sendMessage.mock.calls[0]![1] as { rollId: string };
     await sendRaw(b, v1(aPayload.rollId, 9, damage.result, b, { ...valid().player, name: "GM", color: "#222222" }));
     await sendRaw(b, { ...valid(), playerId: "a-conn" });
     expect(pills(gmTray.container, "Ava")).toHaveLength(1);
-    expect(pills(gmTray.container, "Ava")[0].textContent).toContain("✓");
+    expect(pills(gmTray.container, "Ava")[0]!.textContent).toContain("✓");
     expect(pills(gmTray.container, "Bram")).toHaveLength(2);
     expect(within(gmTray.container).queryAllByText("GM")).toHaveLength(0);
   });
@@ -378,7 +378,7 @@ describe("T-60 mixed versions in one room", () => {
     await sendRaw(b, structuredClone(modifierChanged)); // old client's revision: same timestamp
     const names = within(gmTray.container).getAllByText(/^(Ava|Bram)$/).map((el) => el.textContent);
     expect(names).toEqual(["Bram", "Ava"]);
-    expect(pills(gmTray.container, "Bram")[0].textContent).toContain("[d8-2]");
+    expect(pills(gmTray.container, "Bram")[0]!.textContent).toContain("[d8-2]");
   });
 });
 

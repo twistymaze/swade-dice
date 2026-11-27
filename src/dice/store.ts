@@ -190,7 +190,7 @@ export const useDiceRollStore = create<DiceRollState>()(
 
         const parentDieId = getParentDieId(id);
         updateExplosionResults(draft.explosionResults, parentDieId, value, info.die.type, info.isWildDie);
-        const chain = draft.explosionResults[parentDieId];
+        const chain = draft.explosionResults[parentDieId]!;
         const explosionCount = chain.rolls.length - 1;
 
         if (draft.rollMode !== "STANDARD" && shouldDieExplode(value, info.die.type) && explosionCount < MAX_EXPLOSIONS) {

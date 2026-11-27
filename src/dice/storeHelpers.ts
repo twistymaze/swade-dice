@@ -49,7 +49,7 @@ export function createExplosionDie(
 // Helper function to get parent die ID
 export function getParentDieId(id: string): string {
   if (id.includes('_explosion_')) {
-    return id.split('_explosion_')[0];
+    return id.split('_explosion_')[0]!;
   }
   return id;
 }

@@ -35,8 +35,8 @@ describe("T-23 start / clear state shape", () => {
     const s = store();
     expect(selectPendingDiceIds(s)).toEqual([trait.id, wild.id]);
     expect(Object.keys(s.rollThrows)).toEqual([trait.id, wild.id]);
-    expect(s.dieInfo[wild.id].isWildDie).toBe(true);
-    expect(s.dieInfo[trait.id].isWildDie).toBe(false);
+    expect(s.dieInfo[wild.id]!.isWildDie).toBe(true);
+    expect(s.dieInfo[trait.id]!.isWildDie).toBe(false);
     expect(s.currentRollResult).toBeNull();
     expectProgressInvariant();
   });
@@ -44,7 +44,7 @@ describe("T-23 start / clear state shape", () => {
   it("D-12 a NEBULA D6 without the flag is not the Wild Die", () => {
     const nebula = die("D6", "NEBULA");
     store().startRoll({ dice: [nebula] }, { mode: "TRAIT" });
-    expect(store().dieInfo[nebula.id].isWildDie).toBe(false);
+    expect(store().dieInfo[nebula.id]!.isWildDie).toBe(false);
   });
 
   it("roll with 0 dice -> no pending, no result, no throw", () => {
@@ -80,7 +80,7 @@ describe("T-09 explosion processing", () => {
     finish(`${d4.id}_explosion_2`, 1);
     const s = store();
     expect(s.explosionResults[d4.id]).toMatchObject({ rolls: [4, 4, 1], total: 9, exploded: true });
-    expect(s.currentRollResult?.outcomes[0].total).toBe(9 + 2);
+    expect(s.currentRollResult?.outcomes[0]!.total).toBe(9 + 2);
     expectProgressInvariant();
   });
 
@@ -130,7 +130,7 @@ describe("T-09 explosion processing", () => {
     finish(`${a.id}_explosion_1`, 2);
     expect(store().currentRollResult).toBeNull();
     finish(b.id, 3);
-    expect(store().currentRollResult?.outcomes[0].total).toBe(11);
+    expect(store().currentRollResult?.outcomes[0]!.total).toBe(11);
   });
 
   it("MAX_EXPLOSIONS: after 50 aces the 51st roll is stored, no further die spawns, the roll completes", () => {
@@ -139,7 +139,7 @@ describe("T-09 explosion processing", () => {
     finish(d.id, 4);
     for (let i = 1; i <= MAX_EXPLOSIONS; i++) finish(`${d.id}_explosion_${i}`, 4);
     const s = store();
-    expect(s.explosionResults[d.id].rolls).toHaveLength(MAX_EXPLOSIONS + 1);
+    expect(s.explosionResults[d.id]!.rolls).toHaveLength(MAX_EXPLOSIONS + 1);
     expect(s.explosionDice).toHaveLength(MAX_EXPLOSIONS);
     expect(s.currentRollResult).not.toBeNull();
   });
@@ -160,7 +160,7 @@ describe("T-18 duplicate 'die finished' calls are idempotent (A-05)", () => {
     store().startRoll({ dice: [a, b] }, { mode: "DAMAGE" });
     finish(a.id, 3);
     finish(a.id, 3);
-    expect(store().explosionResults[a.id].rolls).toEqual([3]);
+    expect(store().explosionResults[a.id]!.rolls).toEqual([3]);
   });
 
   it("same id twice with max value -> only one explosion die", () => {
@@ -169,7 +169,7 @@ describe("T-18 duplicate 'die finished' calls are idempotent (A-05)", () => {
     finish(a.id, 6);
     finish(a.id, 6);
     expect(store().explosionDice).toHaveLength(1);
-    expect(store().explosionResults[a.id].rolls).toEqual([6]);
+    expect(store().explosionResults[a.id]!.rolls).toEqual([6]);
   });
 
   it("call after clearRoll (stale die) and for a previous roll's die after startRoll -> ignored", () => {
@@ -209,7 +209,7 @@ describe("T-56 face value validation when a die finishes (A-08)", () => {
     store().startRoll({ dice: [a] }, { mode: "DAMAGE" });
     expect(finish(a.id, 0)).toBe(false);
     expect(finish(a.id, 4)).toBe(true);
-    expect(store().currentRollResult?.outcomes[0].total).toBe(4);
+    expect(store().currentRollResult?.outcomes[0]!.total).toBe(4);
   });
 });
 
@@ -270,8 +270,8 @@ describe("T-19 / T-55 reroll (A-06, A-07, D-06)", () => {
     store().reroll({ wildDieEnabled: false });
     const infos = Object.values(store().dieInfo);
     expect(infos).toHaveLength(1);
-    expect(infos[0].isWildDie).toBe(false);
-    expect(infos[0].die.type).toBe("D8");
+    expect(infos[0]!.isWildDie).toBe(false);
+    expect(infos[0]!.die.type).toBe("D8");
   });
 
   it("reroll after the Wild Die was turned on -> a wild die is added (TRAIT only)", () => {
@@ -303,8 +303,8 @@ describe("T-61 / D-05 the roll records its own mode", () => {
     const dice = getDiceToRoll({ a: 1 }, { a: { id: "a", type: "D8", style: "GALAXY" } }, true, undefined, true);
     store().startRoll({ dice }, { mode: "TRAIT", settings: SETTINGS });
     const [traitDie, wildDie] = Object.keys(store().rollValues);
-    finish(traitDie, 3);
-    finish(wildDie, 5);
+    finish(traitDie!, 3);
+    finish(wildDie!, 5);
     expect(store().currentRollResult).toMatchObject({
       mode: "TRAIT",
       modifier: 1,

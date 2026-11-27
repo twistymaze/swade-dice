@@ -171,7 +171,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
       const pills = historyPills(f.player.name);
       expect(pills).toHaveLength(1);
       for (const o of f.result.outcomes) {
-        expect(within(pills[0]).getAllByText(String(o.total)).length).toBeGreaterThan(0);
+        expect(within(pills[0]!).getAllByText(String(o.total)).length).toBeGreaterThan(0);
       }
     }
   );
@@ -185,7 +185,7 @@ describe("RollHistoryTray receives golden broadcasts", () => {
     expect(pills).toHaveLength(rollHistoryEntries.length);
     rollHistoryEntries.forEach((entry, i) => {
       for (const o of entry.result.outcomes) {
-        expect(within(pills[i]).getAllByText(String(o.total)).length).toBeGreaterThan(0);
+        expect(within(pills[i]!).getAllByText(String(o.total)).length).toBeGreaterThan(0);
       }
     });
   });
@@ -212,8 +212,8 @@ describe("old payloads are still read after the contract changes", () => {
     expect(f.result.outcomes[0]).toHaveProperty("success", true);
     await sendFromRemote(f);
     const [pill] = historyPills(f.player.name);
-    expect(within(pill).getAllByText("13").length).toBeGreaterThan(0);
-    expect(within(pill).queryByText("✓")).not.toBeInTheDocument();
+    expect(within(pill!).getAllByText("13").length).toBeGreaterThan(0);
+    expect(within(pill!).queryByText("✓")).not.toBeInTheDocument();
   });
 
   it("A-01: the old traitNoWild.rolledOne payload (no crit fields) shows the possible crit, computed locally", async () => {
@@ -221,7 +221,7 @@ describe("old payloads are still read after the contract changes", () => {
     const f = fixture("traitNoWild.rolledOne");
     await sendFromRemote(f);
     const [pill] = historyPills(f.player.name);
-    expect(within(pill).getByText("??")).toBeInTheDocument();
+    expect(within(pill!).getByText("??")).toBeInTheDocument();
   });
 });
 

@@ -72,16 +72,16 @@ describe("T-46 recalculation after a post-roll edit (OD-1)", () => {
     act(() => controls().setTraitModifier(10));
     expect(result.current!.outcomes[0]).toMatchObject({ total: 11, criticalFailure: true, success: false, raises: 0 });
     act(() => controls().toggleWildDie());
-    expect(result.current!.outcomes[0].criticalFailure).toBeUndefined();
-    expect(result.current!.outcomes[0].possibleCriticalFailure).toBe(true);
-    expect(result.current!.outcomes[0].success).toBe(true);
+    expect(result.current!.outcomes[0]!.criticalFailure).toBeUndefined();
+    expect(result.current!.outcomes[0]!.possibleCriticalFailure).toBe(true);
+    expect(result.current!.outcomes[0]!.success).toBe(true);
   });
 
   it("DAMAGE (OD-5): the damage modifier updates the total; a TN change adds no success/raises", () => {
     setStoredResult((damageFixture as unknown as { result: SavageRollResult }).result);
     const { result } = renderHook(() => useSavageWorldsResults());
     act(() => controls().setDamageModifier(5));
-    expect(result.current!.outcomes[0].total).toBe(4 + 7 + 5);
+    expect(result.current!.outcomes[0]!.total).toBe(4 + 7 + 5);
     act(() => controls().setTargetNumber(12));
     expect(result.current!.outcomes[0]).not.toHaveProperty("success");
     expect(result.current!.outcomes[0]).not.toHaveProperty("raises");

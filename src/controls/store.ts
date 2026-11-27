@@ -64,7 +64,7 @@ const loadDiceSet = () => {
   // Default: first valid set (not Nebula or "all")
   return diceSets.find(set => 
     set.id !== "NEBULA_STANDARD" && set.id !== "all"
-  ) || diceSets[0];
+  ) || diceSets[0]!;
 };
 
 const initialSet = loadDiceSet();
@@ -157,7 +157,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
         const prevCounts = state.diceCounts;
         const prevDice = state.diceSet.dice;
         for (let i = 0; i < diceSet.dice.length; i++) {
-          const die = diceSet.dice[i];
+          const die = diceSet.dice[i]!;
           const prevDie = prevDice[i];
           // Carry over count if the index and die type match
           if (prevDie && prevDie.type === die.type) {
@@ -190,7 +190,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     changeDieCount(id, count) {
       setDerived((state) => {
         if (id in state.diceCounts) {
-          const others = totalDice(state.diceCounts) - state.diceCounts[id];
+          const others = totalDice(state.diceCounts) - state.diceCounts[id]!;
           state.diceCounts[id] = Math.max(0, Math.min(count, MAX_DICE_PER_ROLL - others));
         }
       });
@@ -198,14 +198,14 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     incrementDieCount(id) {
       setDerived((state) => {
         if (id in state.diceCounts && totalDice(state.diceCounts) < MAX_DICE_PER_ROLL) {
-          state.diceCounts[id] += 1;
+          state.diceCounts[id]! += 1;
         }
       });
     },
     decrementDieCount(id) {
       setDerived((state) => {
-        if (id in state.diceCounts && state.diceCounts[id] > 0) {
-          state.diceCounts[id] -= 1;
+        if (id in state.diceCounts && state.diceCounts[id]! > 0) {
+          state.diceCounts[id]! -= 1;
         }
       });
     },

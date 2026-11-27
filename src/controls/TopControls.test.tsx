@@ -51,8 +51,8 @@ describe("T-34 enable/disable logic of the top-bar controls", () => {
   it("DAMAGE selection (2 dice) -> TN, trait modifier and Wild Die disabled; damage modifier enabled", () => {
     const [a, b] = Object.keys(controls().diceCounts);
     act(() => {
-      controls().changeDieCount(a, 1);
-      controls().changeDieCount(b, 1);
+      controls().changeDieCount(a!, 1);
+      controls().changeDieCount(b!, 1);
     });
     render(<TopControls />);
     expect(wildButton()).toBeDisabled();
@@ -63,7 +63,7 @@ describe("T-34 enable/disable logic of the top-bar controls", () => {
   });
 
   it("TRAIT selection (1 die) -> Wild Die, TN and trait modifier enabled; damage modifier disabled", () => {
-    act(() => controls().changeDieCount(Object.keys(controls().diceCounts)[0], 1));
+    act(() => controls().changeDieCount(Object.keys(controls().diceCounts)[0]!, 1));
     render(<TopControls />);
     for (const b of [wildButton(), tnButton(), traitButton()]) expect(b).toBeEnabled();
     expect(damageButton()).toBeDisabled();
@@ -210,8 +210,8 @@ describe("T-35 TN and modifier inputs", () => {
   it("a disabled control ignores clicks", () => {
     const [a, b] = Object.keys(controls().diceCounts);
     act(() => {
-      controls().changeDieCount(a, 1);
-      controls().changeDieCount(b, 1);
+      controls().changeDieCount(a!, 1);
+      controls().changeDieCount(b!, 1);
     });
     render(<TopControls />);
     fireEvent.click(tnButton());

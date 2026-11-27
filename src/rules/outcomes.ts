@@ -162,9 +162,9 @@ export function computeOutcomes(
   if (wildDieEnabled && wildChain && outcomes.length > 0) {
     let worstIndex = 0;
     for (let i = 1; i < outcomes.length; i++) {
-      if (outcomes[i].total < outcomes[worstIndex].total) worstIndex = i;
+      if (outcomes[i]!.total < outcomes[worstIndex]!.total) worstIndex = i;
     }
-    if (wildChain.total + modifier > outcomes[worstIndex].total) {
+    if (wildChain.total + modifier > outcomes[worstIndex]!.total) {
       outcomes[worstIndex] = traitOutcome(wildChain, modifier, targetNumber, true);
     }
   }

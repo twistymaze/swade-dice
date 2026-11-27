@@ -68,7 +68,7 @@ export function PreviewDiceRoll() {
   }, [invalidate]);
 
   const diceWeight = useMemo<WeightClass>(() => {
-    if (dice.length > 0 && dice[0].style === "IRON") {
+    if (dice.length > 0 && dice[0]!.style === "IRON") {
       return "HEAVY";
     } else {
       return "MEDIUM";

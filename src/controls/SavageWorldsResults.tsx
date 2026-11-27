@@ -174,15 +174,15 @@ export function SavageWorldsResults({ result }: SavageWorldsResultsProps) {
         // Single result (single trait test or damage)
         <>
           <Typography variant="body2" color="white" sx={{ borderTop: '1px solid rgba(255,255,255,0.3)', pt: 0.5, mt: 0.5 }}>
-            {isTraitTest ? "Result" : "Total"}: {outcomes[0].total}
+            {isTraitTest ? "Result" : "Total"}: {outcomes[0]!.total}
           </Typography>
-          {isTraitTest && isComplete && outcomes[0].success !== undefined && (
+          {isTraitTest && isComplete && outcomes[0]!.success !== undefined && (
             isSuccess(0) ? (
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <CheckIcon sx={{ fontSize: "16px", color: "#4caf50" }} />
                 <Typography variant="body2" color="#4caf50">
                   Success vs TN {targetNumber}
-                  {outcomes[0].raises && outcomes[0].raises > 0 ? ` with ${outcomes[0].raises} raise${outcomes[0].raises > 1 ? 's' : ''}!` : ''}
+                  {outcomes[0]!.raises && outcomes[0]!.raises > 0 ? ` with ${outcomes[0]!.raises} raise${outcomes[0]!.raises > 1 ? 's' : ''}!` : ''}
                 </Typography>
               </Stack>
             ) : (

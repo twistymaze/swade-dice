@@ -105,7 +105,7 @@ describe("obrMock", () => {
       await p2.player.setMetadata({ k: 1 });
       expect(await OBR.player.getMetadata()).toEqual({});
       const others = await OBR.party.getPlayers();
-      expect(others[0].metadata).toEqual({ k: 1 });
+      expect(others[0]!.metadata).toEqual({ k: 1 });
     });
 
     it("fires player.onChange on the writer (own echo)", async () => {
@@ -211,8 +211,8 @@ describe("obrMock", () => {
       expect(cb).not.toHaveBeenCalled();
       await sent;
       await flushObr();
-      expect(cb.mock.calls[0][0].data).toEqual(data);
-      expect(cb.mock.calls[0][0].data).not.toBe(data);
+      expect(cb.mock.calls[0]![0].data).toEqual(data);
+      expect(cb.mock.calls[0]![0].data).not.toBe(data);
     });
 
     it("only reaches listeners of the same channel", async () => {

@@ -99,15 +99,15 @@ describe("T-21 roll mode is derived from mode choice and counts (D-08)", () => {
       expect(s.rollMode).toBe(computeRollMode(s.modeChoice, s.diceCounts));
     };
     const [a, b] = Object.keys(store.getState().diceCounts);
-    store.getState().incrementDieCount(a);
+    store.getState().incrementDieCount(a!);
     check();
-    store.getState().incrementDieCount(b);
+    store.getState().incrementDieCount(b!);
     check();
     store.getState().setModeChoice("TRAIT");
     check();
-    store.getState().decrementDieCount(b);
+    store.getState().decrementDieCount(b!);
     check();
-    store.getState().changeDieCount(a, 4);
+    store.getState().changeDieCount(a!, 4);
     check();
     store.getState().resetDiceCounts(true);
     expect(store.getState().modeChoice).toBe("TRAIT");
@@ -120,9 +120,9 @@ describe("T-21 roll mode is derived from mode choice and counts (D-08)", () => {
   it("decrementDieCount at 0 stays 0; unknown ids are ignored", async () => {
     const store = await freshStore({});
     const [a] = Object.keys(store.getState().diceCounts);
-    store.getState().decrementDieCount(a);
+    store.getState().decrementDieCount(a!);
     store.getState().incrementDieCount("nope");
-    expect(store.getState().diceCounts[a]).toBe(0);
+    expect(store.getState().diceCounts[a!]).toBe(0);
     expect(store.getState().diceCounts).not.toHaveProperty("nope");
   });
 });
@@ -155,11 +155,11 @@ describe("T-57 / B-08 limits the receivers accept", () => {
     const { MAX_DICE_PER_ROLL } = await import("./store");
     const ids = Object.keys(store.getState().diceCounts);
     for (const id of ids) store.getState().changeDieCount(id, 0);
-    for (let i = 0; i < MAX_DICE_PER_ROLL + 5; i++) store.getState().incrementDieCount(ids[0]);
-    expect(store.getState().diceCounts[ids[0]]).toBe(MAX_DICE_PER_ROLL);
-    store.getState().changeDieCount(ids[0], 10);
-    store.getState().changeDieCount(ids[1], 999);
-    expect(store.getState().diceCounts[ids[1]]).toBe(MAX_DICE_PER_ROLL - 10);
+    for (let i = 0; i < MAX_DICE_PER_ROLL + 5; i++) store.getState().incrementDieCount(ids[0]!);
+    expect(store.getState().diceCounts[ids[0]!]).toBe(MAX_DICE_PER_ROLL);
+    store.getState().changeDieCount(ids[0]!, 10);
+    store.getState().changeDieCount(ids[1]!, 999);
+    expect(store.getState().diceCounts[ids[1]!]).toBe(MAX_DICE_PER_ROLL - 10);
   });
 
   it("modifiers are clamped to -99..99 integers", async () => {

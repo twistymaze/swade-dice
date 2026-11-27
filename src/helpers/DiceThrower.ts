@@ -129,7 +129,7 @@ export class DiceThrower {
 
   getDiceThrow(index: number): DiceThrow {
     if (this.history.length > index) {
-      return this.history[index];
+      return this.history[index]!;
     }
     let position = randomPosition(this.rng);
     for (let i = 0; i < 50; i++) {

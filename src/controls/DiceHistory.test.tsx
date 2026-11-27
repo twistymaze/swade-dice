@@ -36,7 +36,7 @@ const chips = (menu: HTMLElement) => Array.from(menu.querySelectorAll(".MuiChip-
 describe("T-32 recent-rolls store (max 6)", () => {
   it("the 7th push drops the oldest", () => {
     const rolls = golden();
-    for (let i = 0; i < 7; i++) history().pushRecentRoll({ ...rolls[i % rolls.length], targetNumber: i + 1 });
+    for (let i = 0; i < 7; i++) history().pushRecentRoll({ ...rolls[i % rolls.length]!, targetNumber: i + 1 });
     expect(history().recentRolls.map((r) => r.targetNumber)).toEqual([2, 3, 4, 5, 6, 7]);
   });
 
@@ -66,40 +66,40 @@ describe("T-32 recent-rolls menu", () => {
       "D",
     ]);
     const alts = (c: HTMLElement) => Array.from(c.querySelectorAll("img")).map((i) => i.alt);
-    expect(alts(list[0])).toEqual(["GALAXY D6 preview"]); // wild off
-    expect(alts(list[1])).toEqual(["GALAXY D8 preview", "GALAXY D8 preview", "NEBULA D6 preview"]);
-    expect(alts(list[2])).toEqual(["GALAXY D6 preview", "GALAXY D8 preview"]); // DAMAGE: no wild
-    expect(alts(list[5])).toEqual(["GALAXY D4 preview", "GALAXY D12 preview"]);
+    expect(alts(list[0]!)).toEqual(["GALAXY D6 preview"]); // wild off
+    expect(alts(list[1]!)).toEqual(["GALAXY D8 preview", "GALAXY D8 preview", "NEBULA D6 preview"]);
+    expect(alts(list[2]!)).toEqual(["GALAXY D6 preview", "GALAXY D8 preview"]); // DAMAGE: no wild
+    expect(alts(list[5]!)).toEqual(["GALAXY D4 preview", "GALAXY D12 preview"]);
   });
 
   it("more than 6 dice of one type show 'N×' and one preview", () => {
     const [r] = golden();
-    r.counts = { GALAXY_STANDARD_D6: 8 };
-    r.rollMode = "DAMAGE";
-    act(() => useDiceHistoryStore.setState({ recentRolls: [r] }));
+    r!.counts = { GALAXY_STANDARD_D6: 8 };
+    r!.rollMode = "DAMAGE";
+    act(() => useDiceHistoryStore.setState({ recentRolls: [r!] }));
     const [chip] = chips(openMenu());
     expect(chip).toHaveTextContent("8×");
-    expect(chip.querySelectorAll("img")).toHaveLength(1);
+    expect(chip!.querySelectorAll("img")).toHaveLength(1);
   });
 
   it("the delete icon removes the entry", () => {
     act(() => useDiceHistoryStore.setState({ recentRolls: golden() }));
     const menu = openMenu();
-    fireEvent.click(chips(menu)[0].querySelector(".MuiChip-deleteIcon")!);
+    fireEvent.click(chips(menu)[0]!.querySelector(".MuiChip-deleteIcon")!);
     expect(history().recentRolls).toHaveLength(5);
-    expect(history().recentRolls[0].counts.GALAXY_STANDARD_D8).toBe(2);
+    expect(history().recentRolls[0]!.counts.GALAXY_STANDARD_D8).toBe(2);
   });
 });
 
 describe("T-32 replay", () => {
   function replay(roll: RecentRoll) {
     act(() => useDiceHistoryStore.setState({ recentRolls: [roll] }));
-    fireEvent.click(chips(openMenu())[0]);
+    fireEvent.click(chips(openMenu())[0]!);
   }
 
   it("TRAIT: restores trait modifier, TN and Wild Die (toggled because different); starts with the roll's mode and settings", () => {
     const [r] = golden(); // TRAIT d6, wild off
-    replay({ ...r, traitModifier: 2, damageModifier: 3, targetNumber: 8 });
+    replay({ ...r!, traitModifier: 2, damageModifier: 3, targetNumber: 8 });
     expect(controls()).toMatchObject({ traitModifier: 2, damageModifier: 0, targetNumber: 8, wildDieEnabled: false });
     expect(dice().rollMode).toBe("TRAIT");
     expect(dice().rollSettings).toEqual({ targetNumber: 8, traitModifier: 2, damageModifier: 0, wildDieEnabled: false });
@@ -109,7 +109,7 @@ describe("T-32 replay", () => {
 
   it("DAMAGE: restores the damage modifier only (TN stays), no Wild Die", () => {
     act(() => controls().setTargetNumber(6));
-    replay(golden()[2]); // DAMAGE d6 + d8, +2
+    replay(golden()[2]!); // DAMAGE d6 + d8, +2
     expect(controls()).toMatchObject({ damageModifier: 2, targetNumber: 6, traitModifier: 0 });
     expect(dice().rollMode).toBe("DAMAGE");
     expect(rolled().map((d) => d.type).sort()).toEqual(["D6", "D8"]);
@@ -117,16 +117,16 @@ describe("T-32 replay", () => {
   });
 
   it("Wild Die the same as now -> not toggled", () => {
-    replay(golden()[3]); // TRAIT, wild on; current on
+    replay(golden()[3]!); // TRAIT, wild on; current on
     expect(controls().wildDieEnabled).toBe(true);
     expect(rolled().filter((d) => d.isWildDie)).toHaveLength(1);
   });
 
   it("wildDieEnabled undefined -> uses the current setting", () => {
     const r = golden()[3];
-    delete r.wildDieEnabled;
+    delete r!.wildDieEnabled;
     act(() => useDiceControlsStore.setState({ wildDieEnabled: false }));
-    replay(r);
+    replay(r!);
     expect(controls().wildDieEnabled).toBe(false);
     expect(rolled().some((d) => d.isWildDie)).toBe(false);
   });
@@ -134,10 +134,10 @@ describe("T-32 replay", () => {
   it("hidden is taken from the current setting; counts and mode choice reset after the replay", () => {
     act(() => {
       useDiceControlsStore.setState({ diceHidden: true });
-      controls().changeDieCount(Object.keys(controls().diceCounts)[0], 2);
+      controls().changeDieCount(Object.keys(controls().diceCounts)[0]!, 2);
       controls().setModeChoice("DAMAGE");
     });
-    replay(golden()[0]);
+    replay(golden()[0]!);
     expect(dice().roll?.hidden).toBe(true);
     expect(Object.values(controls().diceCounts).every((n) => n === 0)).toBe(true);
     expect(controls().modeChoice).toBe("AUTO");

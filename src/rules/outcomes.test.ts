@@ -56,7 +56,7 @@ describe("T-07 single-die trait test with Wild Die", () => {
   it("wild higher (d8 3, wild 5, +1, TN 4) -> wild used, total 6, success, 0 raises (golden)", () => {
     const [o] = trait([chain("D8", [3]), wild(5)], { traitModifier: 1 });
     expect(o).toMatchObject({ total: 6, replacedByWild: true, success: true, raises: 0, modifier: 1 });
-    expect(o.chains[0].isWildDie).toBe(true);
+    expect(o!.chains[0]!.isWildDie).toBe(true);
   });
 
   it("wild lower (d8 7, wild 2) -> trait used", () => {
@@ -66,8 +66,8 @@ describe("T-07 single-die trait test with Wild Die", () => {
 
   it("tie (4 vs 4) -> trait kept, replacedByWild false", () => {
     const [o] = trait([chain("D8", [4]), wild(4)]);
-    expect(o.replacedByWild).toBe(false);
-    expect(o.chains[0].isWildDie).toBe(false);
+    expect(o!.replacedByWild).toBe(false);
+    expect(o!.chains[0]!.isWildDie).toBe(false);
   });
 
   it("wild exploded chain (6,6,2 = 14) vs trait 8 -> wild, 2 raises at TN 4", () => {
@@ -89,7 +89,7 @@ describe("T-07 single-die trait test with Wild Die", () => {
   it("T-06 Wild Die on, but the roll was made without a wild chain -> no wild outcome appears", () => {
     const outcomes = trait([chain("D8", [2])], { wildDieEnabled: true });
     expect(outcomes).toHaveLength(1);
-    expect(outcomes[0].replacedByWild).toBe(false);
+    expect(outcomes[0]!.replacedByWild).toBe(false);
   });
 
   it("T-06 Wild Die turned off after the roll -> the wild chain is ignored", () => {
@@ -129,7 +129,7 @@ describe("T-08 multi-die trait test, Wild Die replaces the worst die", () => {
   it("3 dice + wild, mixed explosions ([8,3]=11, 1, 5), wild 6 -> replaces the 1", () => {
     const out = trait([chain("D8", [8, 3]), chain("D8", [1]), chain("D8", [5]), wild(6)]);
     expect(out.map((o) => o.total)).toEqual([11, 6, 5]);
-    expect(out[1].replacedByWild).toBe(true);
+    expect(out[1]!.replacedByWild).toBe(true);
   });
 
   it("A-10 one Wild Die per roll: it replaces at most one trait die and adds no extra outcome", () => {
@@ -236,25 +236,25 @@ describe("T-11 damage roll results (OD-5: no success/raises)", () => {
 
   it("2d6 with one ace [6,2] + [3] = 11", () => {
     const [o] = computeOutcomes("DAMAGE", [chain("D6", [6, 2]), chain("D6", [3])], settings());
-    expect(o.total).toBe(11);
+    expect(o!.total).toBe(11);
   });
 
   it("negative modifier can make the total <= 0", () => {
     const [o] = computeOutcomes("DAMAGE", [chain("D4", [1])], settings({ damageModifier: -3 }));
-    expect(o.total).toBe(-2);
+    expect(o!.total).toBe(-2);
   });
 
   it("T-11 single die in forced DAMAGE mode -> one outcome, die + damage modifier", () => {
     const out = computeOutcomes("DAMAGE", [chain("D8", [5])], settings({ damageModifier: 1 }));
     expect(out).toHaveLength(1);
-    expect(out[0].total).toBe(6);
+    expect(out[0]!.total).toBe(6);
     expect(out[0]).not.toHaveProperty("success");
   });
 
   it("T-11 a wild chain in DAMAGE data (remote payload) is counted in the total", () => {
     const [o] = computeOutcomes("DAMAGE", [chain("D6", [4]), wild(3)], settings({ damageModifier: 1 }));
-    expect(o.total).toBe(8);
-    expect(o.replacedByWild).toBe(false);
+    expect(o!.total).toBe(8);
+    expect(o!.replacedByWild).toBe(false);
   });
 });
 
@@ -278,9 +278,9 @@ describe("T-25 raises and success math", () => {
     [0, 1, false, 0],
   ])("total %i vs TN %i -> success %s, raises %i", (total, tn, success, raises) => {
     const o = one(total, tn);
-    expect(o.total).toBe(total);
-    expect(o.success).toBe(success);
-    expect(o.raises).toBe(raises);
+    expect(o!.total).toBe(total);
+    expect(o!.success).toBe(success);
+    expect(o!.raises).toBe(raises);
     expect(countRaises(total, tn)).toBe(raises);
   });
 
@@ -290,8 +290,8 @@ describe("T-25 raises and success math", () => {
 
   it("the damage modifier is applied once to a multi-chain DAMAGE outcome", () => {
     const [o] = computeOutcomes("DAMAGE", [chain("D6", [3]), chain("D8", [4]), chain("D4", [2])], settings({ damageModifier: 2 }));
-    expect(o.total).toBe(11);
-    expect(o.modifier).toBe(2);
+    expect(o!.total).toBe(11);
+    expect(o!.modifier).toBe(2);
   });
 
   it("the trait modifier is applied to each multi-die TRAIT outcome once", () => {
@@ -319,7 +319,7 @@ describe("T-12 STANDARD mode results (A-03: no modifier)", () => {
       settings({ damageModifier: 2 })
     );
     expect(r.modifier).toBe(0);
-    expect(r.outcomes[0].total - r.modifier).toBe(3);
+    expect(r.outcomes[0]!.total - r.modifier).toBe(3);
   });
 });
 
@@ -402,13 +402,13 @@ describe("T-54 receivers: crit status from the payload field, or computed for ol
   it("old payload with a modifier-lifted crit that says success -> computed locally: critical", () => {
     const r = asResult(traitWildDie);
     r.dieChains = [chain("D8", [1]), wild(1)];
-    r.outcomes = [{ ...r.outcomes[0], chains: [r.dieChains[0]], total: 4, success: true, raises: 0 }];
+    r.outcomes = [{ ...r.outcomes[0]!, chains: [r.dieChains[0]!], total: 4, success: true, raises: 0 }];
     expect(getOutcomeCriticalStatus(r, 0).isCritical).toBe(true);
   });
 
   it("new payload -> rendered from the field, not from the chains", () => {
     const r = asResult(traitWildDie);
-    r.outcomes[0] = { ...r.outcomes[0], criticalFailure: true, success: false, raises: 0, criticalFailureReason: "x" };
+    r.outcomes[0] = { ...r.outcomes[0]!, criticalFailure: true, success: false, raises: 0, criticalFailureReason: "x" };
     expect(getOutcomeCriticalStatus(r, 0)).toEqual({ isCritical: true, isPossible: false, reason: "x" });
   });
 
@@ -449,8 +449,8 @@ describe("T-46 / T-61 invariants on 2000 seeded generated rolls", () => {
     };
 
     for (let i = 0; i < 2000; i++) {
-      const mode = (["TRAIT", "DAMAGE", "STANDARD"] as const)[int(3)];
-      const chains = Array.from({ length: 1 + int(4) }, () => genChain(types[int(5)]));
+      const mode = (["TRAIT", "DAMAGE", "STANDARD"] as const)[int(3)]!;
+      const chains = Array.from({ length: 1 + int(4) }, () => genChain(types[int(5)]!));
       const wildState = int(3); // 0 absent, 1 present+on, 2 present+off
       if (mode === "TRAIT" && wildState > 0) chains.push(genChain("D6", true));
       const s = settings({

@@ -143,7 +143,7 @@ describe("T-48 rate limit, retry and error notice (B-02, D-02)", () => {
     await flushObr();
     expect(received).not.toHaveBeenCalled();
     send.mockImplementation(real);
-    await settle(DEFAULT_RETRY_DELAYS_MS[0] + 10);
+    await settle(DEFAULT_RETRY_DELAYS_MS[0]! + 10);
     expect(received).toHaveBeenCalledTimes(1);
     expect(obr().state.notifications).toEqual([]);
   });
@@ -235,7 +235,7 @@ describe("B-10 / T-27 the payload carries the real OBR role", () => {
     gm.update({ rollId: "r1", hidden: false }, result());
     await flushObr();
     expect(sentPlayers()).toEqual([expect.objectContaining({ id: "g1", connectionId: "cg", name: "Gina", role: "GM" })]);
-    expect(parseRollBroadcast(obr().broadcast.sendMessage.mock.calls[0][1])).not.toBeNull();
+    expect(parseRollBroadcast(obr().broadcast.sendMessage.mock.calls[0]![1])).not.toBeNull();
     gm.dispose();
 
     resetObrMock({ id: "p1", connectionId: "cp", name: "Pip", color: "#0000aa", role: "PLAYER" });
@@ -268,7 +268,7 @@ describe("T-58 player info that rejects: no placeholder identity is sent (B-09)"
       sender.update({ rollId: "r1", hidden: false }, result());
       await flushObr();
       expect(obr().broadcast.sendMessage).not.toHaveBeenCalled();
-      await settle(DEFAULT_RETRY_DELAYS_MS[0] + 100);
+      await settle(DEFAULT_RETRY_DELAYS_MS[0]! + 100);
       expect(sentPlayers()).toEqual([
         expect.objectContaining({ id: "u1", connectionId: "c1", name: "Ava", color: "#aa0000", role: "GM" }),
       ]);
