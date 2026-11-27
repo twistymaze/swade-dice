@@ -1,7 +1,7 @@
 /**
  * Golden compatibility tests: the cross-client and persisted CONTRACT of the app.
  *
- * Fixtures: src/test/fixtures/golden/ (see its README). These tests run against the current code and
+ * Fixtures: src/test/fixtures/golden/ (see docs/app-owlbear-integration.md section 13). These tests run against the current code and
  * must keep passing after refactors, unless a verified finding changes the contract on purpose.
  *
  * Contract:
