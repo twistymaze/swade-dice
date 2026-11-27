@@ -243,6 +243,61 @@ describe("T-11 damage roll results (OD-5: no success/raises)", () => {
     const [o] = computeOutcomes("DAMAGE", [chain("D4", [1])], settings({ damageModifier: -3 }));
     expect(o.total).toBe(-2);
   });
+
+  it("T-11 single die in forced DAMAGE mode -> one outcome, die + damage modifier", () => {
+    const out = computeOutcomes("DAMAGE", [chain("D8", [5])], settings({ damageModifier: 1 }));
+    expect(out).toHaveLength(1);
+    expect(out[0].total).toBe(6);
+    expect(out[0]).not.toHaveProperty("success");
+  });
+
+  it("T-11 a wild chain in DAMAGE data (remote payload) is counted in the total", () => {
+    const [o] = computeOutcomes("DAMAGE", [chain("D6", [4]), wild(3)], settings({ damageModifier: 1 }));
+    expect(o.total).toBe(8);
+    expect(o.replacedByWild).toBe(false);
+  });
+});
+
+describe("T-25 raises and success math", () => {
+  const one = (total: number, targetNumber: number) => {
+    // a d12 chain of 6, the modifier brings it to the wanted total
+    const [o] = trait([chain("D12", [6])], { traitModifier: total - 6, targetNumber, wildDieEnabled: false });
+    return o;
+  };
+
+  it.each([
+    [4, 4, true, 0],
+    [7, 4, true, 0],
+    [8, 4, true, 1],
+    [11, 4, true, 1],
+    [12, 4, true, 2],
+    [3, 4, false, 0],
+    [-4, 4, false, 0],
+    [1, 1, true, 0],
+    [5, 1, true, 1],
+    [0, 1, false, 0],
+  ])("total %i vs TN %i -> success %s, raises %i", (total, tn, success, raises) => {
+    const o = one(total, tn);
+    expect(o.total).toBe(total);
+    expect(o.success).toBe(success);
+    expect(o.raises).toBe(raises);
+    expect(countRaises(total, tn)).toBe(raises);
+  });
+
+  it("negative TN math: countRaises(-4, -8) -> 1 (total 4 over the TN)", () => {
+    expect(countRaises(-4, -8)).toBe(1);
+  });
+
+  it("the damage modifier is applied once to a multi-chain DAMAGE outcome", () => {
+    const [o] = computeOutcomes("DAMAGE", [chain("D6", [3]), chain("D8", [4]), chain("D4", [2])], settings({ damageModifier: 2 }));
+    expect(o.total).toBe(11);
+    expect(o.modifier).toBe(2);
+  });
+
+  it("the trait modifier is applied to each multi-die TRAIT outcome once", () => {
+    const out = trait([chain("D8", [3]), chain("D8", [5])], { traitModifier: 2, wildDieEnabled: false });
+    expect(out.map((o) => o.total)).toEqual([5, 7]);
+  });
 });
 
 describe("T-12 STANDARD mode results (A-03: no modifier)", () => {

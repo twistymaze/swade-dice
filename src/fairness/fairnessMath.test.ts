@@ -45,3 +45,55 @@ describe("fairness math", () => {
     expect(canStartFairnessTest({}, 500)).toBe(false);
   });
 });
+
+describe("T-30 fairness statistics (chi-squared)", () => {
+  it("a perfectly uniform d6, 600 rolls -> statistic 0, expected 100, fair", () => {
+    const values = Array.from({ length: 600 }, (_, i) => (i % 6) + 1);
+    const s = summarizeFairness(values, "D6");
+    expect(s.counts).toEqual([100, 100, 100, 100, 100, 100]);
+    expect(s.expected).toBe(100);
+    expect(s.chiSquared).toBe(0);
+    expect(s.isFair).toBe(true);
+  });
+
+  it("all 6s -> unfair", () => {
+    const s = summarizeFairness(Array(600).fill(6), "D6");
+    expect(s.chiSquared).toBeCloseTo(3000, 6);
+    expect(s.isFair).toBe(false);
+  });
+
+  it.each([
+    ["D4", 7.815],
+    ["D6", 11.07],
+    ["D8", 14.067],
+    ["D10", 16.919],
+    ["D12", 19.675],
+  ] as const)("%s uses the df = sides - 1 critical value %f", (type, critical) => {
+    expect(summarizeFairness([1], type).criticalValue).toBe(critical);
+  });
+
+  it("stopped early: 500 planned, 100 even d4 rolls made -> fair (expected from the rolls made)", () => {
+    const values = Array.from({ length: 100 }, (_, i) => (i % 4) + 1);
+    const s = summarizeFairness(values, "D4");
+    expect(s.expected).toBe(25);
+    expect(s.isFair).toBe(true);
+  });
+
+  it("no rolls -> no division by zero: expected 0, statistic 0, all finite", () => {
+    const s = summarizeFairness([], "D8");
+    expect(s.counts).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(s.expected).toBe(0);
+    expect(s.chiSquared).toBe(0);
+    expect(Number.isFinite(s.chiSquared)).toBe(true);
+  });
+
+  it("values 0 and > sides do not create new faces", () => {
+    const s = summarizeFairness([0, 5, -1, 1, 2, 3, 4], "D4");
+    expect(s.counts).toEqual([1, 1, 1, 1]);
+    expect(s.counts).toHaveLength(4);
+  });
+
+  it("an unknown die type throws (D20/D100 were removed, OD-8)", () => {
+    expect(() => summarizeFairness([1], "D20" as never)).toThrow(/Unknown die type/);
+  });
+});
