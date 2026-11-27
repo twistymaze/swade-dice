@@ -10,7 +10,7 @@ export default [
     files: ['**/*.{js,mjs,cjs,ts,tsx}']
   },
   {
-    ignores: ['dist/**', 'node_modules/**']
+    ignores: ['dist/**', 'node_modules/**', '.claude/**', '.review/**']
   },
   {
     languageOptions: {
