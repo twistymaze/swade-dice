@@ -32,6 +32,10 @@ const FairnessTester = lazy(() =>
   }))
 );
 
+// "default" lets the browser pick the GPU (often the integrated one on dual-GPU
+// laptops) instead of forcing the discrete GPU; R3F keeps antialias and alpha.
+const GL_OPTIONS = { powerPreference: "default" } as const;
+
 function TrayEnvironment() {
   return <Environment files={environment} />;
 }
@@ -82,6 +86,7 @@ export function InteractiveTray() {
           key={canvasKey}
           frameloop="demand"
           onCreated={onCreated}
+          gl={GL_OPTIONS}
           camera={{
             fov: 29,
             position: [0, 4.3, 0],
